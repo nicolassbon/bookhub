@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title th:text="${usuario.nombreUsuario} + ' - Mis libros'"></title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css">
+    <!-- Boostrap core css -->
+    <link rel="stylesheet" th:href="@{/webjars/bootstrap/5.2.0/css/bootstrap.min.css}"/>
+
+    <!-- custom style -->
+    <link rel="stylesheet" th:href="@{/css/navbar.css}">
+
+    <!-- Path to jQuery -->
+    <script src="https://code.jquery.com/jquery-3.2.1.slim.min.js"
+            integrity="sha384-KJ3o2DKtIkvYIK3UENzmM7KCkRr/rE9/Qpg6aAZGJwFDMVNA/GpGFF93hXpG5KkN"
+            crossorigin="anonymous"></script>
+
+    <!-- Path to Popper - it is for dropsdowns etc in bootstrap -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.3/umd/popper.min.js"
+            integrity="sha384-vFJXuSJphROIrBnz7yo7oB41mKfc8JzQZiCq4NCceLEaO4IHwicKwpJf9c9IpFgh"
+            crossorigin="anonymous"></script>
+
+    <!-- Path to bootsrap -->
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0-beta.2/js/bootstrap.min.js"
+            integrity="sha384-alpBpkh1PFOepccYVYDB4do5UnbKysX5WZXm3XxPqe5iKTfUKjNkCk9SaVuEZflJ"
+            crossorigin="anonymous"></script>
+
+    <style>
+        .card {
+            min-height: 550px;
+        }
+
+        .card-img-top {
+            width: 100%;
+            height: 400px;
+            object-fit: cover;
+        }
+
+        .card-body {
+            min-height: 150px;
+        }
+    </style>
+</head>
+<body>
+<div th:insert="navbar :: navbar"></div>
+<main role="main" class="container-fluid mt-2 pt-5">
+    <div class="col-md-9  mx-auto">
+        <h3 th:text="'Estadísticas en ' + ${#httpSession.getAttribute('ANIOACTUAL')}"></h3>
+        <div class="d-flex justify-content-between align-items-start mt-4">
+            <div class="flex-grow-1 me-4">
+                <h4>Tus estanterías</h4>
+                <div class="btn-group" role="group">
+                    <a th:href="@{/libro/misLibros/estanteria(estado='Quiero leer')}"
+                       class="btn btn-outline-primary"
+                       th:classappend="${categoriaActual == 'Quiero leer'} ? 'btn-primary text-white' : ''">Quiero
+                        leer</a>
+                    <a th:href="@{/libro/misLibros/estanteria(estado='Leyendo')}"
+                       class="btn btn-outline-primary"
+                       th:classappend="${categoriaActual == 'Leyendo'} ? 'btn-primary text-white' : ''">Leyendo</a>
+                    <a th:href="@{/libro/misLibros/estanteria(estado='Leído')}"
+                       class="btn btn-outline-primary"
+                       th:classappend="${categoriaActual == 'Leído'} ? 'btn-primary text-white' : ''">Leído</a>
+                </div>
+            </div>
+
+            <div th:if="${categoriaActual == 'Leído'}" class="flex-grow-1">
+                <h4>Progreso de Libros leídos en el año</h4>
+                <div th:if="${usuario.meta} == null" class="alert alert-danger">
+                    <p><span>No se establecio una meta</span></p>
+                </div>
+                <div th:if="${usuario.meta} != null">
+                    <div class="progress">
+                        <div class="progress-bar bg-success" role="progressbar"
+                             th:style="'width: ' + (${cantidadLibrosLeidos} / ${usuario.meta} * 100) + '%;'">
+                        </div>
+                    </div>
+                    <p th:text="${cantidadLibrosLeidos} + ' de ' + ${usuario.meta} + ' libros leídos'"></p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Sección de libros actuales -->
+        <div th:if="${categoriaActual == 'Leyendo'}">
+            <div class="row mt-5">
+                <h3 th:text="'Libros ' + ${categoriaActual}"></h3>
+
+                <div th:if="${error} != null" class="alert alert-danger">
+                    <p><strong>Error:</strong> <span th:text="${error}"></span></p>
+                </div>
+
+                <div class="col-12" th:if="${error} == null">
+                    <div class="row">
+                        <div class="col-md-3" th:each="entry : ${librosConProgreso.entrySet()}">
+                            <a th:href="@{/libro/detalle/{id}(id=${entry.key.libro.id})}">
+                                <div class="card mb-3">
+                                    <!-- Imagen del libro -->
+                                    <img th:src="@{'/Images/' + ${entry.key.libro.imagenUrl}}"
+                                         class="card-img-top" alt="Portada del libro" style="max-height: 500px">
+                                    <div class="card-body">
+                                        <h5 class="card-title" th:text="${entry.key.libro.titulo}"></h5>
+                                        <p class="card-text" th:text="'Autor: ' + ${entry.key.libro.autor}"></p>
+
+                                        <!-- Barra de progreso de lectura -->
+                                        <div class="progress">
+                                            <div class="progress-bar bg-success" role="progressbar"
+                                                 th:style="'width:' + ${entry.value} + '%' ">
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div th:if="${categoriaActual != 'Leyendo'}">
+            <div class="row mt-5">
+                <h3 th:text="'Libros ' + ${categoriaActual}"></h3>
+
+                <div th:if="${error} != null" class="alert alert-danger">
+                    <p><strong>Error:</strong> <span th:text="${error}"></span></p>
+                </div>
+
+                <div class="col-12" th:if="${error} == null">
+                    <div class="row">
+                        <div class="col-md-3" th:each="usuarioLibro : ${libros}">
+                            <a th:href="@{/libro/detalle/{id}(id=${usuarioLibro.libro.id})}">
+                                <div class="card mb-3">
+                                    <!-- Imagen del libro -->
+                                    <img th:src="@{'/Images/' + ${usuarioLibro.libro.imagenUrl}}"
+                                         class="card-img-top" alt="Portada del libro" style="max-height: 500px">
+                                    <div class="card-body">
+                                        <h5 class="card-title" th:text="${usuarioLibro.libro.titulo}"></h5>
+                                        <p class="card-text" th:text="'Autor: ' + ${usuarioLibro.libro.autor}"></p>
+                                    </div>
+                                </div>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Sección de reseñas -->
+        <div th:if="${categoriaActual == 'Leído'} and ${error} == null">
+            <h3 class="mt-4">Reseñas</h3>
+            <div class="list-group">
+                <!-- Iterar sobre los libros leídos con reseñas -->
+                <div th:each="usuarioLibro : ${libros}" class="mb-2">
+                    <a href="#" class="list-group-item list-group-item-action">
+                        <!-- Mostrar el título del libro -->
+                        <h5 th:text="${usuarioLibro.libro.titulo}"></h5>
+                        <!-- Mostrar la reseña -->
+                        <p th:if="${usuarioLibro.resenia != null}"
+                           th:text="${usuarioLibro.resenia}">Reseña del libro</p>
+                        <p th:if="${usuarioLibro.resenia == null}">
+                            No ha dado reseña de este libro
+                        </p>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</main>
+</body>
+</html>

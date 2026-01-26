@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <title>Onboarding</title>
+    <link th:href="@{/webjars/bootstrap/5.2.0/css/bootstrap.min.css}" rel="stylesheet">
+    <script th:src="@{/webjars/bootstrap/5.2.0/js/bootstrap.bundle.min.js}"></script>
+
+    <style>
+        .card-header {
+            background-color: #007bff;
+            color: white;
+        }
+    </style>
+</head>
+<body>
+
+<main role="main" class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+            <!-- Paso 1: Géneros Favoritos -->
+            <div class="card shadow-sm" th:if="${paso == 1}">
+                <div class="card-header text-center">
+                    <h4>Onboarding: Géneros Favoritos</h4>
+                </div>
+                <div class="card-body">
+                    <form id="onboardingForm" th:action="@{/onboarding/guardarGeneros}" method="post">
+                        <input type="hidden" th:value="${userId}" name="usuarioId"/>
+
+                        <div class="mb-3">
+                            <h5>Selecciona tus géneros favoritos:</h5>
+                            <div class="form-check" th:each="genero : ${generos}">
+                                <input class="form-check-input" type="checkbox" th:value="${genero.id}" th:id="'genero-' + ${genero.id}" name="generos"/>
+                                <label class="form-check-label" th:for="'genero-' + ${genero.id}" th:text="${genero.nombre}"></label>
+                            </div>
+                        </div>
+
+                        <div class="d-grid">
+                            <button type="submit" class="btn btn-success btn-block">Guardar y Continuar</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Paso 2: Autores Reconocidos -->
+            <div class="card shadow-sm" th:if="${paso == 2}">
+                <div class="card-header text-center">
+                    <h4>Onboarding: Autores Reconocidos</h4>
+                </div>
+                <div class="card-body">
+                    <form id="onboardingFormAutores" th:action="@{/onboarding/guardarAutores}" method="post">
+                        <input type="hidden" th:value="${userId}" name="usuarioId"/>
+
+                        <div class="mb-3">
+                            <h5>Selecciona tus autores favoritos:</h5>
+                            <div class="form-check" th:each="autor : ${autores}">
+                                <input class="form-check-input" type="checkbox" th:value="${autor.id}" th:id="'autor-' + ${autor.id}" name="autores"/>
+                                <label class="form-check-label" th:for="'autor-' + ${autor.id}" th:text="${autor.nombre}"></label>
+                            </div>
+                        </div>
+
+                        <div class="d-grid">
+                            <button type="submit" class="btn btn-success btn-block">Guardar y Continuar</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Paso 3: Meta de Lectura -->
+            <div class="card shadow-sm" th:if="${paso == 3}">
+                <div class="card-header text-center">
+                    <h4>Onboarding: Meta de Lectura</h4>
+                </div>
+                <div class="card-body">
+                    <form id="onboardingFormMeta" th:action="@{/onboarding/guardarMeta}" method="post">
+                        <input type="hidden" th:value="${userId}" name="usuarioId"/>
+                        <input type="hidden" name="redirectUrl" value="/onboarding/mostrarRegistroExitoso">
+
+                        <div class="mb-3">
+                            <label for="metaLibros" class="form-label">¿Cuál es tu meta de libros para este año?</label>
+                            <input type="number" class="form-control" id="metaLibros" name="metaLibros" required min="1"/>
+                        </div>
+
+                        <div class="d-grid">
+                            <button type="submit" class="btn btn-success btn-block">Finalizar</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</main>
+
+</body>
+</html>

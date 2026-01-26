@@ -1,0 +1,13 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<body>
+<h2>Actualización del plan</h2>
+<!-- Mostrar el mensaje de estado del pago si está disponible -->
+<div th:if="${mensajeEstadoPago}">
+    <p th:text="${mensajeEstadoPago}"></p>
+</div>
+<form th:action="@{/planes/actualizarPlan/{planId}(planId=${planId})}" method="POST">
+    <button type="submit">Confirmar actualización del plan</button>
+</form>
+</body>
+</html>

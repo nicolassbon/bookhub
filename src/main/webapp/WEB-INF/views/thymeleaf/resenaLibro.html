@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <link rel="stylesheet" th:href="@{/css/resena.css}">
+    <title>Reseña del Libro</title>
+</head>
+<body>
+<h1>Reseña del Libro</h1>
+<form th:action="@{/libro/guardarResena}" method="post" accept-charset="UTF-8">
+    <input type="hidden" name="id" th:value="${libro.id}"/>
+    <div>
+        <label for="reseña">Reseña:</label>
+        <textarea id="reseña" name="reseña" rows="4" cols="50"></textarea>
+    </div>
+    <div>
+        <label for="puntuacion">Puntuación:</label>
+        <select id="puntuacion" name="puntuacion" required>
+            <option value="1">&#9733;</option>
+            <option value="2">&#9733;&#9733;</option>
+            <option value="3">&#9733;&#9733;&#9733;</option>
+            <option value="4">&#9733;&#9733;&#9733;&#9733;</option>
+            <option value="5">&#9733;&#9733;&#9733;&#9733;&#9733;</option>
+        </select>
+    </div>
+    <div>
+        <button type="submit">Guardar</button>
+        <a th:href="@{/libro/detalle/{id}(id=${libro.id})}">Cancelar</a>
+    </div>
+</form>
+</body>
+</html>

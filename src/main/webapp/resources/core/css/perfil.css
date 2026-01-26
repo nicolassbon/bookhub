@@ -1,0 +1,106 @@
+.perfil-container h2,
+.perfil-container h3 {
+    color: #333;
+}
+
+.perfil-container {
+    padding: 30px;
+    border-radius: 8px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+/* Profile picture */
+.img-fluid.rounded-circle {
+    width: 150px;
+    height: 150px;
+    object-fit: cover;
+    border: 2px solid #007bff;
+}
+
+/* Biography and user info */
+.row .col-md-9 h2 {
+    font-size: 2rem;
+    margin-bottom: 10px;
+}
+
+.row .col-md-9 p {
+    font-size: 1rem;
+    color: #555;
+}
+
+/* Section title */
+h3 {
+    margin-top: 30px;
+    font-size: 1.5rem;
+    font-weight: 600;
+}
+
+/* Card for current books */
+.card {
+    border: none;
+    border-radius: 8px;
+    transition: transform 0.2s ease-in-out;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.05);
+}
+
+.card:hover {
+    transform: translateY(-5px);
+}
+
+.card-img-top {
+    border-top-left-radius: 8px;
+    border-top-right-radius: 8px;
+    height: 250px;
+    object-fit: cover;
+}
+
+.card-body {
+    padding: 20px;
+}
+
+.card-title {
+    font-size: 1.2rem;
+    color: #007bff;
+    font-weight: bold;
+}
+
+.card-text {
+    color: #666;
+    font-size: 0.9rem;
+}
+
+/* Progress bar for reading status */
+.progress {
+    height: 20px;
+    background-color: #e9ecef;
+    border-radius: 5px;
+    overflow: hidden;
+}
+
+.progress-bar {
+    background-color: #007bff;
+    font-size: 0.8rem;
+    line-height: 20px;
+}
+
+/* Bookshelf buttons */
+.btn-group a {
+    font-size: 1rem;
+    margin-right: 10px;
+}
+
+.btn-outline-primary {
+    color: #007bff;
+    border-color: #007bff;
+}
+
+.btn-outline-primary:hover {
+    background-color: #007bff;
+    color: #fff;
+}
+
+.btn-outline-primary:focus {
+    box-shadow: 0 0 5px rgba(0, 123, 255, 0.5);
+}
+
+

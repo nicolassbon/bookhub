@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8">
+  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css">
+  <!-- Bootstrap core CSS -->
+  <link rel="stylesheet" th:href="@{/webjars/bootstrap/5.2.0/css/bootstrap.min.css}"/>
+
+  <!-- Custom style -->
+  <link rel="stylesheet" th:href="@{/css/navbar.css}">
+  <!-- Noty CSS -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/noty/3.1.6/noty.min.css" />
+</head>
+<body>
+<div th:insert="navbar :: navbar"></div>
+
+<div class="container mt-5">
+  <div class="row justify-content-center">
+    <div class="col-md-6">
+      <div class="card shadow-sm">
+        <div class="card-header text-center text-white" style="background-color: #4CAF50;">
+          <h4 style="color:#ffffff">Lista de Amigos</h4>
+        </div>
+        <div class="card-body">
+          <ul class="list-group" th:if="${listaAmigos != null and !listaAmigos.isEmpty()}">
+            <li class="list-group-item d-flex justify-content-between align-items-center" th:each="amistad : ${listaAmigos}">
+              <div>
+                <a th:href="@{/perfil/{id}(id=${amistad.amigo != null ? amistad.amigo.id : amistad.usuario.id})}"
+                   target="_blank"
+                   th:text="${amistad.amigo != null ? amistad.amigo.nombre : amistad.usuario.nombre}"
+                   class="font-weight-bold"></a>
+
+                <p class="mb-0">
+                  <span class="text-muted">Nombre de usuario:</span>
+                  <span th:text="${amistad.amigo != null ? amistad.amigo.getNombreUsuario() : amistad.usuario.getNombreUsuario()}"></span>
+                </p>
+              </div>
+
+              <form th:action="@{/solicitud-amistad/eliminar-amistad/{friendId}(friendId=${amistad.amigo != null ? amistad.amigo.id : amistad.usuario.id})}"
+                    method="post"
+                    class="ml-auto"
+                    style="margin: 0;">
+                <button type="submit" class="btn btn-danger btn-sm" title="Eliminar amigo">
+                  <i class="fa fa-times"></i> Eliminar amigo
+                </button>
+    </span>
+              </form>
+            </li>
+
+
+          </ul>
+          <div th:if="${listaAmigos == null or listaAmigos.isEmpty()}" class="text-center mt-3">
+            <p class="text-muted">¡Todavía no tienes ningún amigo!</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script th:src="@{/webjars/bootstrap/5.2.0/js/bootstrap.min.js}"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/noty/3.1.6/noty.min.js"></script>
+
+<script th:if="${notyMessage != null}">
+  new Noty({
+    text: [[${notyMessage}]],
+    type: [[${notyType}]],
+    layout: 'topRight',
+    timeout: 3000
+  }).show();
+</script>
+
+</body>
+</html>

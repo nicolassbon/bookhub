@@ -1,0 +1,66 @@
+<!DOCTYPE HTML>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+  <title>Nueva Contraseña</title>
+
+  <link rel="stylesheet" th:href="@{/webjars/bootstrap/5.2.0/css/bootstrap.min.css}" />
+
+  <link rel="stylesheet" th:href="@{/css/main.css}" />
+</head>
+
+<body>
+
+<nav class="navbar navbar-expand-md navbar-dark bg-dark fixed-top">
+  <div class="container">
+    <a class="navbar-brand" href="#">UNLAM</a>
+    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarResponsive" aria-controls="navbarResponsive" aria-expanded="false" aria-label="Toggle navigation">
+      <span class="navbar-toggler-icon"></span>
+    </button>
+  </div>
+</nav>
+
+<main role="main" class="container mt-5 pt-5">
+  <div class="row justify-content-center">
+    <div class="col-md-6">
+      <div class="card shadow-sm">
+        <div class="card-body">
+          <h2 class="card-title text-center mb-4">Crea tu Nueva Contraseña</h2>
+
+          <form th:action="@{/nueva-contrasena}" method="POST" th:object="${nuevaContrasena}" onsubmit="return validarContrasenas();">
+            <input type="hidden" th:value="${email}" name="email" />
+
+            <div class="mb-3">
+              <label for="nuevaContrasena" class="form-label">Nueva Contraseña</label>
+              <input th:field="*{contrasena}" id="nuevaContrasena" type="password" class="form-control" placeholder="Ingresa tu nueva contraseña" required />
+            </div>
+
+            <div class="mb-3">
+              <label for="confirmarContrasena" class="form-label">Confirmar Contraseña</label>
+              <input th:field="*{confirmacionContrasena}" id="confirmarContrasena" type="password" class="form-control" placeholder="Repite tu nueva contraseña" required />
+            </div>
+
+            <div th:if="${error != null}" class="alert alert-danger mt-3" role="alert">
+              <span th:text="'Error: ' + ${error}"></span>
+            </div>
+
+            <div class="d-grid">
+              <button id="btn-guardar" class="btn btn-primary btn-lg" type="submit">Guardar Nueva Contraseña</button>
+            </div>
+          </form>
+
+          <div class="d-grid mt-3">
+            <a href="login.html" class="btn btn-secondary btn-lg">Volver al Inicio de Sesión</a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</main>
+
+<script type="text/javascript" th:src="@{webjars/bootstrap/5.2.0/js/bootstrap.bundle.min.js}"></script>
+
+
+</body>
+</html>

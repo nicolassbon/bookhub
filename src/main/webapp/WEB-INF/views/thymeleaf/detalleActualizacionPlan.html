@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <link rel="stylesheet" th:href="@{/webjars/bootstrap/5.2.0/css/bootstrap.min.css}"/>
+    <link rel="stylesheet" th:href="@{/css/navbar.css}">
+    <style>
+        .container {
+            margin-top: 20px;
+        }
+
+        .plan-detail {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .plan-card {
+            border: 1px solid #ccc;
+            border-radius: 10px;
+            padding: 20px;
+            background-color: #fff;
+            text-align: center;
+            width: 45%;
+        }
+
+        .plan-title {
+            font-size: 1.5em;
+            font-weight: bold;
+        }
+
+        .price {
+            font-size: 1.2em;
+            color: darkgreen;
+            font-weight: bold;
+        }
+
+        .price-difference {
+            font-size: 1.5em;
+            color: darkred;
+            text-align: center;
+            margin-top: 20px;
+        }
+
+        .btn-action {
+            margin-top: 20px;
+            display: block;
+            width: 100%;
+            padding: 10px;
+            background-color: #2d7b78;
+            color: white;
+            text-decoration: none;
+            font-size: 16px;
+            font-weight: bold;
+            text-align: center;
+            border: 2px solid transparent;
+            border-radius: 5px;
+            transition: background-color 0.3s, border-color 0.3s;
+        }
+
+        .btn-action:hover {
+            background-color: white;
+            color: #2d7b78;
+            border-color: #2d7b78;
+        }
+
+        /* Estilo para las alertas */
+        .alert-custom {
+            font-size: 1.2em;
+            font-weight: bold;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0px 4px 6px rgba(0,0,0,0.1);
+        }
+
+        .alert-danger-custom {
+            background-color: #f8d7da;
+            color: #721c24;
+            border: 2px solid #f5c6cb;
+        }
+
+        .alert-warning-custom {
+            background-color: #fff3cd;
+            color: #856404;
+            border: 2px solid #ffeeba;
+        }
+
+        .alert-heading {
+            font-size: 1.3em;
+            font-weight: bold;
+        }
+
+    </style>
+    <title>Detalle de Actualización de Plan</title>
+</head>
+<body>
+<div th:insert="navbar :: navbar"></div>
+
+<div class="container my-5">
+    <h1 class="text-center mb-4">Detalle de Cambio de Plan</h1>
+
+    <!-- Fechas del Plan -->
+    <div class="mb-4">
+        <p><strong>Adquiriste el plan el día:</strong></p>
+        <div class="alert alert-success" role="alert" th:text="${usuarioplan.getFecha_plan_adquirido()}"></div>
+
+        <p><strong>Tu plan vence el día:</strong></p>
+        <div class="alert alert-info" role="alert" th:text="${usuarioplan.getFecha_plan_venc()}"></div>
+    </div>
+
+    <!-- Detalles del Plan -->
+    <div class="row g-4 mb-4">
+        <!-- Plan Actual -->
+        <div class="col-md-6">
+            <div class="card border-success h-100">
+                <div class="card-header text-bg-success text-center">
+                    <h4 th:text="${usuario.getPlan().getNombre()}">Plan Actual</h4>
+                </div>
+                <div class="card-body text-center">
+                    <p class="card-text fs-4 fw-bold text-success" th:text="'$' + ${usuario.getPlan().getPrecio()}">Precio Actual</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Plan Nuevo -->
+        <div class="col-md-6">
+            <div class="card border-primary h-100">
+                <div class="card-header text-bg-primary text-center">
+                    <h4 th:text="${plan.getNombre()}">Plan Nuevo</h4>
+                </div>
+                <div class="card-body text-center">
+                    <p class="card-text fs-4 fw-bold text-primary" th:text="'$' + ${plan.getPrecio()}">Precio Nuevo</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Diferencia de Precios -->
+    <div class="alert alert-danger text-center" role="alert">
+        <h5 class="alert-heading">¡Atención!</h5>
+        <p>Si desde que adquiriste el plan no han pasado 15 días, pagarás solo la diferencia del siguiente plan.</p>
+        <hr>
+        <p class="mb-0 fs-4"><strong>Diferencia a pagar: <span th:text="'$' + ${validacionDias}">Monto</span></strong></p>
+    </div>
+
+    <!-- Mensaje de Advertencia -->
+    <div class="alert alert-warning text-center mt-4" role="alert">
+        <h5 class="alert-heading">Importante:</h5>
+        <p>Si decides bajar de plan y luego quieres volver a un plan superior, se te cobrará el precio completo del nuevo plan.
+            ¡Asegúrate de elegir el plan adecuado para tus necesidades!</p>
+    </div>
+
+    <div class="d-flex justify-content-center mt-4 gap-3">
+        <!-- Botón de Cancelar -->
+        <a th:href="@{/planes/mostrar}" class="btn btn-danger btn-lg">Cancelar cambio</a>
+
+        <!-- Botón de Confirmación -->
+        <form th:if="${irAMercadopago}" th:action="@{/planes/pagar/{id}(id=${plan.id})}" method="post">
+            <button type="submit" class="btn btn-primary btn-lg">Confirmar cambio</button>
+        </form>
+
+        <form th:if="${!irAMercadopago}" th:action="@{/planes/actualizarPlan/{id}(id=${plan.id})}" method="post">
+            <button type="submit" class="btn btn-primary btn-lg">Confirmar cambio</button>
+        </form>
+
+
+    </div>
+
+<script th:src="@{/webjars/bootstrap/5.2.0/js/bootstrap.bundle.min.js}"></script>
+
+</body>
+</html>

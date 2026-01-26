@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title th:text="${usuario.nombre} + ' - Editar Perfil'"></title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css">
+    <!-- Boostrap core css -->
+    <link rel="stylesheet" th:href="@{/webjars/bootstrap/5.2.0/css/bootstrap.min.css}"/>
+
+    <!-- custom style -->
+    <link rel="stylesheet" th:href="@{/css/navbar.css}">
+
+    <!-- Path to jQuery -->
+    <script src="https://code.jquery.com/jquery-3.2.1.slim.min.js"
+            integrity="sha384-KJ3o2DKtIkvYIK3UENzmM7KCkRr/rE9/Qpg6aAZGJwFDMVNA/GpGFF93hXpG5KkN"
+            crossorigin="anonymous"></script>
+
+    <!-- Path to Popper - it is for dropsdowns etc in bootstrap -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.3/umd/popper.min.js"
+            integrity="sha384-vFJXuSJphROIrBnz7yo7oB41mKfc8JzQZiCq4NCceLEaO4IHwicKwpJf9c9IpFgh"
+            crossorigin="anonymous"></script>
+
+    <!-- Path to bootsrap -->
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0-beta.2/js/bootstrap.min.js"
+            integrity="sha384-alpBpkh1PFOepccYVYDB4do5UnbKysX5WZXm3XxPqe5iKTfUKjNkCk9SaVuEZflJ"
+            crossorigin="anonymous"></script>
+</head>
+<body>
+<div th:insert="navbar :: navbar"></div>
+
+<main role="main" class="container mt-2 pt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+            <div class="card shadow-sm">
+                <div class="card-header text-center text-white" style="background-color: #E18C78;">
+                    <h4 style="color:#ffffff">Editar perfil</h4>
+                </div>
+                <div class="card-body">
+                    <form th:action="@{/editarPerfil}" th:object="${usuario}" method="post"
+                          enctype="multipart/form-data">
+                        <!-- Mostrar la imagen actual o la default si no existe -->
+                        <div th:if="${usuario.imagenUrl} == null">
+                            <img src="https://w7.pngwing.com/pngs/81/570/png-transparent-profile-logo-computer-icons-user-user-blue-heroes-logo-thumbnail.png"
+                                 class="img-fluid rounded-circle" alt="Imagen de perfil"
+                                 style="width: 150px;">
+                        </div>
+                        <div th:if="${usuario.imagenUrl} != null">
+                            <img th:src="@{${usuario.imagenUrl}}"
+                                 class="img-fluid rounded-circle" alt="Imagen de perfil"
+                                 style="width: 150px;">
+                        </div>
+
+                        <!-- Campo oculto para mantener la URL de la imagen actual -->
+                        <input type="hidden" name="imagenActual" th:value="${usuario.imagenUrl}">
+
+                        <!-- Input para cambiar la imagen -->
+                        <div class="form-group mb-3">
+                            <label for="imagenPerfil">Cambiar imagen de perfil</label>
+                            <input type="file" class="form-control" id="imagenPerfil" name="imagenPerfil"
+                                   accept="image/jpeg,image/png">
+                            <div th:if="${errorFormato} != null" style="color:red;">
+                                <p th:text="${errorFormato}"></p>
+                            </div>
+                        </div>
+
+                        <!-- Otros campos del perfil -->
+                        <div class="form-group mb-3">
+                            <label for="nombre">Nombre Completo</label>
+                            <input type="text" id="nombre" class="form-control" th:field="*{nombre}" required>
+                        </div>
+
+                        <div class="form-group mb-3">
+                            <label for="nombreUsuario">Nombre de Usuario</label>
+                            <input type="text" id="nombreUsuario" class="form-control" th:field="*{nombreUsuario}"
+                                   required>
+                            <div th:if="${errorNombreUsuario} != null" style="color:red;">
+                                <p th:text="${errorNombreUsuario}"></p>
+                            </div>
+                        </div>
+
+                        <div class="form-group mb-3">
+                            <label for="email">Email</label>
+                            <input type="email" id="email" class="form-control" th:field="*{email}" required>
+                            <div th:if="${errorEmail} != null" style="color:red;">
+                                <p th:text="${errorEmail}"></p>
+                            </div>
+                        </div>
+
+                        <div class="form-group mb-3">
+                            <label for="edad">Edad</label>
+                            <input type="number" id="edad" class="form-control" th:field="*{edad}" required>
+                        </div>
+
+                        <div class="form-group mb-3">
+                            <label for="fechaNacimiento">Fecha de Nacimiento</label>
+                            <input type="date" id="fechaNacimiento" class="form-control" th:field="*{fechaNacimiento}" required>
+                        </div>
+
+                        <div class="form-group mb-3">
+                            <label for="meta">Meta de libros</label>
+                            <input type="number" id="meta" class="form-control" th:field="*{meta}" required>
+                        </div>
+
+                        <div class="form-group mb-3">
+                            <label for="biografia">Biografía</label>
+                            <textarea id="biografia" class="form-control" th:field="*{biografia}"
+                                      style="min-height: 120px;"></textarea>
+                        </div>
+
+                        <div class="d-grid">
+                            <button type="submit" class="btn btn-success btn-block">Guardar</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</main>
+
+<script th:src="@{/js/main.js}"></script>
+<!-- Script para evitar que el usuario suba archivos mayores a 5mb -->
+<script>
+    document.getElementById('imagenPerfil').addEventListener('change', function (event) {
+        var file = event.target.files[0];
+        if (file.size > 5242880) { // 5MB
+            alert('El archivo es demasiado grande. El tamaño máximo permitido es 10MB.');
+            event.target.value = '';
+        }
+    });
+</script>
+</body>
+</html>

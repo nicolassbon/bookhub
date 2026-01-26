@@ -1,0 +1,58 @@
+<!DOCTYPE HTML>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+
+    <title>Recuperar Contraseña</title>
+
+    <link rel="stylesheet" th:href="@{/webjars/bootstrap/5.2.0/css/bootstrap.min.css}" />
+
+    <link rel="stylesheet" th:href="@{/css/main.css}" />
+</head>
+
+<body>
+
+<nav class="navbar navbar-expand-md navbar-dark bg-dark fixed-top">
+    <div class="container">
+        <a class="navbar-brand" href="#">UNLAM</a>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarResponsive" aria-controls="navbarResponsive" aria-expanded="false" aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+    </div>
+</nav>
+
+<main role="main" class="container mt-5 pt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    <h2 class="card-title text-center mb-4">Recuperar Contraseña</h2>
+                    <p class="text-center">Ingresa tu correo electrónico para recibir un código de recuperacion.</p>
+
+                    <form action="#" th:action="@{/recuperar-contrasena}" method="POST" th:object="${datosRecuperarContrasena}">
+                        <div class="mb-3">
+                            <label for="email" class="form-label mb-2">Correo Electrónico</label>
+                            <input th:field="*{email}" id="email" type="email" class="form-control" name="email" placeholder="Ingresa tu correo" required>
+                        </div>
+                        <div class="d-grid">
+                            <button id="btn-login" class="btn btn-primary btn-lg" type="submit">Enviar Correo de Recuperación</button>
+                        </div>
+                    </form>
+
+                    <div th:if="${error != null}" class="alert alert-danger mt-3" role="alert">
+                        <span th:text="'Error: ' + ${error}"></span>
+                    </div>
+
+                    <div class="d-grid mt-3">
+                        <a href="login.html" class="btn btn-secondary btn-lg">Volver al Inicio de Sesión</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</main>
+
+<script type="text/javascript" th:src="@{webjars/bootstrap/5.2.0/js/bootstrap.bundle.min.js}"></script>
+</body>
+</html>

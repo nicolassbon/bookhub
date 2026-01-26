@@ -1,0 +1,109 @@
+    <!DOCTYPE html>
+    <html lang="en" xmlns:th="http://www.thymeleaf.org">
+    <head>
+        <meta charset="UTF-8">
+        <title th:text="${usuario.nombreUsuario} + ' - Perfil'"></title>
+        <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css">
+        <!-- Boostrap core css -->
+        <link rel="stylesheet" th:href="@{/webjars/bootstrap/5.2.0/css/bootstrap.min.css}"/>
+
+        <!-- custom style -->
+        <link rel="stylesheet" th:href="@{/css/navbar.css}">
+
+        <!-- Path to jQuery -->
+        <script src="https://code.jquery.com/jquery-3.2.1.slim.min.js"
+                integrity="sha384-KJ3o2DKtIkvYIK3UENzmM7KCkRr/rE9/Qpg6aAZGJwFDMVNA/GpGFF93hXpG5KkN"
+                crossorigin="anonymous"></script>
+
+        <!-- Path to Popper - it is for dropsdowns etc in bootstrap -->
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.3/umd/popper.min.js"
+                integrity="sha384-vFJXuSJphROIrBnz7yo7oB41mKfc8JzQZiCq4NCceLEaO4IHwicKwpJf9c9IpFgh"
+                crossorigin="anonymous"></script>
+
+        <!-- Path to bootsrap -->
+        <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0-beta.2/js/bootstrap.min.js"
+                integrity="sha384-alpBpkh1PFOepccYVYDB4do5UnbKysX5WZXm3XxPqe5iKTfUKjNkCk9SaVuEZflJ"
+                crossorigin="anonymous"></script>
+    </head>
+    <body>
+    <div th:insert="navbar :: navbar"></div>
+
+    <main role="main" class="container mt-2 pt-5">
+        <div class="row justify-content-center">
+            <!-- Div del perfil -->
+            <div class="col-md-6">
+                <div class="card shadow-sm">
+                    <div class="card-header text-center text-white" style="background-color: #E18C78;">
+                        <h4 style="color:#ffffff" th:text="'Perfil de ' + ${usuario.nombreUsuario}"></h4>
+                    </div>
+                    <div class="card-body">
+                        <!-- Mostrar la imagen actual o la default si no existe -->
+                        <div th:if="${usuario.imagenUrl} == null">
+                            <img src="https://w7.pngwing.com/pngs/81/570/png-transparent-profile-logo-computer-icons-user-user-blue-heroes-logo-thumbnail.png"
+                                 class="img-fluid rounded-circle" alt="Imagen de perfil"
+                                 style="width: 150px;">
+                        </div>
+                        <div th:if="${usuario.imagenUrl} != null">
+                            <img th:src="@{${usuario.imagenUrl}}"
+                                 class="img-fluid rounded-circle" alt="Imagen de perfil"
+                                 style="width: 150px;">
+                        </div>
+                        <div class="form-group mb-3 mt-3">
+                            <label class="fw-bold">Nombre Completo</label>
+                            <p th:text="${usuario.nombre}"></p>
+                        </div>
+                        <div class="form-group mb-3">
+                            <label class="fw-bold">Nombre de Usuario</label>
+                            <p th:text="${usuario.nombreUsuario}"></p>
+                        </div>
+                        <div class="form-group mb-3">
+                            <label class="fw-bold">Email</label>
+                            <p th:text="${usuario.email}"></p>
+                        </div>
+                        <div class="form-group mb-3">
+                            <label class="fw-bold">Edad</label>
+                            <p th:text="${usuario.edad}"></p>
+                        </div>
+                        <div class="form-group mb-3">
+                            <label class="fw-bold">Fecha de Nacimiento</label>
+                            <p th:text="${usuario.fechaNacimiento}"></p>
+                        </div>
+                        <div class="form-group mb-3">
+                            <label class="fw-bold">Meta de libros</label>
+                            <p th:text="${usuario.meta}"></p>
+                        </div>
+                        <div class="form-group mb-3">
+                            <label class="fw-bold">Biografía</label>
+                            <p th:text="${usuario.biografia}"></p>
+                        </div>
+                        <div class="mt-5 text-center">
+                            <div th:if="${usuario.id} == ${#httpSession.getAttribute('USERID')}">
+                                <a th:href="@{/mostrarEditarPerfil}" class="btn btn-primary">Editar
+                                    Perfil</a>
+                            </div>
+                            <div th:if="${usuario.id} != ${#httpSession.getAttribute('USERID')}">
+                                <form th:action="@{/solicitud-amistad/{id}(id=${usuario.id})}" th:if="${isFriend == 'NoAmigos'}"method="post"
+                                      accept-charset="UTF-8">
+                                    <button type="submit" class="btn btn-primary">Enviar solicitud de amistad</button>
+                                </form>
+                                <span th:if="${isFriend == 'Pendiente'}" class="btn btn-success text-white" disabled>Solicitud de amistad pendiente</span>
+
+                                <form th:action="@{/solicitud-amistad/eliminar-amistad/{friendId}(friendId=${usuario.id})}"
+                                      method="post"
+                                      th:if="${isFriend == 'Amigos'}"
+                                      accept-charset="UTF-8"
+                                      class="d-inline-block">
+                                    <button type="submit" class="btn btn-danger">Eliminar amistad</button>
+                                </form>
+                                <span th:if="${isFriend == 'Amigos'}" class="btn btn-success text-white" disabled>¡Ya son amigos!</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script th:src="@{/js/main.js}"></script>
+    </body>
+    </html>

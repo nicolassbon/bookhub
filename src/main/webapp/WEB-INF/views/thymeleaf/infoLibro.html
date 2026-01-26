@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <link rel="stylesheet" th:href="@{/css/informacionLibro.css}">
+    <title>Detalle Libro</title>
+</head>
+<body>
+<nav class="navbar1">
+    <div class="navbar-container2">
+        <h1 class="navbar-title2">Spring</h1>
+        <ul class="navbar-links2">
+            <li><a href="/spring/home">Inicio</a></li>
+            <li><a th:href="@{/libro/misLibros}">Mis Libros</a></li>
+            <li><a th:href="@{/planes/mostrar}">Mis Planes</a></li>
+        </ul>
+    </div>
+</nav>
+<br><br>
+<h1 th:text="${libro.titulo}"></h1>
+<div class="container">
+    <div class="book-info">
+        <img th:src="@{'/Images/' + ${libro.imagenUrl}}" alt="Imagen del libro">
+        <p><strong>Autor:</strong> <span th:text="${libro.autor}"></span></p>
+        <p><strong>Descripción:</strong> <span th:text="${libro.descripcion}"></span></p>
+        <p>
+            <strong>Géneros:</strong>
+        <div th:if="${errorGeneros == null}" th:each="libroGenero : ${generos}">
+            <span th:text="${libroGenero.genero.nombre} + ' '"></span>
+        </div>
+        <div th:if="${errorGeneros != null}" th:each="libroGenero : ${generos}">
+            <span th:text="${errorGeneros}"></span>
+        </div>
+        </p>
+        <p><strong>Páginas:</strong> <span th:text="${libro.cantidadDePaginas}"></span></p>
+    </div>
+
+    <div class="book-interactions">
+        <div class="book-actions">
+            <h2>Estado:</h2>
+            <form th:action="@{/libro/cambiarEstadoDeLectura}" method="post" accept-charset="UTF-8">
+                <input type="hidden" th:value="${libro.id}" name="id"/>
+                <select name="status">
+                    <option th:value="'Quiero leer'"
+                            th:selected="${usuarioLibro != null and usuarioLibro.estadoDeLectura == 'Quiero leer'}">
+                        Quiero leer
+                    </option>
+                    <option th:value="'Leyendo'"
+                            th:selected="${usuarioLibro != null and usuarioLibro.estadoDeLectura == 'Leyendo'}">Leyendo
+                    </option>
+                    <option th:value="'Leído'"
+                            th:selected="${usuarioLibro != null and usuarioLibro.estadoDeLectura == 'Leído'}">Leído
+                    </option>
+                </select>
+
+                <!-- Campo de páginas leídas -->
+                <div th:if="${usuarioLibro != null and usuarioLibro.estadoDeLectura == 'Leyendo'}">
+                    <label for="paginasLeidas">Páginas leídas:</label>
+                    <input type="number" name="cantidadDePaginasLeidas" id="paginasLeidas" min="0"
+                           th:value="${usuarioLibro.cantidadDePaginas}"/>
+                    <br>
+                    <div class="progress-bar">
+                        <div class="progress" th:style="'width: ' + ${progreso} + '%;'"></div>
+                    </div>
+                    <p th:text="'Progreso: ' + ${progreso} + '%'"></p>
+                </div>
+                <br>
+
+
+                <div th:if="${error != null}" style="color: red;">
+                    <p th:text="${error}"></p>
+                </div>
+                <br>
+
+                <button type="submit">Guardar</button>
+                <br>
+                <p><strong>Tu estado de lectura es:</strong> <span
+                        th:if="${usuarioLibro != null and usuarioLibro.estadoDeLectura != null}"
+                        th:text="${usuarioLibro.estadoDeLectura}"></span></p>
+            </form>
+        </div>
+
+        <div class="resenia-section">
+            <h2>Tu Reseña:</h2>
+
+            <p th:if="${resenia != null and resenia.descripcion != null}"
+               th:text="${resenia.descripcion}"></p>
+            <p th:if="${resenia == null or resenia.descripcion == null}">
+                Aún no has dado una reseña de este libro.
+            </p>
+            <br>
+            <h3>Tu Puntuación:</h3>
+
+            <p th:if="${resenia != null and resenia.puntuacion != null}"
+               th:text="${resenia.puntuacion} + ' estrellas'"></p>
+            <p th:if="${resenia == null or resenia.puntuacion == null}">
+                Aún no has puntuado este libro.
+            </p>
+            <br>
+            <h3>Promedio de Puntuación:</h3>
+            <p th:text="'' + (${promedioDePuntuacion != null ? promedioDePuntuacion : '0'}) + ' estrellas'"></p>
+        </div>
+
+        <h2>Reseñas de otros usuarios</h2>
+
+
+        <div th:if="${mensajeDeRestriccion}">
+            <div class="alert alert-warning" style="background-color: #f8d7da;color: #721c24;border: 2px solid #f5c6cb; padding: 10px 15px; font-size: 1rem; border-radius: 8px; font-weight: bold">
+                <p><span th:text="${mensajeDeRestriccion}"></span></p>
+                <br>
+                <a th:href="@{/planes/mostrar}" style="color: #2d7b78; font-size: 0.9rem;">Tus planes</a>
+            </div>
+        </div>
+
+        <!-- Mostrar reseñas de otros usuarios si no están restringidas -->
+        <div th:if="${reseniasDeOtrosUsuarios != null && !reseniasDeOtrosUsuarios.isEmpty()}">
+            <ul>
+                <li th:each="resenia : ${reseniasDeOtrosUsuarios}"
+                    style="margin-bottom: 20px; padding: 10px; border-bottom: 1px solid #ddd; background-color: #fff; border-radius: 5px; box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);">
+                    <strong th:text="${resenia.usuario.nombre}"></strong> escribió:
+                    <p th:text="${resenia.descripcion}"></p>
+                    <span>Puntuación: <span th:text="${resenia.puntuacion}"></span></span>
+                </li>
+            </ul>
+        </div>
+
+        <!-- Si no hay reseñas de otros usuarios, mostrar un mensaje informativo -->
+        <div th:if="${reseniasDeOtrosUsuarios != null && reseniasDeOtrosUsuarios.isEmpty()}">
+            <div class="alert alert-danger">
+                <p><span>No hay reseñas de otros usuarios.</span></p>
+            </div>
+        </div>
+    </div>
+</div>
+</body>
+</html>
