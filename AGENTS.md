@@ -1,110 +1,227 @@
-# AGENTS.md - Project Context & Coding Guidelines
+# AGENTS.md - BookHub Project Context & Coding Guidelines
 
 ## 1. Project Overview
-**BookHub** is a Social Reading Network with a freemium model.
-- **Architecture:** Monolithic REST API (Layered Architecture).
-- **Language:** Java 17.
-- **Framework:** Spring Boot 3.5.x.
+
+**BookHub** is a social reading platform inspired by Goodreads.
+
+- **Architecture:** Microservices-first backend with clear bounded contexts.
+- **Runtime apps:** `api-gateway`, `identity-service`, `catalog-service`, `library-service`.
+- **Language:** Java 21.
+- **Framework:** Spring Boot 3.x.
 - **Build Tool:** Maven.
-- **Database:** PostgreSQL.
-- **Security:** Spring Security 6 (Stateless JWT).
-- **Documentation:** OpenAPI (Swagger).
+- **Database:** PostgreSQL, database per service.
+- **Security:** Spring Security 6, stateless authentication.
+- **Migrations:** Flyway.
+- **Documentation:** OpenAPI and English-only project docs.
+- **Local platform:** Docker Compose + observability demo.
 
 ---
 
-## 2. Architecture & Package Structure
-We follow a strict **Layered Architecture**. Dependencies flow in one direction:
-`Controller` -> `Service` -> `Repository` -> `Database`
+## 2. Architecture and Repository Structure
 
+BookHub uses a **monorepo** with independent services.
+
+```text
+bookhub/
+├── docs/
+├── infrastructure/
+│   ├── docker/
+│   └── observability/
+├── services/
+│   ├── api-gateway/
+│   ├── identity-service/
+│   ├── catalog-service/
+│   └── library-service/
+└── frontend/
+    └── web-app/
 ```
-src/main/java/com/tallerwebi/bookhub/
-├── config/           # Configuration classes (Security, Swagger, CORS)
-├── controller/       # REST Endpoints (@RestController)
-├── dto/              # Data Transfer Objects
-│   ├── request/      # Input DTOs (@Valid)
-│   └── response/     # Output DTOs
-├── model/            # JPA Entities (@Entity)
-├── repository/       # Data Access Layer (Spring Data JPA)
-├── service/          # Business Logic interfaces
-│   └── impl/         # Service implementations
-├── exception/        # Global Error Handling
-└── security/         # JWT, Auth filters, UserDetails
+
+### 2.1 Service internal structure
+
+Each backend service should follow this package layout:
+
+```text
+src/main/java/com/bookhub/{service}/
+├── application/
+├── domain/
+├── infrastructure/
+├── web/
+└── config/
+```
+
+### 2.2 Layer responsibilities
+
+- **domain/**: business concepts, aggregates, value objects, domain exceptions, repository ports.
+- **application/**: use-case orchestration and transactional workflows.
+- **infrastructure/**: JPA adapters, HTTP clients, mail adapters, persistence implementations.
+- **web/**: controllers, request/response DTOs, API mappers, HTTP concerns.
+- **config/**: Spring configuration only.
+
+### 2.3 Architecture rules
+
+- Boundaries are business-first, not framework-first.
+- Each service owns its data and behavior.
+- Cross-service communication must happen through explicit APIs only.
+- Do **NOT** create a `shared`, `common`, or `core-lib` module by default.
+- Do **NOT** access another service database directly.
+
+---
+
+## 3. Coding Standards
+
+### 3.1 General
+
+- **Language:** English for code, docs, comments, commits, and technical artifacts.
+- **Injection:** Use constructor injection only. Field injection is forbidden.
+- **Clean code:** Methods should be short and intentional. Names must reveal purpose.
+- **Immutability:** Prefer immutable objects by default.
+- **No unnecessary cleverness:** Clarity beats abstraction.
+
+### 3.2 Object creation
+
+- Prefer **Lombok builders** for rich object construction to improve readability.
+- Avoid direct constructor calls with many parameters in application/web code.
+- Use `record` for simple request/response DTOs and result models.
+- Acceptable exceptions to the builder preference:
+  - framework-required constructors
+  - compact and obvious value objects
+  - JPA protected no-arg constructors
+  - tests where direct construction is clearer
+
+### 3.3 Lombok usage
+
+- Prefer `@Builder`, `@Getter`, `@RequiredArgsConstructor` where they improve readability.
+- Do **NOT** use `@Data` on entities.
+- Be explicit when Lombok would hide important intent.
+
+### 3.4 Java conventions
+
+- Use PascalCase for classes and records.
+- Use camelCase for fields and methods.
+- Use UPPER_SNAKE_CASE for constants.
+- Prefer domain-specific exceptions over generic `RuntimeException`.
+- Avoid raw types, long parameter lists, deep nesting, and silent catch blocks.
+
+---
+
+## 4. Persistence and Entities
+
+- Use `@Entity` and explicit table names.
+- Use `jakarta.persistence.*`, never `javax.*`.
+- Implement `equals()` and `hashCode()` using only the identifier.
+- Use `FetchType.LAZY` where relationships are introduced.
+- Repositories should stay free of business logic.
+- Use derived queries first; use JPQL/native queries only when justified.
+- Use Flyway for schema evolution; never rely on ad-hoc schema drift.
+
+---
+
+## 5. API and Web Layer
+
+- Controllers must remain thin.
+- Never expose entities directly from controllers.
+- Use request/response DTOs for every API boundary.
+- Validate request payloads with Bean Validation.
+- Return structured error responses through a global `@ControllerAdvice`.
+- Keep endpoint naming consistent with the contracts in `docs/service-contracts-v1.md`.
+
+### Error response baseline
+
+Every service should converge on an error shape like:
+
+```json
+{
+  "timestamp": "2026-04-09T18:00:00Z",
+  "status": 400,
+  "error": "Validation Error",
+  "code": "VALIDATION_ERROR",
+  "message": "displayName must not be blank",
+  "path": "/api/v1/auth/register"
+}
 ```
 
 ---
 
-## 3. Coding Standards & Best Practices
+## 6. Application Service Naming
 
-### 3.1. General
-- **Language:** English for ALL code (variables, methods, comments, commits).
-- **Injection:** Use **Constructor Injection** exclusively. `@Autowired` on fields is FORBIDDEN.
-- **Lombok:** Use heavily to reduce boilerplate (`@Getter`, `@Setter`, `@Builder`, `@RequiredArgsConstructor`).
-- **Clean Code:** Methods should be short and do one thing. Variable names must be descriptive.
+Avoid generic names that lose the use-case meaning.
 
-### 3.2. JPA Entities (`model` package)
-- Use `@Entity` and `@Table(name = "snake_case_plural")`.
-- **Do NOT** use `@Data` on entities (performance/hashCode issues). Use `@Getter`, `@Setter`, `@ToString`.
-- Use `Jakarta` imports (`jakarta.persistence.*`) NOT `javax`.
-- Implement `equals()` and `hashCode()` using **only the ID**.
-- Relationships:
-  - Always use `FetchType.LAZY` for `@OneToMany` and `@ManyToMany`.
-  - Use `Set<>` instead of `List<>` for collections to avoid "MultipleBagFetchException".
+### Preferred naming
 
-### 3.3. DTOs (`dto` package)
-- **NEVER** return Entities from Controllers. Always map to DTOs.
-- Use **MapStruct** for Entity <-> DTO conversion.
-- Use `record` for simple DTOs (Java 16+).
-- Separate Request and Response DTOs.
-- Validation: Use annotations (`@NotBlank`, `@Email`, `@Size`) in Request DTOs.
+- `RegisterUserService`
+- `LoginUserService`
+- `CreateReviewService`
+- `UpdateReadingProgressService`
 
-### 3.4. Repositories (`repository` package)
-- Extend `JpaRepository<Entity, Long>`.
-- Use **Derived Query Methods** (e.g., `findByEmail`) for simple queries.
-- Use `@Query("SELECT ...")` with JPQL for complex queries.
-- **No business logic** inside repositories.
+### Avoid when the class represents a single use case
 
-### 3.5. Services (`service` package)
-- Annotate implementation classes with `@Service` and `@Transactional(readOnly = true)` at the class level.
-- Annotate modifying methods (create, update, delete) with `@Transactional`.
-- Business rules and validations go here.
-- Throw custom exceptions (e.g., `ResourceNotFoundException`) instead of returning null.
+- `UserService`
+- `AuthService`
+- `BookService`
 
-### 3.6. Controllers (`controller` package)
-- Annotate with `@RestController` and `@RequestMapping("/api/v1/resource")`.
-- Return `ResponseEntity<DTO>`.
-- Use `@Valid` for Request Body validation.
-- Document endpoints with `@Operation` and `@ApiResponse` (Swagger).
-- Keep controllers "thin": they only handle HTTP protocol (status codes, headers), then delegate to Service.
+### Rule
 
-### 3.7. Exception Handling
-- Use a global `@ControllerAdvice`.
-- Return a standardized `ErrorResponse` DTO (timestamp, status, message, path).
-- Map internal exceptions to HTTP Status codes (e.g., `ResourceNotFound` -> 404).
+If a class orchestrates **one explicit use case**, name it after the use case.
+If a class truly groups a cohesive set of related operations, a broader name can be acceptable.
+
+The goal is to make the application layer read like the product behavior, not like a grab bag of utilities.
 
 ---
 
-## 4. Testing Guidelines
-- **Frameworks:** JUnit 5, Mockito.
-- **Unit Tests:** Focus on Service layer. Mock repositories.
-- **Integration Tests:** Focus on Controllers (`@WebMvcTest` or `@SpringBootTest`).
-- **Naming:** `ClassNameTest` (e.g., `UserServiceTest`).
-- Use `@DisplayName` to describe the test scenario.
+## 7. Testing Guidelines
 
-## 5. Security Guidelines
-- Stateless session management (`SessionCreationPolicy.STATELESS`).
-- Passwords must be hashed using `BCrypt`.
-- Public endpoints must be explicitly defined in `SecurityConfig`.
-- CORS must be configured to allow frontend origins.
+- Follow **TDD** by default: red → green → refactor.
+- Unit tests first for business rules.
+- Use MockMvc for web layer tests.
+- Use integration tests for critical flows.
+- Prefer Testcontainers for realistic persistence-backed tests when the slice justifies it.
+- Keep tests deterministic and readable.
+- Test behavior, not implementation trivia.
 
-## 6. Git Workflow
-- **Commits:** Conventional Commits standard.
-  - `feat: add user registration`
-  - `fix: resolve login bug`
-  - `refactor: optimize database query`
-  - `docs: update swagger documentation`
-  - `chore: update dependencies`
+---
 
-## 7. Common Commands
-- **Run App:** `./mvnw spring-boot:run`
-- **Run Tests:** `./mvnw test`
-- **Build:** `./mvnw clean package -DskipTests`
+## 8. Security Guidelines
+
+- Stateless authentication only.
+- Public endpoints must be explicitly declared.
+- Deny by default for everything else.
+- Hash passwords with BCrypt or Argon2 through `PasswordEncoder`.
+- Never hardcode secrets in source or YAML.
+- Use environment variables for credentials and sensitive configuration.
+- Configure CORS centrally in security config.
+- Enforce authorization on the server side, never in the frontend only.
+
+---
+
+## 9. Documentation and Decisions
+
+- All project documentation must be written in English.
+- Architectural decisions belong in `docs/adr/`.
+- Service contracts, domain model, and bounded contexts in `docs/` are source-of-truth artifacts.
+- If implementation diverges from the docs, update the docs deliberately.
+
+---
+
+## 10. Git Workflow
+
+- Use Conventional Commits.
+- Keep `legacy/spring-mvc` intact as the legacy reference branch.
+- Microservices work belongs on `main`-based migration branches.
+- Do not commit `.env`, local agent artifacts, or IDE metadata.
+
+Examples:
+
+- `feat(identity): add user login endpoint`
+- `fix(library): prevent duplicate user-book entries`
+- `docs(adr): document database-per-service decision`
+- `chore(infra): add local compose observability stack`
+
+---
+
+## 11. Common Commands
+
+- **Run tests:** `./mvnw test`
+- **Run one service:** `./mvnw spring-boot:run`
+- **Package without tests:** `./mvnw clean package -DskipTests`
+
+Do not rely on manual DB changes. Prefer Flyway migrations.
