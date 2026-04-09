@@ -7,12 +7,15 @@ out/
 *.iml
 *.ipr
 *.iws
+.classpath
+.project
+.factorypath
+.settings/
+.atl/
+skills-lock.json
 
 .env
 .env.local
-application-*.properties
-!application.properties
-!application.yml
 
 .sonar/
 .scannerwork/
