@@ -202,7 +202,68 @@ The goal is to make the application layer read like the product behavior, not li
 
 ---
 
-## 10. Git Workflow
+## 10. SDD Usage Policy
+
+BookHub uses **Spec-Driven Development (SDD)** as the default workflow for meaningful feature work.
+
+### 10.1 When to use the full SDD flow
+
+Use the full SDD flow for features that introduce meaningful business behavior, architectural impact, or non-trivial implementation scope.
+
+Examples:
+
+- user registration
+- login
+- JWT and refresh-token support
+- password recovery
+- new business workflows
+- cross-service integrations
+- significant domain logic changes
+- new public API capabilities
+
+Expected SDD coverage for these features:
+
+- proposal
+- spec
+- design
+- tasks
+- apply
+- verify
+- archive
+
+The exact depth may vary, but the feature must be documented and traceable through SDD artifacts.
+
+### 10.2 When to use only part of SDD
+
+For small, low-risk, or clearly bounded changes, use only the SDD phase(s) that match the complexity of the work.
+
+Examples:
+
+- minor refactors
+- mapper cleanup
+- naming improvements
+- focused bug fixes
+- small configuration adjustments
+- test-only improvements
+
+Typical smaller paths may include:
+
+- `apply` only
+- `apply + verify`
+- a lightweight `spec + apply` when clarification is still useful
+
+### 10.3 Rule of proportionality
+
+Use **full SDD for real feature work** and **proportional SDD for small changes**.
+
+The goal is to avoid both:
+
+- implementing important features without traceability
+- creating unnecessary process overhead for small changes
+
+---
+
+## 11. Git Workflow
 
 - Use Conventional Commits.
 - Keep `legacy/spring-mvc` intact as the legacy reference branch.
@@ -218,7 +279,7 @@ Examples:
 
 ---
 
-## 11. Common Commands
+## 12. Common Commands
 
 - **Run tests:** `./mvnw test`
 - **Run one service:** `./mvnw spring-boot:run`
