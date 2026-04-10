@@ -1,5 +1,6 @@
 package com.bookhub.identity.web.error;
 
+import com.bookhub.identity.application.auth.InvalidCredentialsException;
 import com.bookhub.identity.domain.user.DuplicateResourceException;
 import jakarta.servlet.http.HttpServletRequest;
 import java.time.Instant;
@@ -56,6 +57,18 @@ public class GlobalExceptionHandler {
                 "Conflict",
                 "DUPLICATE_RESOURCE",
                 "Email or username already in use",
+                request.getRequestURI());
+    }
+
+    @ExceptionHandler(InvalidCredentialsException.class)
+    public ResponseEntity<ErrorResponse> handleInvalidCredentials(
+            final InvalidCredentialsException exception,
+            final HttpServletRequest request) {
+        return buildErrorResponse(
+                HttpStatus.UNAUTHORIZED,
+                "Unauthorized",
+                "INVALID_CREDENTIALS",
+                exception.getMessage(),
                 request.getRequestURI());
     }
 

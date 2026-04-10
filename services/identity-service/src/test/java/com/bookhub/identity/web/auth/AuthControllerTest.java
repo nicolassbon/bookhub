@@ -6,10 +6,14 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import com.bookhub.identity.application.auth.LoginUserCommand;
+import com.bookhub.identity.application.auth.LoginUserResult;
 import com.bookhub.identity.application.auth.RegisterUserCommand;
 import com.bookhub.identity.application.auth.RegisterUserResult;
 import com.bookhub.identity.application.auth.RegisterUserService;
 import com.bookhub.identity.domain.user.DuplicateResourceException;
+import com.bookhub.identity.application.auth.LoginUserService;
+import com.bookhub.identity.application.auth.InvalidCredentialsException;
 import com.bookhub.identity.web.error.GlobalExceptionHandler;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -30,9 +34,22 @@ class AuthControllerTest {
     @MockBean
     private RegisterUserService registerUserService;
 
+    @MockBean
+    private LoginUserService loginUserService;
+
+    @MockBean
+    private AuthWebMapper authWebMapper;
+
     @Test
     @DisplayName("Should create user and return 201 response")
     void shouldCreateUserAndReturn201Response() throws Exception {
+        when(authWebMapper.toRegisterUserCommand(any(RegisterRequest.class))).thenReturn(RegisterUserCommand.builder()
+                .username("nico")
+                .email("nico@example.com")
+                .password("StrongPassword123!")
+                .displayName("Nicolas Bon")
+                .build());
+
         when(registerUserService.register(any(RegisterUserCommand.class))).thenReturn(
                 RegisterUserResult.builder()
                         .userId("usr_123")
@@ -41,6 +58,14 @@ class AuthControllerTest {
                         .displayName("Nicolas Bon")
                         .role("USER")
                         .build());
+
+        when(authWebMapper.toRegisterResponse(any(RegisterUserResult.class))).thenReturn(RegisterResponse.builder()
+                .userId("usr_123")
+                .username("nico")
+                .email("nico@example.com")
+                .displayName("Nicolas Bon")
+                .role("USER")
+                .build());
 
         final String requestBody = """
                 {
@@ -88,6 +113,13 @@ class AuthControllerTest {
     @Test
     @DisplayName("Should return 409 with structured error when email or username already exists")
     void shouldReturn409WithStructuredErrorWhenEmailOrUsernameAlreadyExists() throws Exception {
+        when(authWebMapper.toRegisterUserCommand(any(RegisterRequest.class))).thenReturn(RegisterUserCommand.builder()
+                .username("nico")
+                .email("nico@example.com")
+                .password("StrongPassword123!")
+                .displayName("Nicolas Bon")
+                .build());
+
         when(registerUserService.register(any(RegisterUserCommand.class))).thenThrow(
                 new DuplicateResourceException("email", "Email already in use"));
 
@@ -109,5 +141,103 @@ class AuthControllerTest {
                 .andExpect(jsonPath("$.code").value("DUPLICATE_RESOURCE"))
                 .andExpect(jsonPath("$.message").value("Email already in use"))
                 .andExpect(jsonPath("$.path").value("/api/v1/auth/register"));
+    }
+
+    @Test
+    @DisplayName("Should authenticate user and return 200 response")
+    void shouldAuthenticateUserAndReturn200Response() throws Exception {
+        when(authWebMapper.toLoginUserCommand(any(LoginRequest.class))).thenReturn(LoginUserCommand.builder()
+                .email("nico@example.com")
+                .password("StrongPassword123!")
+                .build());
+
+        when(loginUserService.login(any(LoginUserCommand.class))).thenReturn(LoginUserResult.builder()
+                .accessToken("temporary-access-token")
+                .expiresIn(3600)
+                .user(LoginUserResult.LoginUserView.builder()
+                        .userId("usr_123")
+                        .username("nico")
+                        .displayName("Nicolas Bon")
+                        .role("USER")
+                        .build())
+                .build());
+
+        when(authWebMapper.toLoginResponse(any(LoginUserResult.class))).thenReturn(LoginResponse.builder()
+                .accessToken("temporary-access-token")
+                .expiresIn(3600)
+                .user(LoginResponse.LoginUserResponse.builder()
+                        .userId("usr_123")
+                        .username("nico")
+                        .displayName("Nicolas Bon")
+                        .role("USER")
+                        .build())
+                .build());
+
+        final String requestBody = """
+                {
+                  "email": "nico@example.com",
+                  "password": "StrongPassword123!"
+                }
+                """;
+
+        mockMvc.perform(post("/api/v1/auth/login")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(requestBody))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.accessToken").value("temporary-access-token"))
+                .andExpect(jsonPath("$.expiresIn").value(3600))
+                .andExpect(jsonPath("$.user.userId").value("usr_123"))
+                .andExpect(jsonPath("$.user.username").value("nico"))
+                .andExpect(jsonPath("$.user.displayName").value("Nicolas Bon"))
+                .andExpect(jsonPath("$.user.role").value("USER"));
+    }
+
+    @Test
+    @DisplayName("Should return 400 with structured error when login request is invalid")
+    void shouldReturn400WithStructuredErrorWhenLoginRequestIsInvalid() throws Exception {
+        final String invalidRequestBody = """
+                {
+                  "email": "not-an-email",
+                  "password": ""
+                }
+                """;
+
+        mockMvc.perform(post("/api/v1/auth/login")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(invalidRequestBody))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.status").value(400))
+                .andExpect(jsonPath("$.error").value("Validation Error"))
+                .andExpect(jsonPath("$.code").value("VALIDATION_ERROR"))
+                .andExpect(jsonPath("$.message").isNotEmpty())
+                .andExpect(jsonPath("$.path").value("/api/v1/auth/login"));
+    }
+
+    @Test
+    @DisplayName("Should return 401 with structured error when credentials are invalid")
+    void shouldReturn401WithStructuredErrorWhenCredentialsAreInvalid() throws Exception {
+        when(authWebMapper.toLoginUserCommand(any(LoginRequest.class))).thenReturn(LoginUserCommand.builder()
+                .email("nico@example.com")
+                .password("WrongPassword123!")
+                .build());
+
+        when(loginUserService.login(any(LoginUserCommand.class))).thenThrow(new InvalidCredentialsException());
+
+        final String requestBody = """
+                {
+                  "email": "nico@example.com",
+                  "password": "WrongPassword123!"
+                }
+                """;
+
+        mockMvc.perform(post("/api/v1/auth/login")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(requestBody))
+                .andExpect(status().isUnauthorized())
+                .andExpect(jsonPath("$.status").value(401))
+                .andExpect(jsonPath("$.error").value("Unauthorized"))
+                .andExpect(jsonPath("$.code").value("INVALID_CREDENTIALS"))
+                .andExpect(jsonPath("$.message").value("Invalid email or password"))
+                .andExpect(jsonPath("$.path").value("/api/v1/auth/login"));
     }
 }

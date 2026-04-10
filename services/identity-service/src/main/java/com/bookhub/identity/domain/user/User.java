@@ -11,6 +11,7 @@ import jakarta.persistence.UniqueConstraint;
 import java.time.Instant;
 import java.util.Objects;
 import java.util.UUID;
+import lombok.Builder;
 
 @Entity
 @Table(
@@ -49,6 +50,7 @@ public class User {
     protected User() {
     }
 
+    @Builder
     private User(
             final UUID id,
             final String username,
@@ -66,68 +68,6 @@ public class User {
         this.role = role;
         this.createdAt = createdAt;
         this.updatedAt = updatedAt;
-    }
-
-    public static Builder builder() {
-        return new Builder();
-    }
-
-    public static final class Builder {
-        private UUID id;
-        private String username;
-        private String email;
-        private String passwordHash;
-        private String displayName;
-        private UserRole role;
-        private Instant createdAt;
-        private Instant updatedAt;
-
-        private Builder() {
-        }
-
-        public Builder id(final UUID id) {
-            this.id = id;
-            return this;
-        }
-
-        public Builder username(final String username) {
-            this.username = username;
-            return this;
-        }
-
-        public Builder email(final String email) {
-            this.email = email;
-            return this;
-        }
-
-        public Builder passwordHash(final String passwordHash) {
-            this.passwordHash = passwordHash;
-            return this;
-        }
-
-        public Builder displayName(final String displayName) {
-            this.displayName = displayName;
-            return this;
-        }
-
-        public Builder role(final UserRole role) {
-            this.role = role;
-            return this;
-        }
-
-        public Builder createdAt(final Instant createdAt) {
-            this.createdAt = createdAt;
-            return this;
-        }
-
-        public Builder updatedAt(final Instant updatedAt) {
-            this.updatedAt = updatedAt;
-            return this;
-        }
-
-        public User build() {
-            return new User(id, username, email, passwordHash, displayName, role, createdAt, updatedAt);
-        }
     }
 
     @PrePersist
