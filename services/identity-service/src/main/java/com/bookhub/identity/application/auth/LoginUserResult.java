@@ -6,6 +6,8 @@ import lombok.Builder;
 public record LoginUserResult(
         String accessToken,
         long expiresIn,
+        String refreshToken,
+        long refreshTokenExpiresIn,
         LoginUserView user) {
 
     @Builder

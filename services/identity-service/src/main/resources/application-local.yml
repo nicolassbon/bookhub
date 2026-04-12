@@ -20,3 +20,12 @@ management:
 jwt:
   secret: ${JWT_SECRET:local-dev-secret-local-dev-secret-123456}
   expiration: ${JWT_EXPIRATION:3600}
+
+auth:
+  refresh-token:
+    expiration-seconds: ${REFRESH_TOKEN_EXPIRATION_SECONDS:604800}
+    cookie:
+      name: ${REFRESH_TOKEN_COOKIE_NAME:refresh_token}
+      path: ${REFRESH_TOKEN_COOKIE_PATH:/api/v1/auth}
+      same-site: ${REFRESH_TOKEN_COOKIE_SAME_SITE:Strict}
+      secure: ${REFRESH_TOKEN_COOKIE_SECURE:false}

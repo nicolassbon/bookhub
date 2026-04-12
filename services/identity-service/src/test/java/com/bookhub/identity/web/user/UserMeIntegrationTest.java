@@ -6,6 +6,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import com.bookhub.identity.domain.user.User;
 import com.bookhub.identity.domain.user.UserRole;
+import com.bookhub.identity.infrastructure.persistence.RefreshTokenJpaRepository;
 import com.bookhub.identity.infrastructure.persistence.UserJpaRepository;
 import com.bookhub.identity.web.JwtTestTokenFactory;
 import java.time.Instant;
@@ -32,10 +33,14 @@ class UserMeIntegrationTest {
     private UserJpaRepository userJpaRepository;
 
     @Autowired
+    private RefreshTokenJpaRepository refreshTokenJpaRepository;
+
+    @Autowired
     private JwtEncoder jwtEncoder;
 
     @BeforeEach
     void setUp() {
+        refreshTokenJpaRepository.deleteAll();
         userJpaRepository.deleteAll();
     }
 

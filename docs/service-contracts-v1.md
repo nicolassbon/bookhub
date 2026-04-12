@@ -92,7 +92,43 @@ Authenticates a user and returns access credentials.
 
 #### `POST /api/v1/auth/refresh`
 
-Not supported in the current baseline (`identity-jwt-security`).
+Rotates the current refresh session and returns a new access token.
+
+**Request**
+
+- No JSON body.
+- Requires `refresh_token` cookie.
+
+**Response — 200 OK**
+
+```json
+{
+  "accessToken": "new-jwt-access-token",
+  "expiresIn": 3600,
+  "user": {
+    "userId": "usr_123",
+    "username": "nico",
+    "displayName": "Nicolas Bon",
+    "role": "USER"
+  }
+}
+```
+
+- Returns rotated `refresh_token` in `Set-Cookie` (`HttpOnly`, `SameSite=Strict`).
+- Returns `401 Unauthorized` when the refresh token is invalid, expired, or revoked.
+
+#### `POST /api/v1/auth/logout`
+
+Revokes the current refresh token and clears the refresh cookie.
+
+**Request**
+
+- No JSON body.
+- `refresh_token` cookie is optional.
+
+**Response — 204 No Content**
+
+- Clears `refresh_token` through `Set-Cookie` with `Max-Age=0`.
 
 #### `POST /api/v1/auth/forgot-password`
 

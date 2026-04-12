@@ -1,6 +1,7 @@
 package com.bookhub.identity.web.error;
 
 import com.bookhub.identity.application.auth.InvalidCredentialsException;
+import com.bookhub.identity.application.auth.InvalidRefreshTokenException;
 import com.bookhub.identity.domain.user.DuplicateResourceException;
 import jakarta.servlet.http.HttpServletRequest;
 import java.time.Instant;
@@ -68,6 +69,18 @@ public class GlobalExceptionHandler {
                 HttpStatus.UNAUTHORIZED,
                 "Unauthorized",
                 "INVALID_CREDENTIALS",
+                exception.getMessage(),
+                request.getRequestURI());
+    }
+
+    @ExceptionHandler(InvalidRefreshTokenException.class)
+    public ResponseEntity<ErrorResponse> handleInvalidRefreshToken(
+            final InvalidRefreshTokenException exception,
+            final HttpServletRequest request) {
+        return buildErrorResponse(
+                HttpStatus.UNAUTHORIZED,
+                "Unauthorized",
+                "INVALID_REFRESH_TOKEN",
                 exception.getMessage(),
                 request.getRequestURI());
     }

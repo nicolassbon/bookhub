@@ -1,12 +1,13 @@
 package com.bookhub.identity.web.auth;
 
 import static org.hamcrest.Matchers.matchesPattern;
+import static org.hamcrest.Matchers.containsString;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-import com.bookhub.identity.domain.user.User;
-import com.bookhub.identity.domain.user.UserRole;
+import com.bookhub.identity.infrastructure.persistence.RefreshTokenJpaRepository;
 import com.bookhub.identity.infrastructure.persistence.UserJpaRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -31,24 +32,26 @@ class LoginIntegrationTest {
     private UserJpaRepository userJpaRepository;
 
     @Autowired
+    private RefreshTokenJpaRepository refreshTokenJpaRepository;
+
+    @Autowired
     private PasswordEncoder passwordEncoder;
 
     @BeforeEach
     void setUp() {
+        refreshTokenJpaRepository.deleteAll();
         userJpaRepository.deleteAll();
     }
 
     @Test
     @DisplayName("Should authenticate existing user and return signed access token")
     void shouldAuthenticateExistingUserAndReturnSignedAccessToken() throws Exception {
-        final User existingUser = User.builder()
-                .username("nico")
-                .email("nico@example.com")
-                .passwordHash(passwordEncoder.encode("StrongPassword123!"))
-                .displayName("Nicolas Bon")
-                .role(UserRole.USER)
-                .build();
-        final User savedUser = userJpaRepository.save(existingUser);
+        final var existingUser = AuthIntegrationFixture.user(
+                "nico",
+                "nico@example.com",
+                passwordEncoder.encode("StrongPassword123!"),
+                "Nicolas Bon");
+        final var savedUser = userJpaRepository.save(existingUser);
 
         final String requestBody = """
                 {
@@ -61,6 +64,9 @@ class LoginIntegrationTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(requestBody))
                 .andExpect(status().isOk())
+                .andExpect(header().string("Set-Cookie", containsString("refresh_token=")))
+                .andExpect(header().string("Set-Cookie", containsString("HttpOnly")))
+                .andExpect(header().string("Set-Cookie", containsString("SameSite=Strict")))
                 .andExpect(jsonPath("$.accessToken", matchesPattern("^[A-Za-z0-9_-]+\\.[A-Za-z0-9_-]+\\.[A-Za-z0-9_-]+$")))
                 .andExpect(jsonPath("$.expiresIn").value(3600))
                 .andExpect(jsonPath("$.refreshToken").doesNotExist())
@@ -73,13 +79,11 @@ class LoginIntegrationTest {
     @Test
     @DisplayName("Should return 401 with structured error when password is invalid")
     void shouldReturn401WithStructuredErrorWhenPasswordIsInvalid() throws Exception {
-        final User existingUser = User.builder()
-                .username("nico")
-                .email("nico@example.com")
-                .passwordHash(passwordEncoder.encode("StrongPassword123!"))
-                .displayName("Nicolas Bon")
-                .role(UserRole.USER)
-                .build();
+        final var existingUser = AuthIntegrationFixture.user(
+                "nico",
+                "nico@example.com",
+                passwordEncoder.encode("StrongPassword123!"),
+                "Nicolas Bon");
         userJpaRepository.save(existingUser);
 
         final String requestBody = """

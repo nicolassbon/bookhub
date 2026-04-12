@@ -2,6 +2,7 @@ package com.bookhub.identity.web.auth;
 
 import com.bookhub.identity.application.auth.LoginUserCommand;
 import com.bookhub.identity.application.auth.LoginUserResult;
+import com.bookhub.identity.application.auth.RefreshSessionResult;
 import com.bookhub.identity.application.auth.RegisterUserCommand;
 import com.bookhub.identity.application.auth.RegisterUserResult;
 import org.mapstruct.Mapper;
@@ -17,6 +18,8 @@ public interface AuthWebMapper {
     LoginUserCommand toLoginUserCommand(LoginRequest request);
 
     LoginResponse toLoginResponse(LoginUserResult result);
+
+    LoginResponse toLoginResponse(RefreshSessionResult result);
 
     LoginResponse.LoginUserResponse toLoginUserResponse(LoginUserResult.LoginUserView user);
 }
