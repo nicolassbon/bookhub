@@ -80,7 +80,6 @@ Authenticates a user and returns access credentials.
 ```json
 {
   "accessToken": "jwt-access-token",
-  "refreshToken": "refresh-token-if-enabled",
   "expiresIn": 3600,
   "user": {
     "userId": "usr_123",
@@ -93,7 +92,7 @@ Authenticates a user and returns access credentials.
 
 #### `POST /api/v1/auth/refresh`
 
-Refreshes an access token if refresh tokens are enabled.
+Not supported in the current baseline (`identity-jwt-security`).
 
 #### `POST /api/v1/auth/forgot-password`
 
@@ -125,6 +124,18 @@ Completes the password reset flow.
 #### `GET /api/v1/users/me`
 
 Returns the authenticated user's profile.
+
+**Response — 200 OK**
+
+```json
+{
+  "userId": "usr_123",
+  "username": "nico",
+  "displayName": "Nicolas Bon",
+  "email": "nico@example.com",
+  "role": "USER"
+}
+```
 
 #### `GET /api/v1/users/{userId}`
 

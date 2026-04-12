@@ -16,3 +16,7 @@ management:
   endpoint:
     health:
       show-details: always
+
+jwt:
+  secret: ${JWT_SECRET:local-dev-secret-local-dev-secret-123456}
+  expiration: ${JWT_EXPIRATION:3600}

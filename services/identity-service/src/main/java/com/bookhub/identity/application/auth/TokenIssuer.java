@@ -10,7 +10,6 @@ public interface TokenIssuer {
     @Builder
     record IssuedTokenPair(
             String accessToken,
-            String refreshToken,
             long expiresIn) {
     }
 }

@@ -1,6 +1,6 @@
 package com.bookhub.identity.web.auth;
 
-import static org.hamcrest.Matchers.startsWith;
+import static org.hamcrest.Matchers.matchesPattern;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -39,8 +39,8 @@ class LoginIntegrationTest {
     }
 
     @Test
-    @DisplayName("Should authenticate existing user and return temporary tokens")
-    void shouldAuthenticateExistingUserAndReturnTemporaryTokens() throws Exception {
+    @DisplayName("Should authenticate existing user and return signed access token")
+    void shouldAuthenticateExistingUserAndReturnSignedAccessToken() throws Exception {
         final User existingUser = User.builder()
                 .username("nico")
                 .email("nico@example.com")
@@ -61,8 +61,9 @@ class LoginIntegrationTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(requestBody))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.accessToken", startsWith("temp-access-")))
+                .andExpect(jsonPath("$.accessToken", matchesPattern("^[A-Za-z0-9_-]+\\.[A-Za-z0-9_-]+\\.[A-Za-z0-9_-]+$")))
                 .andExpect(jsonPath("$.expiresIn").value(3600))
+                .andExpect(jsonPath("$.refreshToken").doesNotExist())
                 .andExpect(jsonPath("$.user.userId").value(savedUser.getId().toString()))
                 .andExpect(jsonPath("$.user.username").value("nico"))
                 .andExpect(jsonPath("$.user.displayName").value("Nicolas Bon"))

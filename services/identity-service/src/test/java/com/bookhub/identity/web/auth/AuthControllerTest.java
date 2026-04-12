@@ -11,6 +11,7 @@ import com.bookhub.identity.application.auth.LoginUserResult;
 import com.bookhub.identity.application.auth.RegisterUserCommand;
 import com.bookhub.identity.application.auth.RegisterUserResult;
 import com.bookhub.identity.application.auth.RegisterUserService;
+import com.bookhub.identity.config.SecurityConfig;
 import com.bookhub.identity.domain.user.DuplicateResourceException;
 import com.bookhub.identity.application.auth.LoginUserService;
 import com.bookhub.identity.application.auth.InvalidCredentialsException;
@@ -22,10 +23,15 @@ import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
+import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.web.servlet.MockMvc;
 
 @WebMvcTest(controllers = AuthController.class)
-@Import(GlobalExceptionHandler.class)
+@Import({GlobalExceptionHandler.class, SecurityConfig.class})
+@TestPropertySource(properties = {
+        "jwt.secret=test-signing-secret-test-signing-secret-1234",
+        "jwt.expiration=3600"
+})
 class AuthControllerTest {
 
     @Autowired
@@ -152,7 +158,7 @@ class AuthControllerTest {
                 .build());
 
         when(loginUserService.login(any(LoginUserCommand.class))).thenReturn(LoginUserResult.builder()
-                .accessToken("temporary-access-token")
+                .accessToken("jwt-access-token")
                 .expiresIn(3600)
                 .user(LoginUserResult.LoginUserView.builder()
                         .userId("usr_123")
@@ -163,7 +169,7 @@ class AuthControllerTest {
                 .build());
 
         when(authWebMapper.toLoginResponse(any(LoginUserResult.class))).thenReturn(LoginResponse.builder()
-                .accessToken("temporary-access-token")
+                .accessToken("jwt-access-token")
                 .expiresIn(3600)
                 .user(LoginResponse.LoginUserResponse.builder()
                         .userId("usr_123")
@@ -184,8 +190,9 @@ class AuthControllerTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(requestBody))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.accessToken").value("temporary-access-token"))
+                .andExpect(jsonPath("$.accessToken").value("jwt-access-token"))
                 .andExpect(jsonPath("$.expiresIn").value(3600))
+                .andExpect(jsonPath("$.refreshToken").doesNotExist())
                 .andExpect(jsonPath("$.user.userId").value("usr_123"))
                 .andExpect(jsonPath("$.user.username").value("nico"))
                 .andExpect(jsonPath("$.user.displayName").value("Nicolas Bon"))

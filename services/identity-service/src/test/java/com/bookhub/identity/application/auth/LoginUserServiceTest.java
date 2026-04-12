@@ -56,14 +56,13 @@ class LoginUserServiceTest {
         when(userRepository.findByEmail("nico@example.com")).thenReturn(Optional.of(existingUser));
         when(passwordEncoder.matches("StrongPassword123!", "stored-hash")).thenReturn(true);
         when(tokenIssuer.issueFor(existingUser)).thenReturn(TokenIssuer.IssuedTokenPair.builder()
-                .accessToken("temporary-access-token")
-                .refreshToken("temporary-refresh-token")
+                .accessToken("jwt-access-token")
                 .expiresIn(3600)
                 .build());
 
         final LoginUserResult result = loginUserService.login(command);
 
-        assertThat(result.accessToken()).isEqualTo("temporary-access-token");
+        assertThat(result.accessToken()).isEqualTo("jwt-access-token");
         assertThat(result.expiresIn()).isEqualTo(3600);
         assertThat(result.user().userId()).isEqualTo("6676f2d8-0f65-40ae-b102-66145e24f3fd");
         assertThat(result.user().username()).isEqualTo("nico");
