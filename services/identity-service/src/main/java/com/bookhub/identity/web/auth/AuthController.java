@@ -3,12 +3,14 @@ package com.bookhub.identity.web.auth;
 import com.bookhub.identity.application.auth.LoginUserCommand;
 import com.bookhub.identity.application.auth.LoginUserResult;
 import com.bookhub.identity.application.auth.LoginUserService;
+import com.bookhub.identity.application.auth.ForgotPasswordService;
 import com.bookhub.identity.application.auth.LogoutUserService;
 import com.bookhub.identity.application.auth.RefreshSessionResult;
 import com.bookhub.identity.application.auth.RefreshSessionService;
 import com.bookhub.identity.application.auth.RegisterUserCommand;
 import com.bookhub.identity.application.auth.RegisterUserResult;
 import com.bookhub.identity.application.auth.RegisterUserService;
+import com.bookhub.identity.application.auth.ResetPasswordService;
 import com.bookhub.identity.config.RefreshTokenProperties;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpHeaders;
@@ -29,6 +31,8 @@ public class AuthController {
     private final LoginUserService loginUserService;
     private final RefreshSessionService refreshSessionService;
     private final LogoutUserService logoutUserService;
+    private final ForgotPasswordService forgotPasswordService;
+    private final ResetPasswordService resetPasswordService;
     private final AuthWebMapper authWebMapper;
     private final RefreshTokenProperties refreshTokenProperties;
 
@@ -37,12 +41,16 @@ public class AuthController {
             final LoginUserService loginUserService,
             final RefreshSessionService refreshSessionService,
             final LogoutUserService logoutUserService,
+            final ForgotPasswordService forgotPasswordService,
+            final ResetPasswordService resetPasswordService,
             final AuthWebMapper authWebMapper,
             final RefreshTokenProperties refreshTokenProperties) {
         this.registerUserService = registerUserService;
         this.loginUserService = loginUserService;
         this.refreshSessionService = refreshSessionService;
         this.logoutUserService = logoutUserService;
+        this.forgotPasswordService = forgotPasswordService;
+        this.resetPasswordService = resetPasswordService;
         this.authWebMapper = authWebMapper;
         this.refreshTokenProperties = refreshTokenProperties;
     }
@@ -87,6 +95,18 @@ public class AuthController {
         return ResponseEntity.noContent()
                 .header(HttpHeaders.SET_COOKIE, clearRefreshCookie().toString())
                 .build();
+    }
+
+    @PostMapping("/forgot-password")
+    public ResponseEntity<Void> forgotPassword(@Valid @RequestBody final ForgotPasswordRequest request) {
+        forgotPasswordService.request(request.email());
+        return ResponseEntity.ok().build();
+    }
+
+    @PostMapping("/reset-password")
+    public ResponseEntity<Void> resetPassword(@Valid @RequestBody final ResetPasswordRequest request) {
+        resetPasswordService.reset(request.token(), request.newPassword());
+        return ResponseEntity.ok().build();
     }
 
     private ResponseCookie refreshCookie(final String token, final long maxAgeSeconds) {

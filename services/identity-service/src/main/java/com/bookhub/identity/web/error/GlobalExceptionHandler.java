@@ -1,6 +1,7 @@
 package com.bookhub.identity.web.error;
 
 import com.bookhub.identity.application.auth.InvalidCredentialsException;
+import com.bookhub.identity.application.auth.InvalidPasswordResetTokenException;
 import com.bookhub.identity.application.auth.InvalidRefreshTokenException;
 import com.bookhub.identity.domain.user.DuplicateResourceException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -81,6 +82,18 @@ public class GlobalExceptionHandler {
                 HttpStatus.UNAUTHORIZED,
                 "Unauthorized",
                 "INVALID_REFRESH_TOKEN",
+                exception.getMessage(),
+                request.getRequestURI());
+    }
+
+    @ExceptionHandler(InvalidPasswordResetTokenException.class)
+    public ResponseEntity<ErrorResponse> handleInvalidPasswordResetToken(
+            final InvalidPasswordResetTokenException exception,
+            final HttpServletRequest request) {
+        return buildErrorResponse(
+                HttpStatus.BAD_REQUEST,
+                "Bad Request",
+                "INVALID_PASSWORD_RESET_TOKEN",
                 exception.getMessage(),
                 request.getRequestURI());
     }

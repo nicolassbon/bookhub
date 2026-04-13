@@ -133,6 +133,7 @@ Revokes the current refresh token and clears the refresh cookie.
 #### `POST /api/v1/auth/forgot-password`
 
 Starts the password recovery flow.
+This endpoint is anti-enumeration safe: it always returns the same response, even if the email does not exist.
 
 **Request**
 
@@ -141,6 +142,11 @@ Starts the password recovery flow.
   "email": "nico@example.com"
 }
 ```
+
+**Response — 200 OK**
+
+- Empty body.
+- Always returned for syntactically valid requests.
 
 #### `POST /api/v1/auth/reset-password`
 
@@ -152,6 +158,23 @@ Completes the password reset flow.
 {
   "token": "recovery-token",
   "newPassword": "NewStrongPassword123!"
+}
+```
+
+**Response — 200 OK**
+
+- Empty body when token is valid and password is updated.
+
+**Error — 400 Bad Request**
+
+```json
+{
+  "timestamp": "2026-04-12T20:00:00Z",
+  "status": 400,
+  "error": "Bad Request",
+  "code": "INVALID_PASSWORD_RESET_TOKEN",
+  "message": "Invalid or expired password reset token",
+  "path": "/api/v1/auth/reset-password"
 }
 ```
 

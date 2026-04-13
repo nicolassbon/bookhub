@@ -6,6 +6,7 @@ import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
 import jakarta.persistence.Id;
 import jakarta.persistence.PrePersist;
+import jakarta.persistence.PreUpdate;
 import jakarta.persistence.Table;
 import jakarta.persistence.UniqueConstraint;
 import java.time.Instant;
@@ -82,6 +83,16 @@ public class User {
         updatedAt = now;
     }
 
+    @PreUpdate
+    public void preUpdate() {
+        updatedAt = Instant.now();
+    }
+
+    public void updatePassword(final String encodedPassword) {
+        this.passwordHash = encodedPassword;
+        this.updatedAt = Instant.now();
+    }
+
     @Override
     public boolean equals(final Object other) {
         if (this == other) {
@@ -120,5 +131,9 @@ public class User {
 
     public UserRole getRole() {
         return role;
+    }
+
+    public Instant getUpdatedAt() {
+        return updatedAt;
     }
 }

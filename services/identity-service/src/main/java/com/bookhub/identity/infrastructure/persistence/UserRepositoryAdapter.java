@@ -3,6 +3,7 @@ package com.bookhub.identity.infrastructure.persistence;
 import com.bookhub.identity.domain.user.User;
 import com.bookhub.identity.domain.user.UserRepository;
 import java.util.Optional;
+import java.util.UUID;
 import org.springframework.stereotype.Repository;
 
 @Repository
@@ -27,6 +28,11 @@ public class UserRepositoryAdapter implements UserRepository {
     @Override
     public Optional<User> findByEmail(final String email) {
         return userJpaRepository.findByEmail(email);
+    }
+
+    @Override
+    public Optional<User> findById(final UUID userId) {
+        return userJpaRepository.findById(userId);
     }
 
     @Override

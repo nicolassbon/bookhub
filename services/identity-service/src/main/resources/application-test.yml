@@ -12,6 +12,11 @@ spring:
       ddl-auto: validate
   flyway:
     enabled: true
+  mail:
+    host: ${SPRING_MAIL_HOST:localhost}
+    port: ${SPRING_MAIL_PORT:2525}
+    username: ${SPRING_MAIL_USERNAME:test}
+    password: ${SPRING_MAIL_PASSWORD:test}
 
 server:
   port: 0
@@ -34,3 +39,7 @@ auth:
       path: ${REFRESH_TOKEN_COOKIE_PATH:/api/v1/auth}
       same-site: ${REFRESH_TOKEN_COOKIE_SAME_SITE:Strict}
       secure: ${REFRESH_TOKEN_COOKIE_SECURE:false}
+  password-reset:
+    expiration-seconds: ${PASSWORD_RESET_EXPIRATION_SECONDS:900}
+    url-base: ${PASSWORD_RESET_URL_BASE:https://bookhub.test/reset-password?token=}
+    from-address: ${PASSWORD_RESET_FROM_ADDRESS:noreply@bookhub.test}
