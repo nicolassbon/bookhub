@@ -18,16 +18,19 @@ public class RefreshSessionService {
     private final TokenIssuer tokenIssuer;
     private final RefreshTokenProperties refreshTokenProperties;
     private final Clock clock;
+    private final AuthResultMapper authResultMapper;
 
     public RefreshSessionService(
             final RefreshTokenRepository refreshTokenRepository,
             final TokenIssuer tokenIssuer,
             final RefreshTokenProperties refreshTokenProperties,
-            final Clock clock) {
+            final Clock clock,
+            final AuthResultMapper authResultMapper) {
         this.refreshTokenRepository = refreshTokenRepository;
         this.tokenIssuer = tokenIssuer;
         this.refreshTokenProperties = refreshTokenProperties;
         this.clock = clock;
+        this.authResultMapper = authResultMapper;
     }
 
     public RefreshSessionResult refresh(final String refreshTokenValue) {
@@ -41,12 +44,10 @@ public class RefreshSessionService {
 
         final User user = existingToken.getUser();
         final UUID newTokenValue = UUID.randomUUID();
-        final RefreshToken newToken = RefreshToken.builder()
-                .token(newTokenValue)
-                .user(user)
-                .expiresAt(now.plusSeconds(refreshTokenProperties.expirationSeconds()))
-                .revoked(false)
-                .build();
+        final RefreshToken newToken = RefreshToken.issue(
+                newTokenValue,
+                user,
+                now.plusSeconds(refreshTokenProperties.expirationSeconds()));
         refreshTokenRepository.save(newToken);
 
         final TokenIssuer.IssuedTokenPair accessToken = tokenIssuer.issueFor(user);
@@ -55,12 +56,7 @@ public class RefreshSessionService {
                 .expiresIn(accessToken.expiresIn())
                 .refreshToken(newTokenValue.toString())
                 .refreshTokenExpiresIn(refreshTokenProperties.expirationSeconds())
-                .user(LoginUserResult.LoginUserView.builder()
-                        .userId(user.getId().toString())
-                        .username(user.getUsername())
-                        .displayName(user.getDisplayName())
-                        .role(user.getRole().name())
-                        .build())
+                .user(authResultMapper.toLoginUserView(user))
                 .build();
     }
 

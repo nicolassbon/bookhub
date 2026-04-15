@@ -46,12 +46,11 @@ class PasswordResetTokenRepositoryAdapterIntegrationTest {
                 passwordEncoder.encode("StrongPassword123!"),
                 "Nico"));
 
-        final PasswordResetToken token = PasswordResetToken.builder()
-                .id(UUID.fromString("3a5f37c4-f975-4f5f-8190-24338f4dd58e"))
-                .token("ab6bd217-f658-4686-9dac-bc93d83512fd")
-                .userId(user.getId())
-                .expiresAt(Instant.parse("2026-04-12T21:00:00Z"))
-                .build();
+        final PasswordResetToken token = PasswordResetToken.rehydrate(
+                UUID.fromString("3a5f37c4-f975-4f5f-8190-24338f4dd58e"),
+                "ab6bd217-f658-4686-9dac-bc93d83512fd",
+                user.getId(),
+                Instant.parse("2026-04-12T21:00:00Z"));
 
         passwordResetTokenRepository.save(token);
 
@@ -73,18 +72,16 @@ class PasswordResetTokenRepositoryAdapterIntegrationTest {
                 passwordEncoder.encode("StrongPassword123!"),
                 "Nico"));
 
-        passwordResetTokenRepository.save(PasswordResetToken.builder()
-                .id(UUID.fromString("771f238c-dd1d-4e5a-a634-c0dd84f5ec63"))
-                .token("token-one")
-                .userId(user.getId())
-                .expiresAt(Instant.parse("2026-04-12T21:00:00Z"))
-                .build());
-        passwordResetTokenRepository.save(PasswordResetToken.builder()
-                .id(UUID.fromString("8f5342b9-006c-4a77-bf3e-3d728f4f54ca"))
-                .token("token-two")
-                .userId(user.getId())
-                .expiresAt(Instant.parse("2026-04-12T21:05:00Z"))
-                .build());
+        passwordResetTokenRepository.save(PasswordResetToken.rehydrate(
+                UUID.fromString("771f238c-dd1d-4e5a-a634-c0dd84f5ec63"),
+                "token-one",
+                user.getId(),
+                Instant.parse("2026-04-12T21:00:00Z")));
+        passwordResetTokenRepository.save(PasswordResetToken.rehydrate(
+                UUID.fromString("8f5342b9-006c-4a77-bf3e-3d728f4f54ca"),
+                "token-two",
+                user.getId(),
+                Instant.parse("2026-04-12T21:05:00Z")));
 
         passwordResetTokenRepository.deleteByUserId(user.getId());
 

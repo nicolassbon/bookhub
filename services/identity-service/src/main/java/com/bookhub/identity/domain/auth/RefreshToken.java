@@ -13,7 +13,6 @@ import jakarta.persistence.Table;
 import java.time.Instant;
 import java.util.Objects;
 import java.util.UUID;
-import lombok.Builder;
 
 @Entity
 @Table(name = "refresh_tokens")
@@ -45,7 +44,6 @@ public class RefreshToken {
     protected RefreshToken() {
     }
 
-    @Builder
     private RefreshToken(
             final UUID token,
             final User user,
@@ -61,6 +59,22 @@ public class RefreshToken {
         this.revokedAt = revokedAt;
         this.createdAt = createdAt;
         this.updatedAt = updatedAt;
+    }
+
+    public static RefreshToken issue(
+            final UUID token,
+            final User user,
+            final Instant expiresAt) {
+        return new RefreshToken(token, user, expiresAt, false, null, null, null);
+    }
+
+    public static RefreshToken rehydrate(
+            final UUID token,
+            final User user,
+            final Instant expiresAt,
+            final boolean revoked,
+            final Instant revokedAt) {
+        return new RefreshToken(token, user, expiresAt, revoked, revokedAt, null, null);
     }
 
     @PrePersist

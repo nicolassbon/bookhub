@@ -1,21 +1,22 @@
-# ADR-0008 — Use MapStruct for DTO and web mapping
+# ADR-0008 — Use MapStruct for DTO, web, and entity-boundary mapping
 
 - **Status**: Accepted
 - **Date**: 2026-04-09
 
 ## Context
 
-The current identity-service slices already require repeated mappings such as:
+The current services require repeated mappings such as:
 
 - request DTO → application command
 - application result → response DTO
 - nested result model → nested response model
+- JPA entity → boundary/result models
 
 Manual mapping inside controllers is simple at first, but it grows noisy and distracts controllers from HTTP concerns. The project also wants explicit, readable mapping without overengineering.
 
 ## Decision
 
-Use **MapStruct** for DTO and web mapping where manual mapping is already present and meaningful.
+Use **MapStruct** for DTO/web mapping and for entity-to-boundary mapping where manual mapping appears.
 
 Guidelines:
 
@@ -23,6 +24,11 @@ Guidelines:
 - keep mapper interfaces small and local to the feature/module
 - apply it where it replaces real repetitive mapping
 - do not introduce mapper layers where there is nothing to map yet
+- prefer record-based DTO-like types (request/response, commands, results, views)
+- use Lombok `@Builder` on record-based DTO-like types when readability improves call sites
+- avoid using builders as the default mapping mechanism on JPA entities
+- for JPA entities, prefer protected no-arg constructor + regular field/property/update mapping that works with JPA and MapStruct
+- keep an entity builder only when there is demonstrated value that cannot be achieved more simply, and document that exception
 
 MapStruct is integrated with Lombok through `lombok-mapstruct-binding`.
 

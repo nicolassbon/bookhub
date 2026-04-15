@@ -23,6 +23,7 @@ public class LoginUserService {
     private final RefreshTokenRepository refreshTokenRepository;
     private final RefreshTokenProperties refreshTokenProperties;
     private final Clock clock;
+    private final AuthResultMapper authResultMapper;
 
     public LoginUserService(
             final UserRepository userRepository,
@@ -30,13 +31,15 @@ public class LoginUserService {
             final TokenIssuer tokenIssuer,
             final RefreshTokenRepository refreshTokenRepository,
             final RefreshTokenProperties refreshTokenProperties,
-            final Clock clock) {
+            final Clock clock,
+            final AuthResultMapper authResultMapper) {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
         this.tokenIssuer = tokenIssuer;
         this.refreshTokenRepository = refreshTokenRepository;
         this.refreshTokenProperties = refreshTokenProperties;
         this.clock = clock;
+        this.authResultMapper = authResultMapper;
     }
 
     @Transactional
@@ -58,12 +61,7 @@ public class LoginUserService {
                 .expiresIn(issuedTokens.expiresIn())
                 .refreshToken(refreshTokenValue)
                 .refreshTokenExpiresIn(refreshTokenProperties.expirationSeconds())
-                .user(LoginUserResult.LoginUserView.builder()
-                        .userId(user.getId().toString())
-                        .username(user.getUsername())
-                        .displayName(user.getDisplayName())
-                        .role(user.getRole().name())
-                        .build())
+                .user(authResultMapper.toLoginUserView(user))
                 .build();
     }
 
@@ -74,12 +72,10 @@ public class LoginUserService {
     private String issueRefreshToken(final User user) {
         final UUID tokenValue = UUID.randomUUID();
         final Instant now = Instant.now(clock);
-        final RefreshToken refreshToken = RefreshToken.builder()
-                .token(tokenValue)
-                .user(user)
-                .expiresAt(now.plusSeconds(refreshTokenProperties.expirationSeconds()))
-                .revoked(false)
-                .build();
+        final RefreshToken refreshToken = RefreshToken.issue(
+                tokenValue,
+                user,
+                now.plusSeconds(refreshTokenProperties.expirationSeconds()));
 
         refreshTokenRepository.save(refreshToken);
         return tokenValue.toString();

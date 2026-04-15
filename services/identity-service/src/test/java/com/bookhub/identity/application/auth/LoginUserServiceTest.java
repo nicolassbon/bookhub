@@ -47,6 +47,9 @@ class LoginUserServiceTest {
     @Mock
     private Clock clock;
 
+    @Mock
+    private AuthResultMapper authResultMapper;
+
     @InjectMocks
     private LoginUserService loginUserService;
 
@@ -58,14 +61,13 @@ class LoginUserServiceTest {
                 .password("StrongPassword123!")
                 .build();
 
-        final User existingUser = User.builder()
-                .id(UUID.fromString("6676f2d8-0f65-40ae-b102-66145e24f3fd"))
-                .username("nico")
-                .email("nico@example.com")
-                .passwordHash("stored-hash")
-                .displayName("Nicolas Bon")
-                .role(UserRole.USER)
-                .build();
+        final User existingUser = User.rehydrate(
+                UUID.fromString("6676f2d8-0f65-40ae-b102-66145e24f3fd"),
+                "nico",
+                "nico@example.com",
+                "stored-hash",
+                "Nicolas Bon",
+                UserRole.USER);
 
         when(userRepository.findByEmail("nico@example.com")).thenReturn(Optional.of(existingUser));
         when(passwordEncoder.matches("StrongPassword123!", "stored-hash")).thenReturn(true);
@@ -74,6 +76,12 @@ class LoginUserServiceTest {
         when(tokenIssuer.issueFor(existingUser)).thenReturn(TokenIssuer.IssuedTokenPair.builder()
                 .accessToken("jwt-access-token")
                 .expiresIn(3600)
+                .build());
+        when(authResultMapper.toLoginUserView(existingUser)).thenReturn(LoginUserResult.LoginUserView.builder()
+                .userId("6676f2d8-0f65-40ae-b102-66145e24f3fd")
+                .username("nico")
+                .displayName("Nicolas Bon")
+                .role("USER")
                 .build());
 
         when(refreshTokenRepository.save(any(RefreshToken.class))).thenAnswer(invocation -> invocation.getArgument(0));
@@ -118,14 +126,13 @@ class LoginUserServiceTest {
                 .password("WrongPassword123!")
                 .build();
 
-        final User existingUser = User.builder()
-                .id(UUID.fromString("6676f2d8-0f65-40ae-b102-66145e24f3fd"))
-                .username("nico")
-                .email("nico@example.com")
-                .passwordHash("stored-hash")
-                .displayName("Nicolas Bon")
-                .role(UserRole.USER)
-                .build();
+        final User existingUser = User.rehydrate(
+                UUID.fromString("6676f2d8-0f65-40ae-b102-66145e24f3fd"),
+                "nico",
+                "nico@example.com",
+                "stored-hash",
+                "Nicolas Bon",
+                UserRole.USER);
 
         when(userRepository.findByEmail("nico@example.com")).thenReturn(Optional.of(existingUser));
         when(passwordEncoder.matches("WrongPassword123!", "stored-hash")).thenReturn(false);

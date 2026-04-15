@@ -48,14 +48,13 @@ class ForgotPasswordServiceTest {
     @Test
     @DisplayName("Should create reset token and send email when user exists")
     void shouldCreateResetTokenAndSendEmailWhenUserExists() {
-        final User existingUser = User.builder()
-                .id(UUID.fromString("4a6b21df-9276-4fa9-92ea-f22748fc45aa"))
-                .email("user@example.com")
-                .username("nico")
-                .passwordHash("encoded-password")
-                .displayName("Nico")
-                .role(UserRole.USER)
-                .build();
+        final User existingUser = User.rehydrate(
+                UUID.fromString("4a6b21df-9276-4fa9-92ea-f22748fc45aa"),
+                "nico",
+                "user@example.com",
+                "encoded-password",
+                "Nico",
+                UserRole.USER);
 
         final Instant now = Instant.parse("2026-04-12T20:00:00Z");
         when(clock.instant()).thenReturn(now);

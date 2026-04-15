@@ -12,7 +12,6 @@ import jakarta.persistence.UniqueConstraint;
 import java.time.Instant;
 import java.util.Objects;
 import java.util.UUID;
-import lombok.Builder;
 
 @Entity
 @Table(
@@ -51,7 +50,6 @@ public class User {
     protected User() {
     }
 
-    @Builder
     private User(
             final UUID id,
             final String username,
@@ -69,6 +67,25 @@ public class User {
         this.role = role;
         this.createdAt = createdAt;
         this.updatedAt = updatedAt;
+    }
+
+    public static User create(
+            final String username,
+            final String email,
+            final String passwordHash,
+            final String displayName,
+            final UserRole role) {
+        return new User(null, username, email, passwordHash, displayName, role, null, null);
+    }
+
+    public static User rehydrate(
+            final UUID id,
+            final String username,
+            final String email,
+            final String passwordHash,
+            final String displayName,
+            final UserRole role) {
+        return new User(id, username, email, passwordHash, displayName, role, null, null);
     }
 
     @PrePersist

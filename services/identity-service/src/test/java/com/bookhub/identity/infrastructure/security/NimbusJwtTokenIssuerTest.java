@@ -31,14 +31,13 @@ class NimbusJwtTokenIssuerTest {
     void shouldIssueAccessTokenWithExpectedUserClaimsAndConfiguredExpiration() {
         final NimbusJwtTokenIssuer tokenIssuer = new NimbusJwtTokenIssuer(jwtEncoder, 3600);
 
-        final User user = User.builder()
-                .id(UUID.fromString("6676f2d8-0f65-40ae-b102-66145e24f3fd"))
-                .username("nico")
-                .email("nico@example.com")
-                .passwordHash("hash")
-                .displayName("Nicolas Bon")
-                .role(UserRole.USER)
-                .build();
+        final User user = User.rehydrate(
+                UUID.fromString("6676f2d8-0f65-40ae-b102-66145e24f3fd"),
+                "nico",
+                "nico@example.com",
+                "hash",
+                "Nicolas Bon",
+                UserRole.USER);
 
         when(jwtEncoder.encode(any(JwtEncoderParameters.class))).thenReturn(Jwt.withTokenValue("jwt-token")
                 .header("alg", "HS256")
@@ -72,14 +71,13 @@ class NimbusJwtTokenIssuerTest {
     void shouldNotIncludeRefreshTokenInIssuedContract() {
         final NimbusJwtTokenIssuer tokenIssuer = new NimbusJwtTokenIssuer(jwtEncoder, 1800);
 
-        final User user = User.builder()
-                .id(UUID.fromString("6676f2d8-0f65-40ae-b102-66145e24f3fd"))
-                .username("nico")
-                .email("nico@example.com")
-                .passwordHash("hash")
-                .displayName("Nicolas Bon")
-                .role(UserRole.USER)
-                .build();
+        final User user = User.rehydrate(
+                UUID.fromString("6676f2d8-0f65-40ae-b102-66145e24f3fd"),
+                "nico",
+                "nico@example.com",
+                "hash",
+                "Nicolas Bon",
+                UserRole.USER);
 
         when(jwtEncoder.encode(any(JwtEncoderParameters.class))).thenReturn(Jwt.withTokenValue("jwt-token")
                 .header("alg", "HS256")

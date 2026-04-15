@@ -30,6 +30,9 @@ class RegisterUserServiceTest {
     @Mock
     private PasswordEncoder passwordEncoder;
 
+    @Mock
+    private AuthResultMapper authResultMapper;
+
     @InjectMocks
     private RegisterUserService registerUserService;
 
@@ -48,15 +51,21 @@ class RegisterUserServiceTest {
         when(passwordEncoder.encode("StrongPassword123!")).thenReturn("hashed-password");
         when(userRepository.save(any(User.class))).thenAnswer(invocation -> {
             final User user = invocation.getArgument(0);
-            return User.builder()
-                    .id(UUID.fromString("6676f2d8-0f65-40ae-b102-66145e24f3fd"))
-                    .username(user.getUsername())
-                    .email(user.getEmail())
-                    .passwordHash(user.getPasswordHash())
-                    .displayName(user.getDisplayName())
-                    .role(user.getRole())
-                    .build();
+            return User.rehydrate(
+                    UUID.fromString("6676f2d8-0f65-40ae-b102-66145e24f3fd"),
+                    user.getUsername(),
+                    user.getEmail(),
+                    user.getPasswordHash(),
+                    user.getDisplayName(),
+                    user.getRole());
         });
+        when(authResultMapper.toRegisterUserResult(any(User.class))).thenReturn(RegisterUserResult.builder()
+                .userId("6676f2d8-0f65-40ae-b102-66145e24f3fd")
+                .username("nico")
+                .email("nico@example.com")
+                .displayName("Nicolas Bon")
+                .role(UserRole.USER.name())
+                .build());
 
         final RegisterUserResult result = registerUserService.register(command);
 

@@ -76,13 +76,12 @@ class RegisterIntegrationTest {
     @Test
     @DisplayName("Should reject duplicate email with conflict response")
     void shouldRejectDuplicateEmailWithConflictResponse() throws Exception {
-        final User existingUser = User.builder()
-                .username("nico")
-                .email("nico@example.com")
-                .passwordHash(passwordEncoder.encode("StrongPassword123!"))
-                .displayName("Nicolas Bon")
-                .role(UserRole.USER)
-                .build();
+        final User existingUser = User.create(
+                "nico",
+                "nico@example.com",
+                passwordEncoder.encode("StrongPassword123!"),
+                "Nicolas Bon",
+                UserRole.USER);
         userJpaRepository.save(existingUser);
 
         final String duplicateRequestBody = """

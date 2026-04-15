@@ -119,12 +119,12 @@ class RefreshIntegrationTest {
                 "Nicolas Bon"));
 
         final UUID revokedToken = UUID.fromString("cb512f1d-6285-4c01-abee-a1553cc4065c");
-        refreshTokenJpaRepository.save(RefreshToken.builder()
-                .token(revokedToken)
-                .user(user)
-                .expiresAt(Instant.now().plusSeconds(3600))
-                .revoked(true)
-                .build());
+        refreshTokenJpaRepository.save(RefreshToken.rehydrate(
+                revokedToken,
+                user,
+                Instant.now().plusSeconds(3600),
+                true,
+                null));
 
         mockMvc.perform(post("/api/v1/auth/refresh")
                         .cookie(new jakarta.servlet.http.Cookie("refresh_token", revokedToken.toString())))

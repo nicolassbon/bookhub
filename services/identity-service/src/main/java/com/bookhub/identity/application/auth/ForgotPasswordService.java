@@ -52,9 +52,10 @@ public class ForgotPasswordService {
         final Instant now = Instant.now(clock);
 
         passwordResetTokenRepository.deleteByUserId(user.getId());
-        final PasswordResetToken passwordResetToken = PasswordResetToken.builder().token(token)
-                .userId(user.getId())
-                .expiresAt(now.plusSeconds(passwordResetProperties.expirationSeconds())).build();
+        final PasswordResetToken passwordResetToken = PasswordResetToken.issue(
+                token,
+                user.getId(),
+                now.plusSeconds(passwordResetProperties.expirationSeconds()));
         passwordResetTokenRepository.save(passwordResetToken);
 
         try {

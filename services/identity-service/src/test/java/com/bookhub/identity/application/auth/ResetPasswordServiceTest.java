@@ -45,13 +45,18 @@ class ResetPasswordServiceTest {
         @DisplayName("Should reset password and invalidate all user tokens when token is valid")
         void shouldResetPasswordAndInvalidateAllUserTokensWhenTokenIsValid() {
                 final UUID userId = UUID.fromString("b95f69ca-bf80-49f6-a4d6-8477f9127a87");
-                final User user = User.builder().id(userId).username("nico")
-                                .email("nico@example.com").passwordHash("old-password")
-                                .displayName("Nico").role(UserRole.USER).build();
-                final PasswordResetToken resetToken = PasswordResetToken.builder()
-                                .id(UUID.fromString("f0f4f780-edf1-4c06-b5a0-0464bf8282d7"))
-                                .token("f26e5f56-b8fb-4bd5-b18a-95a7ef8d7ab3").userId(userId)
-                                .expiresAt(Instant.parse("2026-04-12T21:00:00Z")).build();
+                final User user = User.rehydrate(
+                                userId,
+                                "nico",
+                                "nico@example.com",
+                                "old-password",
+                                "Nico",
+                                UserRole.USER);
+                final PasswordResetToken resetToken = PasswordResetToken.rehydrate(
+                                UUID.fromString("f0f4f780-edf1-4c06-b5a0-0464bf8282d7"),
+                                "f26e5f56-b8fb-4bd5-b18a-95a7ef8d7ab3",
+                                userId,
+                                Instant.parse("2026-04-12T21:00:00Z"));
 
                 when(clock.instant()).thenReturn(Instant.parse("2026-04-12T20:00:00Z"));
                 when(passwordResetTokenRepository.findByToken(resetToken.getToken()))
@@ -85,11 +90,11 @@ class ResetPasswordServiceTest {
         @Test
         @DisplayName("Should reject reset when token is expired")
         void shouldRejectResetWhenTokenIsExpired() {
-                final PasswordResetToken expiredToken = PasswordResetToken.builder()
-                                .id(UUID.fromString("85af7414-b79a-4e95-8f87-5eb0d7104d8e"))
-                                .token("expired-token")
-                                .userId(UUID.fromString("334dd578-518e-49bc-b9d3-a4f89e4c3c46"))
-                                .expiresAt(Instant.parse("2026-04-12T19:59:00Z")).build();
+                final PasswordResetToken expiredToken = PasswordResetToken.rehydrate(
+                                UUID.fromString("85af7414-b79a-4e95-8f87-5eb0d7104d8e"),
+                                "expired-token",
+                                UUID.fromString("334dd578-518e-49bc-b9d3-a4f89e4c3c46"),
+                                Instant.parse("2026-04-12T19:59:00Z"));
 
                 when(clock.instant()).thenReturn(Instant.parse("2026-04-12T20:00:00Z"));
                 when(passwordResetTokenRepository.findByToken("expired-token"))
@@ -109,10 +114,11 @@ class ResetPasswordServiceTest {
         @DisplayName("Should reject reset when token user does not exist")
         void shouldRejectResetWhenTokenUserDoesNotExist() {
                 final UUID userId = UUID.fromString("8bd381f7-5f26-4c56-bf62-51ca6b61a2cb");
-                final PasswordResetToken validToken = PasswordResetToken.builder()
-                                .id(UUID.fromString("f2f8e967-b91b-48f8-aa5d-f251cd5963ad"))
-                                .token("valid-token").userId(userId)
-                                .expiresAt(Instant.parse("2026-04-12T21:00:00Z")).build();
+                final PasswordResetToken validToken = PasswordResetToken.rehydrate(
+                                UUID.fromString("f2f8e967-b91b-48f8-aa5d-f251cd5963ad"),
+                                "valid-token",
+                                userId,
+                                Instant.parse("2026-04-12T21:00:00Z"));
 
                 when(clock.instant()).thenReturn(Instant.parse("2026-04-12T20:00:00Z"));
                 when(passwordResetTokenRepository.findByToken("valid-token"))

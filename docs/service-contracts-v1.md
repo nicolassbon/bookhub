@@ -266,55 +266,78 @@ Provide canonical book metadata and discovery capabilities.
 
 ### Search and details
 
-#### `GET /api/v1/books?query={term}&page={n}&size={n}`
+#### `GET /api/v1/books?q={term}`
 
-Searches books by title and/or author.
+Searches books concurrently in local catalog storage and Open Library.
+
+Notes:
+- `q` is required (`@NotBlank`).
+- Local books return canonical UUID IDs.
+- Non-persisted external books return ephemeral IDs with format `ext:ol:{sourceReference}`.
+- If local and external results match by `sourceReference`/ISBN-13, local result takes precedence.
+
+**Response — 200 OK**
+
+```json
+[
+  {
+    "id": "123e4567-e89b-12d3-a456-426614174000",
+    "title": "The Hobbit",
+    "authorName": "J.R.R. Tolkien",
+    "coverUrl": "https://covers.openlibrary.org/b/id/111-L.jpg"
+  },
+  {
+    "id": "ext:ol:OL999W",
+    "title": "Unfinished Tales",
+    "authorName": "J.R.R. Tolkien",
+    "coverUrl": "https://covers.openlibrary.org/b/id/222-L.jpg"
+  }
+]
+```
+
+#### `GET /api/v1/books/{id}`
+
+Returns canonical book detail by either:
+- local UUID (`123e4567-e89b-12d3-a456-426614174000`), or
+- ephemeral ID (`ext:ol:OL999W`) that triggers JIT import/persistence.
 
 **Response — 200 OK**
 
 ```json
 {
-  "items": [
-    {
-      "bookId": "bk_001",
-      "title": "Clean Architecture",
-      "authors": ["Robert C. Martin"],
-      "coverUrl": "https://...",
-      "publishedYear": 2017,
-      "source": "OPEN_LIBRARY"
-    }
-  ],
-  "page": 0,
-  "size": 20,
-  "totalElements": 1,
-  "totalPages": 1
+  "id": "123e4567-e89b-12d3-a456-426614174000",
+  "title": "Unfinished Tales",
+  "authorName": "J.R.R. Tolkien",
+  "isbn13": "9780261102163",
+  "sourceReference": "OL999W",
+  "coverUrl": "https://covers.openlibrary.org/b/id/222-L.jpg",
+  "publishedYear": 1980
 }
 ```
 
-#### `GET /api/v1/books/{bookId}`
-
-Returns the canonical book detail.
-
-**Response — 200 OK**
+**Error — 400 Bad Request (`INVALID_BOOK_ID`)**
 
 ```json
 {
-  "bookId": "bk_001",
-  "title": "Clean Architecture",
-  "subtitle": null,
-  "description": "A guide to software structure and design.",
-  "authors": [
-    {
-      "authorId": "au_001",
-      "name": "Robert C. Martin"
-    }
-  ],
-  "isbn13": "9780134494166",
-  "pageCount": 432,
-  "language": "en",
-  "coverUrl": "https://...",
-  "publishedYear": 2017,
-  "categories": ["Software", "Architecture"]
+  "timestamp": "2026-04-14T15:00:00Z",
+  "status": 400,
+  "error": "Bad Request",
+  "code": "INVALID_BOOK_ID",
+  "message": "Book ID format is invalid",
+  "path": "/api/v1/books/invalid-id"
+}
+```
+
+**Error — 404 Not Found (`BOOK_NOT_FOUND`)**
+
+```json
+{
+  "timestamp": "2026-04-14T15:00:00Z",
+  "status": 404,
+  "error": "Not Found",
+  "code": "BOOK_NOT_FOUND",
+  "message": "Book not found",
+  "path": "/api/v1/books/ext:ol:OL404W"
 }
 ```
 
@@ -369,6 +392,7 @@ catalog-service is allowed to expose lightweight book snapshots:
 
 - Canonical `bookId` must be stable.
 - Duplicate books from external sources must be normalized.
+- Ephemeral IDs (`ext:ol:*`) are API-only identifiers and must resolve to canonical local UUIDs after JIT persistence.
 - Imported metadata must be traceable to a source.
 - Admin edits must not break referential consistency.
 

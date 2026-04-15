@@ -115,9 +115,11 @@ class PasswordRecoveryIntegrationTest {
         final var user = userJpaRepository.save(AuthIntegrationFixture.user("nico",
                 "nico@example.com", passwordEncoder.encode("StrongPassword123!"), "Nico"));
 
-        passwordResetTokenJpaRepository.save(PasswordResetToken.builder()
-                .id(UUID.fromString("63553f40-4298-4768-b6b2-71385163467b")).token("expired-token")
-                .userId(user.getId()).expiresAt(Instant.now().minusSeconds(60)).build());
+        passwordResetTokenJpaRepository.save(PasswordResetToken.rehydrate(
+                UUID.fromString("63553f40-4298-4768-b6b2-71385163467b"),
+                "expired-token",
+                user.getId(),
+                Instant.now().minusSeconds(60)));
 
         final String resetBody = """
                 {

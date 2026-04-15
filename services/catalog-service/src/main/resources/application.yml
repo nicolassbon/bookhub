@@ -1,6 +1,9 @@
 spring:
   application:
     name: catalog-service
+  threads:
+    virtual:
+      enabled: true
   profiles:
     active: ${SPRING_PROFILES_ACTIVE:default}
   datasource:
@@ -29,3 +32,10 @@ management:
       probes:
         enabled: true
       show-details: never
+
+catalog:
+  providers:
+    openlibrary:
+      enabled: ${CATALOG_OPENLIBRARY_ENABLED:true}
+      url: ${CATALOG_OPENLIBRARY_URL:https://openlibrary.org}
+      timeout-ms: ${CATALOG_OPENLIBRARY_TIMEOUT_MS:2000}

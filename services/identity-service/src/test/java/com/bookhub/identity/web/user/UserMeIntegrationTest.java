@@ -47,13 +47,12 @@ class UserMeIntegrationTest {
     @Test
     @DisplayName("Should return authenticated user profile when access token is valid")
     void shouldReturnAuthenticatedUserProfileWhenAccessTokenIsValid() throws Exception {
-        final User savedUser = userJpaRepository.save(User.builder()
-                .username("nico")
-                .email("nico@example.com")
-                .passwordHash("ignored")
-                .displayName("Nicolas Bon")
-                .role(UserRole.USER)
-                .build());
+        final User savedUser = userJpaRepository.save(User.create(
+                "nico",
+                "nico@example.com",
+                "ignored",
+                "Nicolas Bon",
+                UserRole.USER));
 
         final String token = JwtTestTokenFactory.createAccessToken(
                 jwtEncoder,

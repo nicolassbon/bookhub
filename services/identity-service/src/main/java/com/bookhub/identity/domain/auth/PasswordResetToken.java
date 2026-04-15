@@ -9,7 +9,6 @@ import jakarta.persistence.UniqueConstraint;
 import java.time.Instant;
 import java.util.Objects;
 import java.util.UUID;
-import lombok.Builder;
 
 @Entity
 @Table(
@@ -38,7 +37,6 @@ public class PasswordResetToken {
     protected PasswordResetToken() {
     }
 
-    @Builder
     private PasswordResetToken(
             final UUID id,
             final String token,
@@ -50,6 +48,21 @@ public class PasswordResetToken {
         this.userId = userId;
         this.expiresAt = expiresAt;
         this.createdAt = createdAt;
+    }
+
+    public static PasswordResetToken issue(
+            final String token,
+            final UUID userId,
+            final Instant expiresAt) {
+        return new PasswordResetToken(null, token, userId, expiresAt, null);
+    }
+
+    public static PasswordResetToken rehydrate(
+            final UUID id,
+            final String token,
+            final UUID userId,
+            final Instant expiresAt) {
+        return new PasswordResetToken(id, token, userId, expiresAt, null);
     }
 
     @PrePersist

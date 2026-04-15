@@ -39,28 +39,28 @@ class RefreshSessionServiceTest {
     @Mock
     private Clock clock;
 
+    @Mock
+    private AuthResultMapper authResultMapper;
+
     @InjectMocks
     private RefreshSessionService refreshSessionService;
 
     @Test
     @DisplayName("Should rotate refresh token and return a new access token")
     void shouldRotateRefreshTokenAndReturnANewAccessToken() {
-        final User user = User.builder()
-                .id(UUID.fromString("6676f2d8-0f65-40ae-b102-66145e24f3fd"))
-                .username("nico")
-                .email("nico@example.com")
-                .passwordHash("hash")
-                .displayName("Nicolas Bon")
-                .role(UserRole.USER)
-                .build();
+        final User user = User.rehydrate(
+                UUID.fromString("6676f2d8-0f65-40ae-b102-66145e24f3fd"),
+                "nico",
+                "nico@example.com",
+                "hash",
+                "Nicolas Bon",
+                UserRole.USER);
 
         final UUID tokenValue = UUID.fromString("d7cc2a0f-ea1a-4f74-8e64-3f3f4a5ba723");
-        final RefreshToken activeToken = RefreshToken.builder()
-                .token(tokenValue)
-                .user(user)
-                .expiresAt(Instant.parse("2026-04-20T13:00:00Z"))
-                .revoked(false)
-                .build();
+        final RefreshToken activeToken = RefreshToken.issue(
+                tokenValue,
+                user,
+                Instant.parse("2026-04-20T13:00:00Z"));
 
         when(clock.instant()).thenReturn(Instant.parse("2026-04-12T13:00:00Z"));
         when(refreshTokenProperties.expirationSeconds()).thenReturn(604800L);
@@ -70,6 +70,12 @@ class RefreshSessionServiceTest {
         when(tokenIssuer.issueFor(user)).thenReturn(TokenIssuer.IssuedTokenPair.builder()
                 .accessToken("new-access-token")
                 .expiresIn(3600)
+                .build());
+        when(authResultMapper.toLoginUserView(user)).thenReturn(LoginUserResult.LoginUserView.builder()
+                .userId("6676f2d8-0f65-40ae-b102-66145e24f3fd")
+                .username("nico")
+                .displayName("Nicolas Bon")
+                .role("USER")
                 .build());
 
         final RefreshSessionResult result = refreshSessionService.refresh(tokenValue.toString());

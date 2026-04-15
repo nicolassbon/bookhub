@@ -15,10 +15,15 @@ public class RegisterUserService {
 
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
+    private final AuthResultMapper authResultMapper;
 
-    public RegisterUserService(final UserRepository userRepository, final PasswordEncoder passwordEncoder) {
+    public RegisterUserService(
+            final UserRepository userRepository,
+            final PasswordEncoder passwordEncoder,
+            final AuthResultMapper authResultMapper) {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
+        this.authResultMapper = authResultMapper;
     }
 
     @Transactional
@@ -35,22 +40,15 @@ public class RegisterUserService {
         }
 
         final String hashedPassword = passwordEncoder.encode(command.password());
-        final User user = User.builder()
-                .username(normalizedUsername)
-                .email(normalizedEmail)
-                .passwordHash(hashedPassword)
-                .displayName(command.displayName().trim())
-                .role(UserRole.USER)
-                .build();
+        final User user = User.create(
+                normalizedUsername,
+                normalizedEmail,
+                hashedPassword,
+                command.displayName().trim(),
+                UserRole.USER);
 
         final User persistedUser = userRepository.save(user);
-        return RegisterUserResult.builder()
-                .userId(persistedUser.getId().toString())
-                .username(persistedUser.getUsername())
-                .email(persistedUser.getEmail())
-                .displayName(persistedUser.getDisplayName())
-                .role(persistedUser.getRole().name())
-                .build();
+        return authResultMapper.toRegisterUserResult(persistedUser);
     }
 
     private String normalize(final String value) {
