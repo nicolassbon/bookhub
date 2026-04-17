@@ -5,7 +5,6 @@ import com.bookhub.catalog.domain.BookRepository;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
-import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Repository;
 
 @Repository
@@ -38,8 +37,8 @@ public class BookPersistenceRepositoryAdapter implements BookRepository {
     }
 
     @Override
-    public List<Book> searchByQuery(final String query, final Pageable pageable) {
-        return jpaBookRepository.searchByQuery(query, pageable)
+    public List<Book> searchByQuery(final String query, final int candidateLimit) {
+        return jpaBookRepository.searchByQuery(query, candidateLimit)
                 .stream()
                 .map(bookEntityMapper::toDomain)
                 .toList();

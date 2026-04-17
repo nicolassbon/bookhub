@@ -1,6 +1,9 @@
 package com.bookhub.identity.config;
 
+import com.bookhub.identity.application.auth.PasswordResetTokenHasher;
+import com.bookhub.identity.infrastructure.security.HmacPasswordResetTokenHasher;
 import java.time.Clock;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -17,5 +20,11 @@ public class SecurityBeansConfig {
     @Bean
     public Clock clock() {
         return Clock.systemUTC();
+    }
+
+    @Bean
+    public PasswordResetTokenHasher passwordResetTokenHasher(
+            @Value("${auth.password-reset.hash-secret}") final String hashSecret) {
+        return new HmacPasswordResetTokenHasher(hashSecret);
     }
 }

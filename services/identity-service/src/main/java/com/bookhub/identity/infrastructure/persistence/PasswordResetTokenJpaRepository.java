@@ -9,7 +9,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 public interface PasswordResetTokenJpaRepository extends JpaRepository<PasswordResetToken, UUID> {
 
-    Optional<PasswordResetToken> findByToken(String token);
+    Optional<PasswordResetToken> findByTokenHash(String tokenHash);
 
     List<PasswordResetToken> findAllByUserId(UUID userId);
 

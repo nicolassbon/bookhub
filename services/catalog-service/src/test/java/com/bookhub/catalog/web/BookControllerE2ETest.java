@@ -67,7 +67,7 @@ class BookControllerE2ETest {
         }
 
         @Test
-        void shouldMergeSearchResultsAndPersistExternalBookOnDetailFetch() throws Exception {
+    void shouldMergeSearchResultsAndPersistExternalBookOnDetailFetch() throws Exception {
                 final Book localBook = bookRepository.save(Book.builder()
                                 .id(UUID.fromString("123e4567-e89b-12d3-a456-426614174000"))
                                 .title("The Hobbit").authorName("J.R.R. Tolkien")
@@ -116,6 +116,22 @@ class BookControllerE2ETest {
                                 .andExpect(jsonPath("$.sourceReference").value("OL999W"))
                                 .andExpect(jsonPath("$.title").value("Unfinished Tales"));
 
-                assertThat(bookRepository.findBySourceReference("OL999W")).isPresent();
-        }
+        assertThat(bookRepository.findBySourceReference("OL999W")).isPresent();
+    }
+
+    @Test
+    void shouldReturnInvalidProviderPayloadWhenDetailTitleIsMissing() throws Exception {
+        WIRE_MOCK_SERVER.stubFor(WireMock.get(urlPathMatching("/works/OLMISSINGW.json"))
+                .willReturn(okJson("""
+                        {
+                          "key": "/works/OLMISSINGW",
+                          "author_name": ["Unknown"]
+                        }
+                        """)));
+
+        mockMvc.perform(get("/api/v1/books/{id}", "ext:ol:OLMISSINGW"))
+                .andExpect(status().isBadGateway())
+                .andExpect(jsonPath("$.code").value("INVALID_PROVIDER_PAYLOAD"))
+                .andExpect(jsonPath("$.path").value("/api/v1/books/ext:ol:OLMISSINGW"));
+    }
 }

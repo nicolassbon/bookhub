@@ -27,6 +27,9 @@ import com.bookhub.identity.domain.user.DuplicateResourceException;
 import com.bookhub.identity.application.auth.LoginUserService;
 import com.bookhub.identity.application.auth.InvalidCredentialsException;
 import com.bookhub.identity.web.error.GlobalExceptionHandler;
+import java.time.Clock;
+import java.time.Instant;
+import java.time.ZoneOffset;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -71,12 +74,17 @@ class AuthControllerTest {
     @MockitoBean
     private RefreshTokenProperties refreshTokenProperties;
 
+    @MockitoBean
+    private Clock clock;
+
     @BeforeEach
     void setUp() {
         when(refreshTokenProperties.cookieName()).thenReturn("refresh_token");
         when(refreshTokenProperties.cookiePath()).thenReturn("/api/v1/auth");
         when(refreshTokenProperties.cookieSameSite()).thenReturn("Strict");
         when(refreshTokenProperties.cookieSecure()).thenReturn(false);
+        when(clock.instant()).thenReturn(Instant.parse("2026-04-17T00:00:00Z"));
+        when(clock.getZone()).thenReturn(ZoneOffset.UTC);
     }
 
     @Test
@@ -364,4 +372,5 @@ class AuthControllerTest {
                 .andExpect(jsonPath("$.message").value("Invalid or expired password reset token"))
                 .andExpect(jsonPath("$.path").value("/api/v1/auth/reset-password"));
     }
+
 }

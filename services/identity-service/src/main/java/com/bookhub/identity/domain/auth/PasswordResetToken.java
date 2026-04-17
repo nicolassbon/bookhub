@@ -14,7 +14,7 @@ import java.util.UUID;
 @Table(
         name = "password_reset_tokens",
         uniqueConstraints = {
-            @UniqueConstraint(name = "uk_password_reset_tokens_token", columnNames = "token")
+            @UniqueConstraint(name = "uk_password_reset_tokens_token_hash", columnNames = "token_hash")
         })
 public class PasswordResetToken {
 
@@ -22,8 +22,8 @@ public class PasswordResetToken {
     @Column(name = "id", nullable = false, updatable = false)
     private UUID id;
 
-    @Column(name = "token", nullable = false, length = 100)
-    private String token;
+    @Column(name = "token_hash", nullable = false, length = 64)
+    private String tokenHash;
 
     @Column(name = "user_id", nullable = false)
     private UUID userId;
@@ -39,30 +39,30 @@ public class PasswordResetToken {
 
     private PasswordResetToken(
             final UUID id,
-            final String token,
+            final String tokenHash,
             final UUID userId,
             final Instant expiresAt,
             final Instant createdAt) {
         this.id = id;
-        this.token = token;
+        this.tokenHash = tokenHash;
         this.userId = userId;
         this.expiresAt = expiresAt;
         this.createdAt = createdAt;
     }
 
     public static PasswordResetToken issue(
-            final String token,
+            final String tokenHash,
             final UUID userId,
             final Instant expiresAt) {
-        return new PasswordResetToken(null, token, userId, expiresAt, null);
+        return new PasswordResetToken(null, tokenHash, userId, expiresAt, null);
     }
 
     public static PasswordResetToken rehydrate(
             final UUID id,
-            final String token,
+            final String tokenHash,
             final UUID userId,
             final Instant expiresAt) {
-        return new PasswordResetToken(id, token, userId, expiresAt, null);
+        return new PasswordResetToken(id, tokenHash, userId, expiresAt, null);
     }
 
     @PrePersist
@@ -79,8 +79,8 @@ public class PasswordResetToken {
         return id;
     }
 
-    public String getToken() {
-        return token;
+    public String getTokenHash() {
+        return tokenHash;
     }
 
     public UUID getUserId() {

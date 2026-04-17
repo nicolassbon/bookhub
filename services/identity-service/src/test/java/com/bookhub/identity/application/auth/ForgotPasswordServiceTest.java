@@ -1,6 +1,7 @@
 package com.bookhub.identity.application.auth;
 
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -42,6 +43,9 @@ class ForgotPasswordServiceTest {
     @Mock
     private Clock clock;
 
+    @Mock
+    private PasswordResetTokenHasher passwordResetTokenHasher;
+
     @InjectMocks
     private ForgotPasswordService forgotPasswordService;
 
@@ -60,14 +64,16 @@ class ForgotPasswordServiceTest {
         when(clock.instant()).thenReturn(now);
         when(passwordResetProperties.expirationSeconds()).thenReturn(900L);
         when(userRepository.findByEmail("user@example.com")).thenReturn(Optional.of(existingUser));
+        when(passwordResetTokenHasher.hash(any(String.class))).thenReturn("hashed-reset-token");
         when(passwordResetTokenRepository.save(any(PasswordResetToken.class)))
                 .thenAnswer(invocation -> invocation.getArgument(0));
 
         forgotPasswordService.request(" user@example.com ");
 
         verify(passwordResetTokenRepository).deleteByUserId(existingUser.getId());
-        verify(passwordResetTokenRepository).save(any(PasswordResetToken.class));
+        verify(passwordResetTokenRepository).save(argThat(token -> "hashed-reset-token".equals(token.getTokenHash())));
         verify(mailSenderPort).sendPasswordResetEmail(eq("user@example.com"), any(String.class));
+        verify(passwordResetTokenHasher).hash(any(String.class));
     }
 
     @Test

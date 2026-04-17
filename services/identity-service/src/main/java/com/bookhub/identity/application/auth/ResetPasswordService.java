@@ -17,22 +17,26 @@ public class ResetPasswordService {
     private final PasswordResetTokenRepository passwordResetTokenRepository;
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
+    private final PasswordResetTokenHasher passwordResetTokenHasher;
     private final Clock clock;
 
     public ResetPasswordService(
             final PasswordResetTokenRepository passwordResetTokenRepository,
             final UserRepository userRepository,
             final PasswordEncoder passwordEncoder,
+            final PasswordResetTokenHasher passwordResetTokenHasher,
             final Clock clock) {
         this.passwordResetTokenRepository = passwordResetTokenRepository;
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
+        this.passwordResetTokenHasher = passwordResetTokenHasher;
         this.clock = clock;
     }
 
     public void reset(final String token, final String newPassword) {
         final Instant now = Instant.now(clock);
-        final PasswordResetToken passwordResetToken = passwordResetTokenRepository.findByToken(token)
+        final String tokenHash = passwordResetTokenHasher.hash(token);
+        final PasswordResetToken passwordResetToken = passwordResetTokenRepository.findByTokenHash(tokenHash)
                 .orElseThrow(InvalidPasswordResetTokenException::new);
 
         if (passwordResetToken.getExpiresAt().isBefore(now)) {

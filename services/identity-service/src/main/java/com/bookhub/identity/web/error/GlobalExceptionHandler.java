@@ -4,6 +4,7 @@ import com.bookhub.identity.application.auth.InvalidCredentialsException;
 import com.bookhub.identity.application.auth.InvalidPasswordResetTokenException;
 import com.bookhub.identity.application.auth.InvalidRefreshTokenException;
 import com.bookhub.identity.domain.user.DuplicateResourceException;
+import com.bookhub.identity.web.auth.ratelimit.RateLimitExceededException;
 import jakarta.servlet.http.HttpServletRequest;
 import java.time.Instant;
 import java.util.Comparator;
@@ -94,6 +95,18 @@ public class GlobalExceptionHandler {
                 HttpStatus.BAD_REQUEST,
                 "Bad Request",
                 "INVALID_PASSWORD_RESET_TOKEN",
+                exception.getMessage(),
+                request.getRequestURI());
+    }
+
+    @ExceptionHandler(RateLimitExceededException.class)
+    public ResponseEntity<ErrorResponse> handleRateLimitExceeded(
+            final RateLimitExceededException exception,
+            final HttpServletRequest request) {
+        return buildErrorResponse(
+                HttpStatus.TOO_MANY_REQUESTS,
+                "Too Many Requests",
+                "RATE_LIMIT_EXCEEDED",
                 exception.getMessage(),
                 request.getRequestURI());
     }

@@ -43,8 +43,11 @@ public class SearchResultMerger {
 
     private BookSearchItem toEphemeralExternalItem(final BookSearchItem external) {
         final String normalizedSourceReference = BookNormalization.normalizeSourceReference(external.sourceReference());
+        final String ephemeralId = normalizedSourceReference != null
+                ? EXTERNAL_PREFIX + normalizedSourceReference
+                : "unknown";
         return new BookSearchItem(
-                EXTERNAL_PREFIX + normalizedSourceReference,
+                ephemeralId,
                 external.title(),
                 external.authorName(),
                 normalizedSourceReference,
@@ -60,6 +63,13 @@ public class SearchResultMerger {
         if (item.isbn13() != null) {
             return "isbn:" + item.isbn13();
         }
-        return "title:" + item.title().toLowerCase(Locale.ROOT);
+        if (item.title() != null) {
+            return "title:" + item.title().toLowerCase(Locale.ROOT);
+        }
+        final String itemId = item.id();
+        if (itemId != null) {
+            return "id:" + itemId.toLowerCase(Locale.ROOT);
+        }
+        return "unknown";
     }
 }

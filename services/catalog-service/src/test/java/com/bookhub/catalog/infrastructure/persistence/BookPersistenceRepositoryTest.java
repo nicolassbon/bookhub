@@ -58,6 +58,28 @@ class BookPersistenceRepositoryTest {
                 .isInstanceOf(DataIntegrityViolationException.class);
     }
 
+    @Test
+    void shouldFindByMiddleSubstringInTitleAndAuthor() {
+        bookRepository.save(baseBook("OL123W"));
+        bookRepository.save(Book.builder()
+                .id(UUID.randomUUID())
+                .title("Clean Architecture")
+                .authorName("Robert Martin")
+                .isbn13("9780134494166")
+                .sourceReference("OL456W")
+                .build());
+
+        final var titleMatches = bookRepository.searchByQuery("obbi", 10);
+        final var authorMatches = bookRepository.searchByQuery("mart", 10);
+
+        assertThat(titleMatches)
+                .extracting(Book::getSourceReference)
+                .contains("OL123W");
+        assertThat(authorMatches)
+                .extracting(Book::getSourceReference)
+                .contains("OL456W");
+    }
+
     private Book baseBook(final String sourceReference) {
         return Book.builder()
                 .id(UUID.randomUUID())

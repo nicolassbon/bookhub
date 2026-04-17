@@ -13,8 +13,6 @@ import java.util.concurrent.Executor;
 import java.util.concurrent.TimeUnit;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Sort;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -22,6 +20,7 @@ import org.springframework.stereotype.Service;
 public class SearchBooksService {
 
     private static final int DEFAULT_LIMIT = 20;
+    private static final int MAX_LIMIT = 100;
     private static final Logger LOGGER = LoggerFactory.getLogger(SearchBooksService.class);
 
     private final BookRepository bookRepository;
@@ -51,13 +50,16 @@ public class SearchBooksService {
                 new SearchResultMerger(), meterRegistry);
     }
 
-    public List<BookSearchItem> search(final String query) {
+    public List<BookSearchItem> search(final String query, final int limit, final int offset) {
+        final int normalizedLimit = normalizeLimit(limit);
+        final int normalizedOffset = normalizeOffset(offset);
+        final int candidateLimit = normalizedLimit + normalizedOffset;
+
         final long totalStart = System.nanoTime();
         final CompletableFuture<List<Book>> localFuture = CompletableFuture.supplyAsync(() -> {
             final long start = System.nanoTime();
             try {
-                return bookRepository.searchByQuery(query,
-                        PageRequest.of(0, DEFAULT_LIMIT, Sort.by(Sort.Direction.ASC, "title")));
+                return bookRepository.searchByQuery(query, candidateLimit);
             } finally {
                 meterRegistry.timer("catalog.search.local.duration")
                         .record(System.nanoTime() - start, TimeUnit.NANOSECONDS);
@@ -65,7 +67,7 @@ public class SearchBooksService {
         }, searchExecutor);
 
         final CompletableFuture<List<BookSearchItem>> externalFuture = searchProvider
-                .searchAsync(query, DEFAULT_LIMIT, searchExecutor)
+                .searchAsync(query, candidateLimit, searchExecutor)
                 .completeOnTimeout(List.of(), providerTimeout.toMillis(), TimeUnit.MILLISECONDS)
                 .exceptionally(ignored -> List.of()).thenApply(results -> {
                     meterRegistry.timer("catalog.search.external.duration")
@@ -77,11 +79,32 @@ public class SearchBooksService {
         final List<BookSearchItem> externalResults = externalFuture.join();
         final List<BookSearchItem> mergedResults =
                 searchResultMerger.merge(localResults, externalResults);
+        final List<BookSearchItem> pagedResults = mergedResults.stream()
+                .skip(normalizedOffset)
+                .limit(normalizedLimit)
+                .toList();
+
         meterRegistry.timer("catalog.search.total.duration").record(System.nanoTime() - totalStart,
                 TimeUnit.NANOSECONDS);
         LOGGER.info(
-                "Catalog search completed query='{}' localCount={} externalCount={} mergedCount={}",
-                query, localResults.size(), externalResults.size(), mergedResults.size());
-        return mergedResults;
+                "Catalog search completed query='{}' localCount={} externalCount={} mergedCount={} pageCount={} candidateLimit={}",
+                query,
+                localResults.size(),
+                externalResults.size(),
+                mergedResults.size(),
+                pagedResults.size(),
+                candidateLimit);
+        return pagedResults;
+    }
+
+    private int normalizeLimit(final int limit) {
+        if (limit <= 0) {
+            return DEFAULT_LIMIT;
+        }
+        return Math.min(limit, MAX_LIMIT);
+    }
+
+    private int normalizeOffset(final int offset) {
+        return Math.max(offset, 0);
     }
 }

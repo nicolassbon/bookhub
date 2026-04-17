@@ -1,6 +1,7 @@
 package com.bookhub.catalog.web;
 
 import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.verify;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -8,6 +9,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import com.bookhub.catalog.application.GetBookDetailService;
 import com.bookhub.catalog.application.SearchBooksService;
 import com.bookhub.catalog.application.error.BookNotFoundException;
+import com.bookhub.catalog.application.error.InvalidProviderPayloadException;
 import com.bookhub.catalog.application.model.BookSearchItem;
 import com.bookhub.catalog.domain.Book;
 import java.util.List;
@@ -33,6 +35,35 @@ class BookControllerTest {
     private GetBookDetailService getBookDetailService;
 
     @Test
+    void shouldRejectQueryShorterThanTwoCharacters() throws Exception {
+        mockMvc.perform(get("/api/v1/books").queryParam("q", "a"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.code").value("VALIDATION_ERROR"));
+    }
+
+    @Test
+    void shouldRejectQueryLongerThan200Characters() throws Exception {
+        final String longQuery = "a".repeat(201);
+        mockMvc.perform(get("/api/v1/books").queryParam("q", longQuery))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.code").value("VALIDATION_ERROR"));
+    }
+
+    @Test
+    void shouldRejectLimitExceedingMaximum() throws Exception {
+        mockMvc.perform(get("/api/v1/books").queryParam("q", "hobbit").queryParam("limit", "200"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.code").value("VALIDATION_ERROR"));
+    }
+
+    @Test
+    void shouldRejectNegativeOffset() throws Exception {
+        mockMvc.perform(get("/api/v1/books").queryParam("q", "hobbit").queryParam("offset", "-1"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.code").value("VALIDATION_ERROR"));
+    }
+
+    @Test
     void shouldReturnSearchResults() throws Exception {
         final BookSearchItem item = new BookSearchItem(
                 "ext:ol:OL262758W",
@@ -43,12 +74,27 @@ class BookControllerTest {
                 "https://covers.openlibrary.org/b/id/1-L.jpg",
                 null);
 
-        when(searchBooksService.search("hobbit")).thenReturn(List.of(item));
+        when(searchBooksService.search("hobbit", 20, 0)).thenReturn(List.of(item));
 
         mockMvc.perform(get("/api/v1/books").queryParam("q", "hobbit"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$[0].id").value("ext:ol:OL262758W"))
                 .andExpect(jsonPath("$[0].title").value("The Hobbit"));
+
+        verify(searchBooksService).search("hobbit", 20, 0);
+    }
+
+    @Test
+    void shouldPropagatePaginationParametersToSearchService() throws Exception {
+        when(searchBooksService.search("hobbit", 10, 20)).thenReturn(List.of());
+
+        mockMvc.perform(get("/api/v1/books")
+                        .queryParam("q", "hobbit")
+                        .queryParam("limit", "10")
+                        .queryParam("offset", "20"))
+                .andExpect(status().isOk());
+
+        verify(searchBooksService).search("hobbit", 10, 20);
     }
 
     @Test
@@ -79,5 +125,16 @@ class BookControllerTest {
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.code").value("BOOK_NOT_FOUND"))
                 .andExpect(jsonPath("$.path").value("/api/v1/books/ext:ol:OL404W"));
+    }
+
+    @Test
+    void shouldReturnInvalidProviderPayloadErrorShape() throws Exception {
+        when(getBookDetailService.getById("ext:ol:OLMISSINGW"))
+                .thenThrow(new InvalidProviderPayloadException("Provider payload missing required title"));
+
+        mockMvc.perform(get("/api/v1/books/{id}", "ext:ol:OLMISSINGW"))
+                .andExpect(status().isBadGateway())
+                .andExpect(jsonPath("$.code").value("INVALID_PROVIDER_PAYLOAD"))
+                .andExpect(jsonPath("$.path").value("/api/v1/books/ext:ol:OLMISSINGW"));
     }
 }

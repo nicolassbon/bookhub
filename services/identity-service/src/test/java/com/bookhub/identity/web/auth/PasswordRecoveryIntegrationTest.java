@@ -1,6 +1,8 @@
 package com.bookhub.identity.web.auth;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import com.bookhub.identity.application.auth.PasswordResetTokenHasher;
+import static org.mockito.Mockito.verify;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -15,6 +17,7 @@ import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.mockito.ArgumentCaptor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -43,6 +46,9 @@ class PasswordRecoveryIntegrationTest {
 
     @Autowired
     private PasswordEncoder passwordEncoder;
+
+    @Autowired
+    private PasswordResetTokenHasher passwordResetTokenHasher;
 
     @MockitoBean
     private MailSenderPort mailSenderPort;
@@ -87,7 +93,14 @@ class PasswordRecoveryIntegrationTest {
 
         final var createdTokens = passwordResetTokenJpaRepository.findAllByUserId(user.getId());
         assertThat(createdTokens).hasSize(1);
-        final String token = createdTokens.getFirst().getToken();
+        final String tokenHash = createdTokens.getFirst().getTokenHash();
+        assertThat(tokenHash)
+                .isNotBlank()
+                .doesNotContain("-");
+
+        final ArgumentCaptor<String> tokenCaptor = ArgumentCaptor.forClass(String.class);
+        verify(mailSenderPort).sendPasswordResetEmail(org.mockito.ArgumentMatchers.eq("nico@example.com"), tokenCaptor.capture());
+        final String token = tokenCaptor.getValue();
 
         final String resetBody = """
                 {
@@ -102,7 +115,7 @@ class PasswordRecoveryIntegrationTest {
         final var updatedUser = userJpaRepository.findById(user.getId()).orElseThrow();
         assertThat(passwordEncoder.matches("NewStrongPassword123!", updatedUser.getPasswordHash()))
                 .isTrue();
-        assertThat(passwordResetTokenJpaRepository.findByToken(token)).isEmpty();
+        assertThat(passwordResetTokenJpaRepository.findByTokenHash(tokenHash)).isEmpty();
 
         mockMvc.perform(post("/api/v1/auth/reset-password").contentType(MediaType.APPLICATION_JSON)
                 .content(resetBody)).andExpect(status().isBadRequest())
@@ -117,7 +130,7 @@ class PasswordRecoveryIntegrationTest {
 
         passwordResetTokenJpaRepository.save(PasswordResetToken.rehydrate(
                 UUID.fromString("63553f40-4298-4768-b6b2-71385163467b"),
-                "expired-token",
+                passwordResetTokenHasher.hash("expired-token"),
                 user.getId(),
                 Instant.now().minusSeconds(60)));
 

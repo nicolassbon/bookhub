@@ -38,6 +38,9 @@ class ResetPasswordServiceTest {
         @Mock
         private Clock clock;
 
+        @Mock
+        private PasswordResetTokenHasher passwordResetTokenHasher;
+
         @InjectMocks
         private ResetPasswordService resetPasswordService;
 
@@ -59,24 +62,29 @@ class ResetPasswordServiceTest {
                                 Instant.parse("2026-04-12T21:00:00Z"));
 
                 when(clock.instant()).thenReturn(Instant.parse("2026-04-12T20:00:00Z"));
-                when(passwordResetTokenRepository.findByToken(resetToken.getToken()))
+                when(passwordResetTokenHasher.hash("raw-token"))
+                                .thenReturn("hashed-token");
+                when(passwordResetTokenRepository.findByTokenHash("hashed-token"))
                                 .thenReturn(Optional.of(resetToken));
                 when(userRepository.findById(userId)).thenReturn(Optional.of(user));
                 when(passwordEncoder.encode("NewStrongPassword123!"))
                                 .thenReturn("encoded-new-password");
 
-                resetPasswordService.reset(resetToken.getToken(), "NewStrongPassword123!");
+                resetPasswordService.reset("raw-token", "NewStrongPassword123!");
 
                 verify(passwordEncoder).encode("NewStrongPassword123!");
                 verify(userRepository).save(user);
                 verify(passwordResetTokenRepository).delete(resetToken);
                 verify(passwordResetTokenRepository).deleteByUserId(userId);
+                verify(passwordResetTokenHasher).hash("raw-token");
         }
 
         @Test
         @DisplayName("Should reject reset when token does not exist")
         void shouldRejectResetWhenTokenDoesNotExist() {
-                when(passwordResetTokenRepository.findByToken("unknown-token"))
+                when(passwordResetTokenHasher.hash("unknown-token"))
+                                .thenReturn("unknown-token-hash");
+                when(passwordResetTokenRepository.findByTokenHash("unknown-token-hash"))
                                 .thenReturn(Optional.empty());
 
                 assertThatThrownBy(() -> resetPasswordService.reset("unknown-token",
@@ -97,7 +105,9 @@ class ResetPasswordServiceTest {
                                 Instant.parse("2026-04-12T19:59:00Z"));
 
                 when(clock.instant()).thenReturn(Instant.parse("2026-04-12T20:00:00Z"));
-                when(passwordResetTokenRepository.findByToken("expired-token"))
+                when(passwordResetTokenHasher.hash("expired-token"))
+                                .thenReturn("expired-token-hash");
+                when(passwordResetTokenRepository.findByTokenHash("expired-token-hash"))
                                 .thenReturn(Optional.of(expiredToken));
 
                 assertThatThrownBy(() -> resetPasswordService.reset("expired-token",
@@ -121,7 +131,9 @@ class ResetPasswordServiceTest {
                                 Instant.parse("2026-04-12T21:00:00Z"));
 
                 when(clock.instant()).thenReturn(Instant.parse("2026-04-12T20:00:00Z"));
-                when(passwordResetTokenRepository.findByToken("valid-token"))
+                when(passwordResetTokenHasher.hash("valid-token"))
+                                .thenReturn("valid-token-hash");
+                when(passwordResetTokenRepository.findByTokenHash("valid-token-hash"))
                                 .thenReturn(Optional.of(validToken));
                 when(userRepository.findById(userId)).thenReturn(Optional.empty());
 

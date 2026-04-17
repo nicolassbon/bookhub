@@ -26,16 +26,20 @@ public class ForgotPasswordService {
     private final PasswordResetTokenRepository passwordResetTokenRepository;
     private final MailSenderPort mailSenderPort;
     private final PasswordResetProperties passwordResetProperties;
+    private final PasswordResetTokenHasher passwordResetTokenHasher;
     private final Clock clock;
 
     public ForgotPasswordService(final UserRepository userRepository,
             final PasswordResetTokenRepository passwordResetTokenRepository,
             final MailSenderPort mailSenderPort,
-            final PasswordResetProperties passwordResetProperties, final Clock clock) {
+            final PasswordResetProperties passwordResetProperties,
+            final PasswordResetTokenHasher passwordResetTokenHasher,
+            final Clock clock) {
         this.userRepository = userRepository;
         this.passwordResetTokenRepository = passwordResetTokenRepository;
         this.mailSenderPort = mailSenderPort;
         this.passwordResetProperties = passwordResetProperties;
+        this.passwordResetTokenHasher = passwordResetTokenHasher;
         this.clock = clock;
     }
 
@@ -48,18 +52,19 @@ public class ForgotPasswordService {
         }
 
         final User user = userOptional.get();
-        final String token = UUID.randomUUID().toString();
+        final String rawToken = UUID.randomUUID().toString();
+        final String tokenHash = passwordResetTokenHasher.hash(rawToken);
         final Instant now = Instant.now(clock);
 
         passwordResetTokenRepository.deleteByUserId(user.getId());
         final PasswordResetToken passwordResetToken = PasswordResetToken.issue(
-                token,
+                tokenHash,
                 user.getId(),
                 now.plusSeconds(passwordResetProperties.expirationSeconds()));
         passwordResetTokenRepository.save(passwordResetToken);
 
         try {
-            mailSenderPort.sendPasswordResetEmail(user.getEmail(), token);
+            mailSenderPort.sendPasswordResetEmail(user.getEmail(), rawToken);
         } catch (RuntimeException exception) {
             LOGGER.warn("Password reset mail delivery failed for {}", normalizedEmail, exception);
         }

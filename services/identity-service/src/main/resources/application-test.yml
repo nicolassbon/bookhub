@@ -43,3 +43,14 @@ auth:
     expiration-seconds: ${PASSWORD_RESET_EXPIRATION_SECONDS:900}
     url-base: ${PASSWORD_RESET_URL_BASE:https://bookhub.test/reset-password?token=}
     from-address: ${PASSWORD_RESET_FROM_ADDRESS:noreply@bookhub.test}
+    hash-secret: ${PASSWORD_RESET_HASH_SECRET:test-password-reset-secret}
+  rate-limit:
+    login:
+      max-attempts: ${AUTH_RATE_LIMIT_LOGIN_MAX_ATTEMPTS:10}
+      window-seconds: ${AUTH_RATE_LIMIT_LOGIN_WINDOW_SECONDS:60}
+    register:
+      max-attempts: ${AUTH_RATE_LIMIT_REGISTER_MAX_ATTEMPTS:10}
+      window-seconds: ${AUTH_RATE_LIMIT_REGISTER_WINDOW_SECONDS:60}
+    forgot-password:
+      max-attempts: ${AUTH_RATE_LIMIT_FORGOT_PASSWORD_MAX_ATTEMPTS:10}
+      window-seconds: ${AUTH_RATE_LIMIT_FORGOT_PASSWORD_WINDOW_SECONDS:60}

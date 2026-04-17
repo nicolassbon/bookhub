@@ -21,8 +21,8 @@ public class PasswordResetTokenRepositoryAdapter implements PasswordResetTokenRe
     }
 
     @Override
-    public Optional<PasswordResetToken> findByToken(final String token) {
-        return passwordResetTokenJpaRepository.findByToken(token);
+    public Optional<PasswordResetToken> findByTokenHash(final String tokenHash) {
+        return passwordResetTokenJpaRepository.findByTokenHash(tokenHash);
     }
 
     @Override

@@ -11,7 +11,6 @@ out/
 .project
 .factorypath
 .settings/
-.atl/
 skills-lock.json
 
 .env

@@ -48,19 +48,19 @@ class PasswordResetTokenRepositoryAdapterIntegrationTest {
 
         final PasswordResetToken token = PasswordResetToken.rehydrate(
                 UUID.fromString("3a5f37c4-f975-4f5f-8190-24338f4dd58e"),
-                "ab6bd217-f658-4686-9dac-bc93d83512fd",
+                "ab6bd217f65846869dacbc93d83512fdhash",
                 user.getId(),
                 Instant.parse("2026-04-12T21:00:00Z"));
 
         passwordResetTokenRepository.save(token);
 
-        final var persistedToken = passwordResetTokenRepository.findByToken("ab6bd217-f658-4686-9dac-bc93d83512fd");
+        final var persistedToken = passwordResetTokenRepository.findByTokenHash("ab6bd217f65846869dacbc93d83512fdhash");
         assertThat(persistedToken).isPresent();
         assertThat(persistedToken.get().getUserId()).isEqualTo(user.getId());
 
         passwordResetTokenRepository.delete(persistedToken.get());
 
-        assertThat(passwordResetTokenRepository.findByToken("ab6bd217-f658-4686-9dac-bc93d83512fd")).isEmpty();
+        assertThat(passwordResetTokenRepository.findByTokenHash("ab6bd217f65846869dacbc93d83512fdhash")).isEmpty();
     }
 
     @Test
@@ -74,18 +74,18 @@ class PasswordResetTokenRepositoryAdapterIntegrationTest {
 
         passwordResetTokenRepository.save(PasswordResetToken.rehydrate(
                 UUID.fromString("771f238c-dd1d-4e5a-a634-c0dd84f5ec63"),
-                "token-one",
+                "token-one-hash",
                 user.getId(),
                 Instant.parse("2026-04-12T21:00:00Z")));
         passwordResetTokenRepository.save(PasswordResetToken.rehydrate(
                 UUID.fromString("8f5342b9-006c-4a77-bf3e-3d728f4f54ca"),
-                "token-two",
+                "token-two-hash",
                 user.getId(),
                 Instant.parse("2026-04-12T21:05:00Z")));
 
         passwordResetTokenRepository.deleteByUserId(user.getId());
 
-        assertThat(passwordResetTokenJpaRepository.findByToken("token-one")).isEmpty();
-        assertThat(passwordResetTokenJpaRepository.findByToken("token-two")).isEmpty();
+        assertThat(passwordResetTokenJpaRepository.findByTokenHash("token-one-hash")).isEmpty();
+        assertThat(passwordResetTokenJpaRepository.findByTokenHash("token-two-hash")).isEmpty();
     }
 }

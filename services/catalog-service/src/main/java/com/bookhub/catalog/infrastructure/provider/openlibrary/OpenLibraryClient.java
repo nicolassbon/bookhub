@@ -1,6 +1,7 @@
 package com.bookhub.catalog.infrastructure.provider.openlibrary;
 
 import com.bookhub.catalog.application.error.ExternalProviderException;
+import com.bookhub.catalog.application.error.InvalidProviderPayloadException;
 import com.bookhub.catalog.application.model.BookSearchItem;
 import com.bookhub.catalog.application.support.BookNormalization;
 import com.bookhub.catalog.config.OpenLibraryProperties;
@@ -99,9 +100,11 @@ public class OpenLibraryClient implements SearchProvider {
                 throw new ExternalProviderException("OpenLibrary detail not found", new RestClientException("Empty response"));
             }
 
+            final String title = requireTitle(response);
+
             return Book.builder()
                     .id(UUID.randomUUID())
-                    .title(response.title())
+                    .title(title)
                     .authorName(resolveAuthor(response.authorNames()))
                     .isbn13(resolveIsbn13(response.isbn13Values()))
                     .sourceReference(normalized)
@@ -175,5 +178,13 @@ public class OpenLibraryClient implements SearchProvider {
         }
 
         return Integer.valueOf(candidate);
+    }
+
+    private String requireTitle(final OpenLibraryWorkResponse response) {
+        final String title = response.title();
+        if (title == null || title.isBlank()) {
+            throw new InvalidProviderPayloadException("Provider payload missing required title");
+        }
+        return title;
     }
 }

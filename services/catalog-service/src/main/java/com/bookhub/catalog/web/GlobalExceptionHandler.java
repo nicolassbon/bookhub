@@ -3,8 +3,11 @@ package com.bookhub.catalog.web;
 import com.bookhub.catalog.application.error.BookNotFoundException;
 import com.bookhub.catalog.application.error.ExternalProviderException;
 import com.bookhub.catalog.application.error.InvalidBookIdException;
+import com.bookhub.catalog.application.error.InvalidProviderPayloadException;
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.validation.ConstraintViolationException;
 import java.time.Instant;
+import java.util.stream.Collectors;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -12,6 +15,21 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 
 @RestControllerAdvice
 public class GlobalExceptionHandler {
+
+    @ExceptionHandler(ConstraintViolationException.class)
+    public ResponseEntity<ErrorResponse> handleConstraintViolation(
+            final ConstraintViolationException exception,
+            final HttpServletRequest request) {
+        final String message = exception.getConstraintViolations().stream()
+                .map(v -> v.getPropertyPath() + " " + v.getMessage())
+                .collect(Collectors.joining("; "));
+        return buildError(
+                HttpStatus.BAD_REQUEST,
+                "Validation Error",
+                "VALIDATION_ERROR",
+                message,
+                request.getRequestURI());
+    }
 
     @ExceptionHandler(InvalidBookIdException.class)
     public ResponseEntity<ErrorResponse> handleInvalidBookId(
@@ -45,6 +63,18 @@ public class GlobalExceptionHandler {
                 HttpStatus.BAD_GATEWAY,
                 "Bad Gateway",
                 "EXTERNAL_PROVIDER_ERROR",
+                exception.getMessage(),
+                request.getRequestURI());
+    }
+
+    @ExceptionHandler(InvalidProviderPayloadException.class)
+    public ResponseEntity<ErrorResponse> handleInvalidProviderPayload(
+            final InvalidProviderPayloadException exception,
+            final HttpServletRequest request) {
+        return buildError(
+                HttpStatus.BAD_GATEWAY,
+                "Bad Gateway",
+                "INVALID_PROVIDER_PAYLOAD",
                 exception.getMessage(),
                 request.getRequestURI());
     }

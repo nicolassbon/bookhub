@@ -2,7 +2,10 @@ package com.bookhub.catalog.web;
 
 import com.bookhub.catalog.application.GetBookDetailService;
 import com.bookhub.catalog.application.SearchBooksService;
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Size;
 import java.util.List;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -15,6 +18,8 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequestMapping("/api/v1/books")
 public class BookController {
+
+    private static final int MAX_LIMIT = 100;
 
     private final SearchBooksService searchBooksService;
     private final GetBookDetailService getBookDetailService;
@@ -30,8 +35,11 @@ public class BookController {
     }
 
     @GetMapping
-    public List<BookSearchResponse> search(@RequestParam("q") @NotBlank final String query) {
-        return searchBooksService.search(query)
+    public List<BookSearchResponse> search(
+            @RequestParam("q") @NotBlank @Size(min = 2, max = 200) final String query,
+            @RequestParam(value = "limit", defaultValue = "20") @Min(1) @Max(MAX_LIMIT) final int limit,
+            @RequestParam(value = "offset", defaultValue = "0") @Min(0) final int offset) {
+        return searchBooksService.search(query, limit, offset)
                 .stream()
                 .map(bookWebMapper::toSearchResponse)
                 .toList();

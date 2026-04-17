@@ -8,6 +8,7 @@ import static org.springframework.test.web.client.response.MockRestResponseCreat
 import static org.springframework.test.web.client.response.MockRestResponseCreators.withSuccess;
 
 import com.bookhub.catalog.application.error.ExternalProviderException;
+import com.bookhub.catalog.application.error.InvalidProviderPayloadException;
 import com.bookhub.catalog.application.model.BookSearchItem;
 import com.bookhub.catalog.config.OpenLibraryProperties;
 import com.bookhub.catalog.domain.Book;
@@ -151,5 +152,21 @@ class OpenLibraryClientTest {
         assertThat(detail.getIsbn13()).isNull();
         assertThat(detail.getPublishedYear()).isNull();
         assertThat(detail.getCoverUrl()).isNull();
+    }
+
+    @Test
+    void shouldFailWhenDetailPayloadHasMissingTitle() {
+        mockServer.expect(requestTo("https://openlibrary.org/works/OLMISSINGW.json"))
+                .andExpect(method(HttpMethod.GET))
+                .andRespond(withSuccess("""
+                        {
+                          "key": "/works/OLMISSINGW",
+                          "author_name": ["Unknown"]
+                        }
+                        """, MediaType.APPLICATION_JSON));
+
+        assertThatThrownBy(() -> openLibraryClient.fetchDetail("OLMISSINGW"))
+                .isInstanceOf(InvalidProviderPayloadException.class)
+                .hasMessage("Provider payload missing required title");
     }
 }
