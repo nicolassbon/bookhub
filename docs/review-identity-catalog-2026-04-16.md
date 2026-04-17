@@ -859,43 +859,48 @@ void shouldMergeLocalAndExternalResultsConcurrently() {
 
 ## Executive Summary by Priority
 
-### ❌ Critical — Immediate Action Required
+### ✅ Resolved Since This Review
+
+| # | Service | Problem | Resolution status |
+|---|---|---|---|
+| 1 | Identity | No rate limiting on `/login`, `/register`, `/forgot-password` | Resolved via auth rate limiting interceptor and 429 handling |
+| 2 | Identity | Password reset token stored in plaintext in DB | Resolved via hashed token persistence + migration |
+| 3 | Catalog | Leading-wildcard `LIKE '%q%'` bypasses all search indexes | Resolved via trigram-backed search strategy + migration |
+| 4 | Catalog | Null title from OL flows to `NOT NULL` column producing a misleading error | Resolved via explicit invalid-provider-payload handling |
+| 5 | Catalog | `limit` is validated but never propagated to the service or query | Resolved via end-to-end `limit/offset` propagation |
+| 15 | Catalog | `shouldMergeLocalAndExternalResultsConcurrently` test missing `@Test` | Resolved; test is now active |
+
+### ⚠️ Next Sprint — Recommended Focus
 
 | # | Service | Problem | File |
 |---|---|---|---|
-| 1 | Identity | **No rate limiting** on `/login`, `/register`, `/forgot-password` | `pom.xml`, controllers |
-| 2 | Identity | **Password reset token stored in plaintext** in DB | `domain/auth/PasswordResetToken.java` |
-| 3 | Catalog | **Leading-wildcard `LIKE '%q%'` bypasses all search indexes** — full table scan at scale | `V1__init_catalog_schema.sql`, `JpaBookRepository.java` |
-| 4 | Catalog | **Null title from OL flows to `NOT NULL` column** producing a misleading error | `OpenLibraryClient.java`, `GetBookDetailService.java` |
-| 5 | Catalog | **`limit` is validated but never propagated** to the service or query | `BookController.java`, `SearchBooksService.java` |
-
-### ⚠️ High — Plan for Next Sprint
-
-| # | Service | Problem | File |
-|---|---|---|---|
-| 6 | Identity | No `iss` / `aud` claims in JWT | `NimbusJwtTokenIssuer.java` |
+| 6 | Identity | No `iss` / `aud` claims in JWT | `NimbusJwtTokenIssuer.java`, `SecurityConfig.java` |
 | 7 | Identity | No minimum key length enforced at startup | `NimbusJwtTokenIssuer.java`, `SecurityConfig.java` |
+| 12 | Identity | `/actuator/health` requires auth → Kubernetes health probes receive 401 | `SecurityConfig.java` |
+| 18 | Identity | No catch-all `Exception` handler in `GlobalExceptionHandler` | `web/error/GlobalExceptionHandler.java` |
+| 13 | Catalog | No circuit breaker — sustained OL downtime causes latency spike under load | `pom.xml`, `OpenLibraryClient.java` |
+| 14 | Catalog | Detail endpoint fails with 502 if OL is down and book is not in local DB | `GetBookDetailService.java` |
+
+### 🔵 Backlog — Important but Not Immediate
+
+| # | Service | Problem | File |
+|---|---|---|---|
 | 8 | Identity | `logout()` only invalidates current session — no "log out everywhere" | `LogoutUserService.java`, `RefreshTokenRepository.java` |
 | 9 | Identity | JWT access token remains valid up to 1h after logout | `SecurityConfig.java` |
 | 10 | Identity | Consider migrating HS256 → RS256/ES256 for multi-service architecture | `NimbusJwtTokenIssuer.java` |
 | 11 | Identity | CORS not configured | `SecurityConfig.java` |
-| 12 | Identity | `/actuator/health` requires auth → Kubernetes health probes receive 401 | `SecurityConfig.java` |
-| 13 | Catalog | No circuit breaker — sustained OL downtime causes latency spike under load | `pom.xml`, `OpenLibraryClient.java` |
-| 14 | Catalog | Detail endpoint fails with 502 if OL is down and book is not in local DB | `GetBookDetailService.java` |
-| 15 | Catalog | `shouldMergeLocalAndExternalResultsConcurrently` test **missing `@Test`** — never runs | `SearchBooksServiceTest.java` |
-
-### 🔵 Medium — Planned Backlog
-
-| # | Service | Problem | File |
-|---|---|---|---|
-| 16 | Identity | Only length validated for passwords, no complexity rules | `ResetPasswordRequest.java`, `RegisterRequest.java` |
 | 17 | Identity | `User.create()` has no domain invariants — aggregate is not self-protecting | `domain/user/User.java` |
-| 18 | Identity | No catch-all `Exception` handler in `GlobalExceptionHandler` | `web/error/GlobalExceptionHandler.java` |
 | 19 | Identity | Timing oracle in `/forgot-password` — dispatch email asynchronously | `ForgotPasswordService.java` |
 | 20 | Catalog | `sourceReference` exposed in `BookDetailResponse` — couples contract to OL | `BookDetailResponse.java`, `BookWebMapper.java` |
 | 21 | Catalog | No cache for repeated search queries | `SearchBooksService.java` |
 | 22 | Catalog | ISBN normalization strips separators but does not validate digit-only content | `BookNormalization.java` |
 | 23 | Catalog | Title-based deduplication in `SearchResultMerger` is too broad — collapses distinct books | `SearchResultMerger.java` |
 | 24 | Catalog | No retry on transient OL errors | `OpenLibraryClient.java` |
-| 25 | Catalog | No `DEFAULT 'Unknown'` on `author_name` column | `V1__init_catalog_schema.sql` |
 | 26 | Catalog | No `CHECK` constraint on `isbn13` column | `V1__init_catalog_schema.sql` |
+
+### ℹ️ Lower Priority / Re-evaluate Before Acting
+
+| # | Service | Problem | Note |
+|---|---|---|---|
+| 16 | Identity | Only length validated for passwords, no complexity rules | Re-evaluate against current NIST guidance before adding regex-style complexity rules |
+| 25 | Catalog | No `DEFAULT 'Unknown'` on `author_name` column | Application path already normalizes most cases; DB default is defense-in-depth only |
