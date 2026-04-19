@@ -42,12 +42,12 @@ auth:
       name: ${REFRESH_TOKEN_COOKIE_NAME:refresh_token}
       path: ${REFRESH_TOKEN_COOKIE_PATH:/api/v1/auth}
       same-site: ${REFRESH_TOKEN_COOKIE_SAME_SITE:Strict}
-      secure: ${REFRESH_TOKEN_COOKIE_SECURE:false}
+      secure: ${REFRESH_TOKEN_COOKIE_SECURE:true}
   password-reset:
     expiration-seconds: ${PASSWORD_RESET_EXPIRATION_SECONDS:900}
     url-base: ${PASSWORD_RESET_URL_BASE:https://bookhub.test/reset-password?token=}
     from-address: ${PASSWORD_RESET_FROM_ADDRESS:noreply@bookhub.test}
-    hash-secret: ${PASSWORD_RESET_HASH_SECRET:${random.uuid}}
+    hash-secret: ${PASSWORD_RESET_HASH_SECRET:test-secret-value-for-password-reset-only}
   rate-limit:
     login:
       max-attempts: ${AUTH_RATE_LIMIT_LOGIN_MAX_ATTEMPTS:10}
