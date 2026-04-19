@@ -5,6 +5,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
+import java.security.SecureRandom;
 import javax.crypto.spec.SecretKeySpec;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -53,8 +54,10 @@ class SecurityConfigJwtValidationTest {
     @Test
     @DisplayName("Should reject legacy HS256 token")
     void shouldRejectLegacyHs256Token() throws Exception {
+        final byte[] hmacKeyBytes = new byte[32];
+        new SecureRandom().nextBytes(hmacKeyBytes);
         final NimbusJwtEncoder hsEncoder = new NimbusJwtEncoder(new ImmutableSecret<>(
-                new SecretKeySpec("legacy-signing-secret-legacy-signing-secret".getBytes(), "HmacSHA256")));
+                new SecretKeySpec(hmacKeyBytes, "HmacSHA256")));
 
         final JwtClaimsSet claims = baseClaimsBuilder()
                 .issuer("bookhub-identity")
