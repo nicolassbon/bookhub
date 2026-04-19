@@ -12,6 +12,7 @@ import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.FieldError;
+import org.springframework.web.bind.MissingRequestCookieException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
@@ -108,6 +109,30 @@ public class GlobalExceptionHandler {
                 "Too Many Requests",
                 "RATE_LIMIT_EXCEEDED",
                 exception.getMessage(),
+                request.getRequestURI());
+    }
+
+    @ExceptionHandler(MissingRequestCookieException.class)
+    public ResponseEntity<ErrorResponse> handleMissingRequestCookie(
+            final MissingRequestCookieException exception,
+            final HttpServletRequest request) {
+        return buildErrorResponse(
+                HttpStatus.BAD_REQUEST,
+                "Bad Request",
+                "MISSING_REQUEST_COOKIE",
+                exception.getMessage(),
+                request.getRequestURI());
+    }
+
+    @ExceptionHandler(Exception.class)
+    public ResponseEntity<ErrorResponse> handleUnhandled(
+            final Exception exception,
+            final HttpServletRequest request) {
+        return buildErrorResponse(
+                HttpStatus.INTERNAL_SERVER_ERROR,
+                "Internal Server Error",
+                "INTERNAL_ERROR",
+                "Unexpected error",
                 request.getRequestURI());
     }
 

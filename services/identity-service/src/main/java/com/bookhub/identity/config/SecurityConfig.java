@@ -1,23 +1,23 @@
 package com.bookhub.identity.config;
 
-import java.nio.charset.StandardCharsets;
-import javax.crypto.SecretKey;
-import javax.crypto.spec.SecretKeySpec;
-import org.springframework.beans.factory.annotation.Value;
+import java.security.interfaces.RSAPublicKey;
+import java.util.List;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
-import org.springframework.security.oauth2.jose.jws.MacAlgorithm;
+import org.springframework.security.oauth2.core.OAuth2Error;
+import org.springframework.security.oauth2.core.OAuth2TokenValidator;
+import org.springframework.security.oauth2.core.OAuth2TokenValidatorResult;
 import org.springframework.security.oauth2.jwt.JwtDecoder;
-import org.springframework.security.oauth2.jwt.JwtEncoder;
+import org.springframework.security.oauth2.jwt.JwtValidators;
 import org.springframework.security.oauth2.jwt.NimbusJwtDecoder;
-import org.springframework.security.oauth2.jwt.NimbusJwtEncoder;
+import org.springframework.security.oauth2.jwt.Jwt;
+import org.springframework.security.oauth2.jose.jws.SignatureAlgorithm;
+import org.springframework.security.oauth2.core.DelegatingOAuth2TokenValidator;
 import org.springframework.security.web.SecurityFilterChain;
-
-import com.nimbusds.jose.jwk.source.ImmutableSecret;
 
 @Configuration
 public class SecurityConfig {
@@ -34,7 +34,9 @@ public class SecurityConfig {
                                 "/api/v1/auth/refresh",
                                 "/api/v1/auth/logout",
                                 "/api/v1/auth/forgot-password",
-                                "/api/v1/auth/reset-password")
+                                "/api/v1/auth/reset-password",
+                                "/actuator/health/**",
+                                "/actuator/info")
                         .permitAll()
                         .anyRequest().authenticated())
                 .oauth2ResourceServer(oauth2 -> oauth2.jwt(Customizer.withDefaults()))
@@ -42,18 +44,24 @@ public class SecurityConfig {
     }
 
     @Bean
-    public JwtEncoder jwtEncoder(@Value("${jwt.secret}") final String jwtSecret) {
-        return new NimbusJwtEncoder(new ImmutableSecret<>(secretKey(jwtSecret)));
-    }
-
-    @Bean
-    public JwtDecoder jwtDecoder(@Value("${jwt.secret}") final String jwtSecret) {
-        return NimbusJwtDecoder.withSecretKey(secretKey(jwtSecret))
-                .macAlgorithm(MacAlgorithm.HS256)
+    public JwtDecoder jwtDecoder(final RSAPublicKey rsaPublicKey, final JwtProperties jwtProperties) {
+        final NimbusJwtDecoder decoder = NimbusJwtDecoder.withPublicKey(rsaPublicKey)
+                .signatureAlgorithm(SignatureAlgorithm.RS256)
                 .build();
-    }
 
-    private SecretKey secretKey(final String jwtSecret) {
-        return new SecretKeySpec(jwtSecret.getBytes(StandardCharsets.UTF_8), "HmacSHA256");
+        final OAuth2TokenValidator<Jwt> issuerValidator = JwtValidators.createDefaultWithIssuer(jwtProperties.issuer());
+        final OAuth2TokenValidator<Jwt> audienceValidator = token -> {
+            final List<String> audience = token.getAudience();
+            if (audience != null && audience.contains(jwtProperties.audience())) {
+                return OAuth2TokenValidatorResult.success();
+            }
+            return OAuth2TokenValidatorResult.failure(new OAuth2Error(
+                    "invalid_token",
+                    "The required audience is missing",
+                    null));
+        };
+
+        decoder.setJwtValidator(new DelegatingOAuth2TokenValidator<>(issuerValidator, audienceValidator));
+        return decoder;
     }
 }

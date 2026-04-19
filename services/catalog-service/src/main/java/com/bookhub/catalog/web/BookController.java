@@ -7,6 +7,9 @@ import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 import java.util.List;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -46,7 +49,16 @@ public class BookController {
     }
 
     @GetMapping("/{id}")
-    public BookDetailResponse getDetail(@PathVariable("id") final String id) {
-        return bookWebMapper.toDetailResponse(getBookDetailService.getById(id));
+    public ResponseEntity<?> getDetail(@PathVariable("id") final String id) {
+        final GetBookDetailService.BookDetailResult result = getBookDetailService.getById(id);
+        if (result.isDegraded()) {
+            final Integer retryAfterSeconds = result.degraded().retryAfterSeconds();
+            final ResponseEntity.BodyBuilder responseBuilder = ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE);
+            if (retryAfterSeconds != null) {
+                responseBuilder.header(HttpHeaders.RETRY_AFTER, String.valueOf(retryAfterSeconds));
+            }
+            return responseBuilder.body(bookWebMapper.toDegradedDetailResponse(result.degraded()));
+        }
+        return ResponseEntity.ok(bookWebMapper.toDetailResponse(result.book()));
     }
 }

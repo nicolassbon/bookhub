@@ -39,3 +39,10 @@ catalog:
       enabled: ${CATALOG_OPENLIBRARY_ENABLED:true}
       url: ${CATALOG_OPENLIBRARY_URL:https://openlibrary.org}
       timeout-ms: ${CATALOG_OPENLIBRARY_TIMEOUT_MS:2000}
+      circuit-breaker:
+        name: ${CATALOG_OPENLIBRARY_CIRCUIT_BREAKER_NAME:openLibrary}
+        sliding-window-size: ${CATALOG_OPENLIBRARY_CIRCUIT_BREAKER_SLIDING_WINDOW_SIZE:10}
+        minimum-number-of-calls: ${CATALOG_OPENLIBRARY_CIRCUIT_BREAKER_MINIMUM_NUMBER_OF_CALLS:5}
+        failure-rate-threshold: ${CATALOG_OPENLIBRARY_CIRCUIT_BREAKER_FAILURE_RATE_THRESHOLD:50}
+        wait-duration-open-state-ms: ${CATALOG_OPENLIBRARY_CIRCUIT_BREAKER_WAIT_DURATION_OPEN_STATE_MS:30000}
+        permitted-number-of-calls-in-half-open-state: ${CATALOG_OPENLIBRARY_CIRCUIT_BREAKER_PERMITTED_HALF_OPEN_CALLS:2}

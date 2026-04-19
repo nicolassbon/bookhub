@@ -21,6 +21,7 @@ import com.bookhub.identity.application.auth.ResetPasswordService;
 import com.bookhub.identity.application.auth.RefreshSessionResult;
 import com.bookhub.identity.application.auth.RefreshSessionService;
 import com.bookhub.identity.application.auth.LogoutUserService;
+import com.bookhub.identity.config.JwtKeyConfig;
 import com.bookhub.identity.config.SecurityConfig;
 import com.bookhub.identity.config.RefreshTokenProperties;
 import com.bookhub.identity.domain.user.DuplicateResourceException;
@@ -37,14 +38,13 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
-import org.springframework.test.context.TestPropertySource;
+import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
 @WebMvcTest(controllers = AuthController.class)
-@Import({GlobalExceptionHandler.class, SecurityConfig.class})
-@TestPropertySource(properties = {"jwt.secret=test-signing-secret-test-signing-secret-1234",
-        "jwt.expiration=3600"})
+@Import({GlobalExceptionHandler.class, SecurityConfig.class, JwtKeyConfig.class})
+@ActiveProfiles("test")
 class AuthControllerTest {
 
     @Autowired
@@ -250,6 +250,31 @@ class AuthControllerTest {
                 .andExpect(jsonPath("$.error").value("Unauthorized"))
                 .andExpect(jsonPath("$.code").value("INVALID_CREDENTIALS"))
                 .andExpect(jsonPath("$.message").value("Invalid email or password"))
+                .andExpect(jsonPath("$.path").value("/api/v1/auth/login"));
+    }
+
+    @Test
+    @DisplayName("Should return 500 with structured error when an unexpected exception occurs")
+    void shouldReturn500WithStructuredErrorWhenUnexpectedExceptionOccurs() throws Exception {
+        when(authWebMapper.toLoginUserCommand(any(LoginRequest.class))).thenReturn(LoginUserCommand
+                .builder().email("nico@example.com").password("StrongPassword123!").build());
+        when(loginUserService.login(any(LoginUserCommand.class))).thenThrow(new RuntimeException("boom"));
+
+        final String requestBody = """
+                {
+                  "email": "nico@example.com",
+                  "password": "StrongPassword123!"
+                }
+                """;
+
+        mockMvc.perform(post("/api/v1/auth/login")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(requestBody))
+                .andExpect(status().isInternalServerError())
+                .andExpect(jsonPath("$.status").value(500))
+                .andExpect(jsonPath("$.error").value("Internal Server Error"))
+                .andExpect(jsonPath("$.code").value("INTERNAL_ERROR"))
+                .andExpect(jsonPath("$.message").value("Unexpected error"))
                 .andExpect(jsonPath("$.path").value("/api/v1/auth/login"));
     }
 

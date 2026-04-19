@@ -3,6 +3,8 @@ package com.bookhub.catalog.config;
 import java.time.Duration;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
+import io.github.resilience4j.circuitbreaker.CircuitBreaker;
+import io.github.resilience4j.circuitbreaker.CircuitBreakerConfig;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -28,6 +30,19 @@ public class CatalogSearchConfig {
     @Bean
     public Duration providerTimeout(final OpenLibraryProperties openLibraryProperties) {
         return Duration.ofMillis(openLibraryProperties.timeoutMs());
+    }
+
+    @Bean
+    public CircuitBreaker openLibraryCircuitBreaker(final OpenLibraryProperties openLibraryProperties) {
+        final OpenLibraryProperties.CircuitBreaker breaker = openLibraryProperties.circuitBreaker();
+        final CircuitBreakerConfig config = CircuitBreakerConfig.custom()
+                .slidingWindowSize(breaker.slidingWindowSize())
+                .minimumNumberOfCalls(breaker.minimumNumberOfCalls())
+                .failureRateThreshold(breaker.failureRateThreshold())
+                .waitDurationInOpenState(Duration.ofMillis(breaker.waitDurationOpenStateMs()))
+                .permittedNumberOfCallsInHalfOpenState(breaker.permittedNumberOfCallsInHalfOpenState())
+                .build();
+        return CircuitBreaker.of(breaker.name(), config);
     }
 
     @Bean

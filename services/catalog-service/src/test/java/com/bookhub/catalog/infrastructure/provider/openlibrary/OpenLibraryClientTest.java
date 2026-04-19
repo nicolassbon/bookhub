@@ -12,7 +12,10 @@ import com.bookhub.catalog.application.error.InvalidProviderPayloadException;
 import com.bookhub.catalog.application.model.BookSearchItem;
 import com.bookhub.catalog.config.OpenLibraryProperties;
 import com.bookhub.catalog.domain.Book;
+import io.github.resilience4j.circuitbreaker.CircuitBreaker;
+import io.github.resilience4j.circuitbreaker.CircuitBreakerConfig;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
+import java.time.Duration;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -35,10 +38,20 @@ class OpenLibraryClientTest {
         restClientBuilder = RestClient.builder().baseUrl("https://openlibrary.org");
         mockServer = MockRestServiceServer.bindTo(restClientBuilder).build();
         meterRegistry = new SimpleMeterRegistry();
+        final CircuitBreaker circuitBreaker = CircuitBreaker.of(
+                "openLibrary",
+                CircuitBreakerConfig.custom()
+                        .slidingWindowSize(10)
+                        .minimumNumberOfCalls(5)
+                        .failureRateThreshold(50)
+                        .waitDurationInOpenState(Duration.ofSeconds(30))
+                        .permittedNumberOfCallsInHalfOpenState(2)
+                        .build());
         openLibraryClient = new OpenLibraryClient(
                 restClientBuilder.build(),
-                new OpenLibraryProperties(true, "https://openlibrary.org", 50),
-                meterRegistry);
+                new OpenLibraryProperties(true, "https://openlibrary.org", 50, null),
+                meterRegistry,
+                circuitBreaker);
     }
 
     @Test

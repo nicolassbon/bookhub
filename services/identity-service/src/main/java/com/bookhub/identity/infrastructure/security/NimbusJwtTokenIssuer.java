@@ -1,10 +1,11 @@
 package com.bookhub.identity.infrastructure.security;
 
 import com.bookhub.identity.application.auth.TokenIssuer;
+import com.bookhub.identity.config.JwtProperties;
 import com.bookhub.identity.domain.user.User;
 import java.time.Instant;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.security.oauth2.jose.jws.MacAlgorithm;
+import java.util.List;
+import org.springframework.security.oauth2.jose.jws.SignatureAlgorithm;
 import org.springframework.security.oauth2.jwt.JwsHeader;
 import org.springframework.security.oauth2.jwt.JwtClaimsSet;
 import org.springframework.security.oauth2.jwt.JwtEncoder;
@@ -16,12 +17,16 @@ public class NimbusJwtTokenIssuer implements TokenIssuer {
 
     private final JwtEncoder jwtEncoder;
     private final long expirationSeconds;
+    private final String issuer;
+    private final String audience;
 
     public NimbusJwtTokenIssuer(
             final JwtEncoder jwtEncoder,
-            @Value("${jwt.expiration}") final long expirationSeconds) {
+            final JwtProperties jwtProperties) {
         this.jwtEncoder = jwtEncoder;
-        this.expirationSeconds = expirationSeconds;
+        this.expirationSeconds = jwtProperties.expiration();
+        this.issuer = jwtProperties.issuer();
+        this.audience = jwtProperties.audience();
     }
 
     @Override
@@ -33,13 +38,15 @@ public class NimbusJwtTokenIssuer implements TokenIssuer {
                 .subject(user.getId().toString())
                 .issuedAt(issuedAt)
                 .expiresAt(expiresAt)
+                .issuer(issuer)
+                .audience(List.of(audience))
                 .claim("username", user.getUsername())
                 .claim("displayName", user.getDisplayName())
                 .claim("role", user.getRole().name())
                 .claim("email", user.getEmail())
                 .build();
 
-        final JwsHeader jwsHeader = JwsHeader.with(MacAlgorithm.HS256).build();
+        final JwsHeader jwsHeader = JwsHeader.with(SignatureAlgorithm.RS256).build();
         final String accessToken = jwtEncoder.encode(JwtEncoderParameters.from(jwsHeader, claims)).getTokenValue();
 
         return IssuedTokenPair.builder()

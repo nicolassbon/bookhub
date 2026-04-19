@@ -9,6 +9,7 @@ import static org.mockito.Mockito.when;
 import static org.mockito.ArgumentMatchers.argThat;
 
 import com.bookhub.catalog.application.error.BookNotFoundException;
+import com.bookhub.catalog.application.error.ExternalServiceUnavailableException;
 import com.bookhub.catalog.application.error.InvalidBookIdException;
 import com.bookhub.catalog.domain.Book;
 import com.bookhub.catalog.domain.BookRepository;
@@ -35,7 +36,7 @@ class GetBookDetailServiceTest {
 
     @BeforeEach
     void setUp() {
-        getBookDetailService = new GetBookDetailService(bookRepository, searchProvider);
+        getBookDetailService = new GetBookDetailService(bookRepository, searchProvider, 30);
     }
 
     @Test
@@ -57,9 +58,10 @@ class GetBookDetailServiceTest {
         when(searchProvider.fetchDetail("OL262758W")).thenReturn(fetched);
         when(bookRepository.save(any(Book.class))).thenReturn(persisted);
 
-        final Book result = getBookDetailService.getById("ext:ol:OL262758W");
+        final GetBookDetailService.BookDetailResult result = getBookDetailService.getById("ext:ol:OL262758W");
 
-        assertThat(result.getId()).isEqualTo(UUID.fromString("123e4567-e89b-12d3-a456-426614174000"));
+        assertThat(result.isDegraded()).isFalse();
+        assertThat(result.book().getId()).isEqualTo(UUID.fromString("123e4567-e89b-12d3-a456-426614174000"));
         verify(bookRepository).save(argThat(book ->
                 "J.R.R. Tolkien".equals(book.getAuthorName())
                         && "9780261103344".equals(book.getIsbn13())
@@ -89,9 +91,10 @@ class GetBookDetailServiceTest {
         when(searchProvider.fetchDetail("OLMALFORMEDW")).thenReturn(fetched);
         when(bookRepository.save(any(Book.class))).thenReturn(persisted);
 
-        final Book result = getBookDetailService.getById("ext:ol:OLMALFORMEDW");
+        final GetBookDetailService.BookDetailResult result = getBookDetailService.getById("ext:ol:OLMALFORMEDW");
 
-        assertThat(result.getAuthorName()).isEqualTo("Unknown");
+        assertThat(result.isDegraded()).isFalse();
+        assertThat(result.book().getAuthorName()).isEqualTo("Unknown");
         verify(bookRepository).save(argThat(book ->
                 "Unknown".equals(book.getAuthorName())
                         && book.getIsbn13() == null
@@ -117,9 +120,9 @@ class GetBookDetailServiceTest {
         when(bookRepository.save(any(Book.class)))
                 .thenThrow(new DataIntegrityViolationException("duplicate"));
 
-        final Book result = getBookDetailService.getById("ext:ol:OL262758W");
+        final GetBookDetailService.BookDetailResult result = getBookDetailService.getById("ext:ol:OL262758W");
 
-        assertThat(result.getId()).isEqualTo(UUID.fromString("123e4567-e89b-12d3-a456-426614174000"));
+        assertThat(result.book().getId()).isEqualTo(UUID.fromString("123e4567-e89b-12d3-a456-426614174000"));
     }
 
     @Test
@@ -133,9 +136,40 @@ class GetBookDetailServiceTest {
 
         when(bookRepository.findById(bookId)).thenReturn(Optional.of(persisted));
 
-        final Book result = getBookDetailService.getById(bookId.toString());
+        final GetBookDetailService.BookDetailResult result = getBookDetailService.getById(bookId.toString());
 
-        assertThat(result.getId()).isEqualTo(bookId);
+        assertThat(result.isDegraded()).isFalse();
+        assertThat(result.book().getId()).isEqualTo(bookId);
+        verify(searchProvider, never()).fetchDetail(any());
+    }
+
+    @Test
+    void shouldReturnDegradedResultWhenProviderIsUnavailableAndBookIsNotCached() {
+        when(bookRepository.findBySourceReference("OLOUTAGEW")).thenReturn(Optional.empty());
+        when(searchProvider.fetchDetail("OLOUTAGEW"))
+                .thenThrow(new ExternalServiceUnavailableException("OpenLibrary unavailable", 45));
+
+        final GetBookDetailService.BookDetailResult result = getBookDetailService.getById("ext:ol:OLOUTAGEW");
+
+        assertThat(result.isDegraded()).isTrue();
+        assertThat(result.book()).isNull();
+        assertThat(result.degraded().code()).isEqualTo("OPENLIBRARY_UNAVAILABLE");
+        assertThat(result.degraded().retryAfterSeconds()).isEqualTo(45);
+    }
+
+    @Test
+    void shouldReturnCachedBookWhenProviderIsUnavailableButBookExistsLocally() {
+        final Book cachedBook = Book.builder()
+                .id(UUID.fromString("123e4567-e89b-12d3-a456-426614174099"))
+                .title("Cached Book")
+                .sourceReference("OLCACHEDW")
+                .build();
+        when(bookRepository.findBySourceReference("OLCACHEDW")).thenReturn(Optional.of(cachedBook));
+
+        final GetBookDetailService.BookDetailResult result = getBookDetailService.getById("ext:ol:OLCACHEDW");
+
+        assertThat(result.isDegraded()).isFalse();
+        assertThat(result.book().getId()).isEqualTo(cachedBook.getId());
         verify(searchProvider, never()).fetchDetail(any());
     }
 

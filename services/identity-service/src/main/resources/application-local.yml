@@ -18,8 +18,12 @@ management:
       show-details: always
 
 jwt:
-  secret: ${JWT_SECRET:local-dev-secret-local-dev-secret-123456}
+  issuer: ${JWT_ISSUER:bookhub-identity-local}
+  audience: ${JWT_AUDIENCE:bookhub-api-local}
   expiration: ${JWT_EXPIRATION:3600}
+  rsa:
+    private-key: ${JWT_RSA_PRIVATE_KEY:}
+    public-key: ${JWT_RSA_PUBLIC_KEY:}
 
 auth:
   refresh-token:

@@ -1,6 +1,7 @@
 package com.bookhub.catalog.infrastructure.provider.openlibrary;
 
 import com.bookhub.catalog.application.error.ExternalProviderException;
+import com.bookhub.catalog.application.error.ExternalServiceUnavailableException;
 import com.bookhub.catalog.application.error.InvalidProviderPayloadException;
 import com.bookhub.catalog.application.model.BookSearchItem;
 import com.bookhub.catalog.application.support.BookNormalization;
@@ -9,6 +10,8 @@ import com.bookhub.catalog.domain.Book;
 import com.bookhub.catalog.domain.SearchProvider;
 import com.bookhub.catalog.infrastructure.provider.openlibrary.dto.OpenLibrarySearchResponse;
 import com.bookhub.catalog.infrastructure.provider.openlibrary.dto.OpenLibraryWorkResponse;
+import io.github.resilience4j.circuitbreaker.CallNotPermittedException;
+import io.github.resilience4j.circuitbreaker.CircuitBreaker;
 import io.micrometer.core.instrument.MeterRegistry;
 import java.util.List;
 import java.util.UUID;
@@ -30,20 +33,23 @@ public class OpenLibraryClient implements SearchProvider {
     private final RestClient openLibraryRestClient;
     private final OpenLibraryProperties openLibraryProperties;
     private final MeterRegistry meterRegistry;
+    private final CircuitBreaker openLibraryCircuitBreaker;
 
     public OpenLibraryClient(
             final RestClient openLibraryRestClient,
             final OpenLibraryProperties openLibraryProperties,
-            final MeterRegistry meterRegistry) {
+            final MeterRegistry meterRegistry,
+            final CircuitBreaker openLibraryCircuitBreaker) {
         this.openLibraryRestClient = openLibraryRestClient;
         this.openLibraryProperties = openLibraryProperties;
         this.meterRegistry = meterRegistry;
+        this.openLibraryCircuitBreaker = openLibraryCircuitBreaker;
     }
 
     @Override
     public List<BookSearchItem> search(final String query, final int limit) {
         try {
-            final OpenLibrarySearchResponse response = openLibraryRestClient.get()
+            final OpenLibrarySearchResponse response = openLibraryCircuitBreaker.executeSupplier(() -> openLibraryRestClient.get()
                     .uri(uriBuilder -> uriBuilder
                             .path("/search.json")
                             .queryParam("q", query)
@@ -53,7 +59,7 @@ public class OpenLibraryClient implements SearchProvider {
                     .onStatus(HttpStatusCode::isError, (request, clientResponse) -> {
                         throw new RestClientException("OpenLibrary search failed");
                     })
-                    .body(OpenLibrarySearchResponse.class);
+                    .body(OpenLibrarySearchResponse.class));
 
             if (response == null || response.docs() == null) {
                 return List.of();
@@ -62,7 +68,14 @@ public class OpenLibraryClient implements SearchProvider {
             return response.docs().stream()
                     .map(this::toSearchItem)
                     .toList();
+        } catch (CallNotPermittedException exception) {
+            meterRegistry.counter("catalog.provider.openlibrary.search.fallbacks", "reason", "circuit_open")
+                    .increment();
+            LOGGER.warn("OpenLibrary search short-circuited by circuit breaker. query='{}'", query);
+            return List.of();
         } catch (RestClientException exception) {
+            meterRegistry.counter("catalog.provider.openlibrary.search.fallbacks", "reason", "error")
+                    .increment();
             return List.of();
         }
     }
@@ -89,12 +102,12 @@ public class OpenLibraryClient implements SearchProvider {
     public Book fetchDetail(final String sourceReference) {
         try {
             final String normalized = BookNormalization.normalizeSourceReference(sourceReference);
-            final OpenLibraryWorkResponse response = openLibraryRestClient.get()
+            final OpenLibraryWorkResponse response = openLibraryCircuitBreaker.executeSupplier(() -> openLibraryRestClient.get()
                     .uri(uriBuilder -> uriBuilder
                             .path("/works/{workId}.json")
                             .build(normalized))
                     .retrieve()
-                    .body(OpenLibraryWorkResponse.class);
+                    .body(OpenLibraryWorkResponse.class));
 
             if (response == null) {
                 throw new ExternalProviderException("OpenLibrary detail not found", new RestClientException("Empty response"));
@@ -111,9 +124,21 @@ public class OpenLibraryClient implements SearchProvider {
                     .coverUrl(resolveCoverUrl(response.coverIds()))
                     .publishedYear(resolvePublishedYear(response.firstPublishDate()))
                     .build();
+        } catch (CallNotPermittedException exception) {
+            throw new ExternalServiceUnavailableException(
+                    "OpenLibrary detail is temporarily unavailable",
+                    exception,
+                    retryAfterSeconds());
         } catch (RestClientException exception) {
-            throw new ExternalProviderException("OpenLibrary detail fetch failed", exception);
+            throw new ExternalServiceUnavailableException(
+                    "OpenLibrary detail fetch failed",
+                    exception,
+                    retryAfterSeconds());
         }
+    }
+
+    private int retryAfterSeconds() {
+        return Math.max(1, (int) (openLibraryProperties.circuitBreaker().waitDurationOpenStateMs() / 1000));
     }
 
     private BookSearchItem toSearchItem(final OpenLibrarySearchResponse.OpenLibraryBookDoc bookDoc) {

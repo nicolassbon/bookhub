@@ -16,6 +16,7 @@ import com.bookhub.identity.application.auth.RegisterUserCommand;
 import com.bookhub.identity.application.auth.RegisterUserResult;
 import com.bookhub.identity.application.auth.RegisterUserService;
 import com.bookhub.identity.application.auth.ResetPasswordService;
+import com.bookhub.identity.config.JwtKeyConfig;
 import com.bookhub.identity.config.RefreshTokenProperties;
 import com.bookhub.identity.config.SecurityConfig;
 import com.bookhub.identity.web.error.GlobalExceptionHandler;
@@ -28,15 +29,15 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
+import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
 @WebMvcTest(controllers = AuthController.class)
-@Import({GlobalExceptionHandler.class, SecurityConfig.class})
+@Import({GlobalExceptionHandler.class, SecurityConfig.class, JwtKeyConfig.class})
+@ActiveProfiles("test")
 @TestPropertySource(properties = {
-        "jwt.secret=test-signing-secret-test-signing-secret-1234",
-        "jwt.expiration=3600",
         "auth.rate-limit.login.max-attempts=1",
         "auth.rate-limit.login.window-seconds=60",
         "auth.rate-limit.register.max-attempts=1",

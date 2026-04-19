@@ -1,10 +1,14 @@
 package com.bookhub.catalog.web;
 
 import static com.github.tomakehurst.wiremock.client.WireMock.okJson;
+import static com.github.tomakehurst.wiremock.client.WireMock.serverError;
+import static com.github.tomakehurst.wiremock.client.WireMock.exactly;
 import static com.github.tomakehurst.wiremock.client.WireMock.urlPathEqualTo;
 import static com.github.tomakehurst.wiremock.client.WireMock.urlPathMatching;
+import static com.github.tomakehurst.wiremock.client.WireMock.verify;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -54,6 +58,10 @@ class BookControllerE2ETest {
                 registry.add("spring.datasource.password", POSTGRESQL_CONTAINER::getPassword);
                 registry.add("spring.flyway.enabled", () -> true);
                 registry.add("catalog.providers.openlibrary.url", WIRE_MOCK_SERVER::baseUrl);
+                registry.add("catalog.providers.openlibrary.circuit-breaker.minimum-number-of-calls", () -> 2);
+                registry.add("catalog.providers.openlibrary.circuit-breaker.sliding-window-size", () -> 2);
+                registry.add("catalog.providers.openlibrary.circuit-breaker.failure-rate-threshold", () -> 50);
+                registry.add("catalog.providers.openlibrary.circuit-breaker.wait-duration-open-state-ms", () -> 30000);
         }
 
         @BeforeAll
@@ -133,5 +141,27 @@ class BookControllerE2ETest {
                 .andExpect(status().isBadGateway())
                 .andExpect(jsonPath("$.code").value("INVALID_PROVIDER_PAYLOAD"))
                 .andExpect(jsonPath("$.path").value("/api/v1/books/ext:ol:OLMISSINGW"));
+    }
+
+    @Test
+    void shouldReturnDegraded503AndShortCircuitWhenBreakerIsOpen() throws Exception {
+        WIRE_MOCK_SERVER.stubFor(WireMock.get(urlPathMatching("/works/OLOUTAGEW.json"))
+                .willReturn(serverError()));
+
+        mockMvc.perform(get("/api/v1/books/{id}", "ext:ol:OLOUTAGEW"))
+                .andExpect(status().isServiceUnavailable())
+                .andExpect(header().string("Retry-After", "30"))
+                .andExpect(jsonPath("$.id").value("ext:ol:OLOUTAGEW"))
+                .andExpect(jsonPath("$.code").value("OPENLIBRARY_UNAVAILABLE"))
+                .andExpect(jsonPath("$.degraded").value(true))
+                .andExpect(jsonPath("$.retryAfterSeconds").value(30));
+
+        mockMvc.perform(get("/api/v1/books/{id}", "ext:ol:OLOUTAGEW"))
+                .andExpect(status().isServiceUnavailable());
+
+        mockMvc.perform(get("/api/v1/books/{id}", "ext:ol:OLOUTAGEW"))
+                .andExpect(status().isServiceUnavailable());
+
+        verify(exactly(2), WireMock.getRequestedFor(urlPathMatching("/works/OLOUTAGEW.json")));
     }
 }

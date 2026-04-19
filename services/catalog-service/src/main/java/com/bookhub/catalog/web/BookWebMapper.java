@@ -1,6 +1,7 @@
 package com.bookhub.catalog.web;
 
 import com.bookhub.catalog.application.model.BookSearchItem;
+import com.bookhub.catalog.application.GetBookDetailService;
 import com.bookhub.catalog.domain.Book;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
@@ -13,4 +14,7 @@ public interface BookWebMapper {
 
     @Mapping(target = "id", expression = "java(book.getId().toString())")
     BookDetailResponse toDetailResponse(Book book);
+
+    @Mapping(target = "degraded", constant = "true")
+    DegradedBookDetailResponse toDegradedDetailResponse(GetBookDetailService.DegradedDetail degradedDetail);
 }

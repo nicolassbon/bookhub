@@ -5,6 +5,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import com.bookhub.identity.config.JwtProperties;
 import com.bookhub.identity.domain.user.User;
 import com.bookhub.identity.domain.user.UserRole;
 import java.time.Instant;
@@ -19,6 +20,7 @@ import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.security.oauth2.jwt.JwtClaimsSet;
 import org.springframework.security.oauth2.jwt.JwtEncoder;
 import org.springframework.security.oauth2.jwt.JwtEncoderParameters;
+import org.springframework.security.oauth2.jose.jws.SignatureAlgorithm;
 
 @ExtendWith(MockitoExtension.class)
 class NimbusJwtTokenIssuerTest {
@@ -27,9 +29,9 @@ class NimbusJwtTokenIssuerTest {
     private JwtEncoder jwtEncoder;
 
     @Test
-    @DisplayName("Should issue access token with expected user claims and configured expiration")
-    void shouldIssueAccessTokenWithExpectedUserClaimsAndConfiguredExpiration() {
-        final NimbusJwtTokenIssuer tokenIssuer = new NimbusJwtTokenIssuer(jwtEncoder, 3600);
+    @DisplayName("Should issue RS256 access token with expected user claims and configured expiration")
+    void shouldIssueRs256AccessTokenWithExpectedUserClaimsAndConfiguredExpiration() {
+        final NimbusJwtTokenIssuer tokenIssuer = new NimbusJwtTokenIssuer(jwtEncoder, jwtProperties(3600));
 
         final User user = User.rehydrate(
                 UUID.fromString("6676f2d8-0f65-40ae-b102-66145e24f3fd"),
@@ -40,7 +42,7 @@ class NimbusJwtTokenIssuerTest {
                 UserRole.USER);
 
         when(jwtEncoder.encode(any(JwtEncoderParameters.class))).thenReturn(Jwt.withTokenValue("jwt-token")
-                .header("alg", "HS256")
+                .header("alg", "RS256")
                 .issuedAt(Instant.now())
                 .expiresAt(Instant.now().plusSeconds(3600))
                 .subject("6676f2d8-0f65-40ae-b102-66145e24f3fd")
@@ -55,6 +57,7 @@ class NimbusJwtTokenIssuerTest {
         final ArgumentCaptor<JwtEncoderParameters> parametersCaptor = ArgumentCaptor.forClass(JwtEncoderParameters.class);
         verify(jwtEncoder).encode(parametersCaptor.capture());
         final JwtClaimsSet claims = parametersCaptor.getValue().getClaims();
+        final Object algorithm = parametersCaptor.getValue().getJwsHeader().getHeaders().get("alg");
 
         assertThat(issuedToken.accessToken()).isEqualTo("jwt-token");
         assertThat(issuedToken.expiresIn()).isEqualTo(3600);
@@ -64,12 +67,15 @@ class NimbusJwtTokenIssuerTest {
         assertThat((String) claims.getClaim("role")).isEqualTo("USER");
         assertThat((String) claims.getClaim("email")).isEqualTo("nico@example.com");
         assertThat(claims.getExpiresAt()).isAfter(claims.getIssuedAt());
+        assertThat((String) claims.getClaims().get("iss")).isEqualTo("bookhub-identity");
+        assertThat(claims.getAudience()).containsExactly("bookhub-api");
+        assertThat(algorithm).isEqualTo(SignatureAlgorithm.RS256);
     }
 
     @Test
     @DisplayName("Should not include refresh token in issued contract")
     void shouldNotIncludeRefreshTokenInIssuedContract() {
-        final NimbusJwtTokenIssuer tokenIssuer = new NimbusJwtTokenIssuer(jwtEncoder, 1800);
+        final NimbusJwtTokenIssuer tokenIssuer = new NimbusJwtTokenIssuer(jwtEncoder, jwtProperties(1800));
 
         final User user = User.rehydrate(
                 UUID.fromString("6676f2d8-0f65-40ae-b102-66145e24f3fd"),
@@ -80,7 +86,7 @@ class NimbusJwtTokenIssuerTest {
                 UserRole.USER);
 
         when(jwtEncoder.encode(any(JwtEncoderParameters.class))).thenReturn(Jwt.withTokenValue("jwt-token")
-                .header("alg", "HS256")
+                .header("alg", "RS256")
                 .issuedAt(Instant.now())
                 .expiresAt(Instant.now().plusSeconds(1800))
                 .subject("6676f2d8-0f65-40ae-b102-66145e24f3fd")
@@ -90,5 +96,13 @@ class NimbusJwtTokenIssuerTest {
 
         assertThat(issuedToken.accessToken()).isNotBlank();
         assertThat(issuedToken.expiresIn()).isEqualTo(1800);
+    }
+
+    private JwtProperties jwtProperties(final long expirationSeconds) {
+        return new JwtProperties(
+                "bookhub-identity",
+                "bookhub-api",
+                expirationSeconds,
+                new JwtProperties.Rsa("ignored", "ignored"));
     }
 }

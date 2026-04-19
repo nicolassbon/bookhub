@@ -3,6 +3,7 @@ package com.bookhub.catalog.web;
 import static org.mockito.Mockito.when;
 import static org.mockito.Mockito.verify;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -108,7 +109,7 @@ class BookControllerTest {
                 .isbn13("9780261103344")
                 .build();
 
-        when(getBookDetailService.getById(bookId.toString())).thenReturn(book);
+        when(getBookDetailService.getById(bookId.toString())).thenReturn(GetBookDetailService.BookDetailResult.success(book));
 
         mockMvc.perform(get("/api/v1/books/{id}", bookId))
                 .andExpect(status().isOk())
@@ -125,6 +126,24 @@ class BookControllerTest {
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.code").value("BOOK_NOT_FOUND"))
                 .andExpect(jsonPath("$.path").value("/api/v1/books/ext:ol:OL404W"));
+    }
+
+    @Test
+    void shouldReturnDegradedDetailWhenProviderIsUnavailableAndNoCacheExists() throws Exception {
+        when(getBookDetailService.getById("ext:ol:OLOUTAGEW")).thenReturn(
+                GetBookDetailService.BookDetailResult.degraded(new GetBookDetailService.DegradedDetail(
+                        "ext:ol:OLOUTAGEW",
+                        "OPENLIBRARY_UNAVAILABLE",
+                        "OpenLibrary is temporarily unavailable. Please retry later.",
+                        30)));
+
+        mockMvc.perform(get("/api/v1/books/{id}", "ext:ol:OLOUTAGEW"))
+                .andExpect(status().isServiceUnavailable())
+                .andExpect(header().string("Retry-After", "30"))
+                .andExpect(jsonPath("$.id").value("ext:ol:OLOUTAGEW"))
+                .andExpect(jsonPath("$.code").value("OPENLIBRARY_UNAVAILABLE"))
+                .andExpect(jsonPath("$.degraded").value(true))
+                .andExpect(jsonPath("$.retryAfterSeconds").value(30));
     }
 
     @Test
