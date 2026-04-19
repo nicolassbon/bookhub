@@ -33,3 +33,5 @@ pom.xml.releaseBackup
 *.tmp
 *.swp
 *~
+
+.atl/
