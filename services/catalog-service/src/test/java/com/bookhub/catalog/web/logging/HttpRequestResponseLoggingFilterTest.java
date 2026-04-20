@@ -12,6 +12,8 @@ import org.springframework.mock.web.MockHttpServletResponse;
 
 class HttpRequestResponseLoggingFilterTest {
 
+    private static final int REQUEST_ID_MAX_LENGTH = 100;
+
     private final HttpRequestResponseLoggingFilter filter = new HttpRequestResponseLoggingFilter();
 
     @Test
@@ -37,6 +39,48 @@ class HttpRequestResponseLoggingFilterTest {
 
         final String requestId = (String) request.getAttribute("requestId");
         assertThat(requestId).isNotBlank();
+        assertThat(response.getHeader("X-Request-Id")).isEqualTo(requestId);
+    }
+
+    @Test
+    @DisplayName("Should generate request id when header contains disallowed characters")
+    void shouldGenerateRequestIdWhenHeaderContainsDisallowedCharacters() throws ServletException, IOException {
+        final MockHttpServletRequest request = new MockHttpServletRequest("GET", "/api/v1/books");
+        request.addHeader("X-Request-Id", "req<123>");
+        final MockHttpServletResponse response = new MockHttpServletResponse();
+
+        filter.doFilter(request, response, new MockFilterChain());
+
+        final String requestId = (String) request.getAttribute("requestId");
+        assertThat(requestId).isNotBlank().isNotEqualTo("req<123>");
+        assertThat(response.getHeader("X-Request-Id")).isEqualTo(requestId);
+    }
+
+    @Test
+    @DisplayName("Should generate request id when header contains control characters")
+    void shouldGenerateRequestIdWhenHeaderContainsControlCharacters() throws ServletException, IOException {
+        final MockHttpServletRequest request = new MockHttpServletRequest("GET", "/api/v1/books");
+        request.addHeader("X-Request-Id", "req\n123");
+        final MockHttpServletResponse response = new MockHttpServletResponse();
+
+        filter.doFilter(request, response, new MockFilterChain());
+
+        final String requestId = (String) request.getAttribute("requestId");
+        assertThat(requestId).isNotBlank().isNotEqualTo("req\n123");
+        assertThat(response.getHeader("X-Request-Id")).isEqualTo(requestId);
+    }
+
+    @Test
+    @DisplayName("Should generate request id when header exceeds max length")
+    void shouldGenerateRequestIdWhenHeaderExceedsMaxLength() throws ServletException, IOException {
+        final MockHttpServletRequest request = new MockHttpServletRequest("GET", "/api/v1/books");
+        request.addHeader("X-Request-Id", "a".repeat(REQUEST_ID_MAX_LENGTH + 1));
+        final MockHttpServletResponse response = new MockHttpServletResponse();
+
+        filter.doFilter(request, response, new MockFilterChain());
+
+        final String requestId = (String) request.getAttribute("requestId");
+        assertThat(requestId).isNotBlank().hasSizeLessThanOrEqualTo(REQUEST_ID_MAX_LENGTH);
         assertThat(response.getHeader("X-Request-Id")).isEqualTo(requestId);
     }
 }

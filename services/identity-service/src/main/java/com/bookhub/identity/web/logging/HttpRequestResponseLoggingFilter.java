@@ -7,8 +7,8 @@ import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.time.Duration;
 import java.time.Instant;
-import java.util.Optional;
 import java.util.UUID;
+import java.util.regex.Pattern;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.core.Ordered;
 import org.springframework.core.annotation.Order;
@@ -22,6 +22,8 @@ public class HttpRequestResponseLoggingFilter extends OncePerRequestFilter {
 
     private static final String REQUEST_ID_ATTRIBUTE = "requestId";
     private static final String REQUEST_ID_HEADER = "X-Request-Id";
+    private static final int REQUEST_ID_MAX_LENGTH = 100;
+    private static final Pattern REQUEST_ID_ALLOWED_PATTERN = Pattern.compile("^[A-Za-z0-9._-]+$");
 
     @Override
     protected void doFilterInternal(
@@ -55,8 +57,17 @@ public class HttpRequestResponseLoggingFilter extends OncePerRequestFilter {
     }
 
     private String resolveRequestId(final HttpServletRequest request) {
-        return Optional.ofNullable(request.getHeader(REQUEST_ID_HEADER))
-                .filter(value -> !value.isBlank())
-                .orElseGet(() -> UUID.randomUUID().toString());
+        final String incomingRequestId = request.getHeader(REQUEST_ID_HEADER);
+        if (isValidRequestId(incomingRequestId)) {
+            return incomingRequestId;
+        }
+        return UUID.randomUUID().toString();
+    }
+
+    private boolean isValidRequestId(final String requestId) {
+        return requestId != null
+                && !requestId.isBlank()
+                && requestId.length() <= REQUEST_ID_MAX_LENGTH
+                && REQUEST_ID_ALLOWED_PATTERN.matcher(requestId).matches();
     }
 }

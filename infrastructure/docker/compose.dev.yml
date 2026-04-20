@@ -1,0 +1,16 @@
+services:
+  identity-service:
+    ports:
+      - '8081:8081'
+
+  catalog-service:
+    ports:
+      - '8082:8082'
+
+  identity-db:
+    ports:
+      - '5432:5432'
+
+  catalog-db:
+    ports:
+      - '5433:5432'
