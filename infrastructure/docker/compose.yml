@@ -9,7 +9,7 @@ services:
       context: ../../services/api-gateway
       dockerfile: Dockerfile
     ports:
-      - "8080:8080"
+      - '8080:8080'
     environment:
       SPRING_PROFILES_ACTIVE: local
     depends_on:
@@ -74,7 +74,7 @@ services:
       POSTGRES_USER: bookhub
       POSTGRES_PASSWORD: bookhub
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U bookhub -d bookhub_identity"]
+      test: ['CMD-SHELL', 'pg_isready -U bookhub -d bookhub_identity']
       interval: 10s
       timeout: 5s
       retries: 5
@@ -90,7 +90,7 @@ services:
       POSTGRES_USER: bookhub
       POSTGRES_PASSWORD: bookhub
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U bookhub -d bookhub_catalog"]
+      test: ['CMD-SHELL', 'pg_isready -U bookhub -d bookhub_catalog']
       interval: 10s
       timeout: 5s
       retries: 5
@@ -106,7 +106,7 @@ services:
       POSTGRES_USER: bookhub
       POSTGRES_PASSWORD: bookhub
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U bookhub -d bookhub_library"]
+      test: ['CMD-SHELL', 'pg_isready -U bookhub -d bookhub_library']
       interval: 10s
       timeout: 5s
       retries: 5
