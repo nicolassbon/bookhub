@@ -8,6 +8,7 @@ import com.bookhub.catalog.domain.BookIdentifier;
 import com.bookhub.catalog.domain.BookRepository;
 import com.bookhub.catalog.domain.SearchProvider;
 import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -21,6 +22,7 @@ public class GetBookDetailService {
     private final SearchProvider searchProvider;
     private final int defaultRetryAfterSeconds;
 
+    @Autowired
     public GetBookDetailService(final BookRepository bookRepository, final SearchProvider searchProvider) {
         this(bookRepository, searchProvider, 30);
     }

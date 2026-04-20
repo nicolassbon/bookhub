@@ -156,4 +156,13 @@ class BookControllerTest {
                 .andExpect(jsonPath("$.code").value("INVALID_PROVIDER_PAYLOAD"))
                 .andExpect(jsonPath("$.path").value("/api/v1/books/ext:ol:OLMISSINGW"));
     }
+
+    @Test
+    void shouldReturnStructuredNotFoundForUnknownRoute() throws Exception {
+        mockMvc.perform(get("/api/v1/books/unknown/route"))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.error").value("Not Found"))
+                .andExpect(jsonPath("$.code").value("RESOURCE_NOT_FOUND"))
+                .andExpect(jsonPath("$.path").value("/api/v1/books/unknown/route"));
+    }
 }

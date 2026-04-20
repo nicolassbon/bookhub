@@ -8,11 +8,14 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.ConstraintViolationException;
 import java.time.Instant;
 import java.util.stream.Collectors;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.servlet.resource.NoResourceFoundException;
 
+@Slf4j
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
@@ -79,16 +82,40 @@ public class GlobalExceptionHandler {
                 request.getRequestURI());
     }
 
+    @ExceptionHandler(NoResourceFoundException.class)
+    public ResponseEntity<ErrorResponse> handleNoResourceFound(
+            final NoResourceFoundException exception,
+            final HttpServletRequest request) {
+        return buildError(
+                HttpStatus.NOT_FOUND,
+                "Not Found",
+                "RESOURCE_NOT_FOUND",
+                "Resource not found",
+                request.getRequestURI());
+    }
+
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ErrorResponse> handleUnhandled(
             final Exception exception,
             final HttpServletRequest request) {
+        log.error(
+                "Unhandled server exception method={} path={} requestId={}",
+                request.getMethod(),
+                request.getRequestURI(),
+                requestId(request),
+                exception);
+
         return buildError(
                 HttpStatus.INTERNAL_SERVER_ERROR,
                 "Internal Server Error",
                 "INTERNAL_ERROR",
                 "Unexpected error",
                 request.getRequestURI());
+    }
+
+    private String requestId(final HttpServletRequest request) {
+        final Object requestId = request.getAttribute("requestId");
+        return requestId == null ? "n/a" : requestId.toString();
     }
 
     private ResponseEntity<ErrorResponse> buildError(
