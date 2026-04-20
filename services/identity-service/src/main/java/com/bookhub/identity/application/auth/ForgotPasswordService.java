@@ -11,16 +11,14 @@ import java.time.Instant;
 import java.util.Locale;
 import java.util.Optional;
 import java.util.UUID;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+@Slf4j
 @Service
 @Transactional(readOnly = true)
 public class ForgotPasswordService {
-
-    private static final Logger LOGGER = LoggerFactory.getLogger(ForgotPasswordService.class);
 
     private final UserRepository userRepository;
     private final PasswordResetTokenRepository passwordResetTokenRepository;
@@ -66,7 +64,7 @@ public class ForgotPasswordService {
         try {
             mailSenderPort.sendPasswordResetEmail(user.getEmail(), rawToken);
         } catch (RuntimeException exception) {
-            LOGGER.warn("Password reset mail delivery failed for {}", normalizedEmail, exception);
+            log.warn("Password reset mail delivery failed for {}", normalizedEmail, exception);
         }
     }
 

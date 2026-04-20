@@ -250,6 +250,7 @@ public class RateLimitFilter extends OncePerRequestFilter {
 
 - Never log secrets, tokens, passwords, or full PAN data
 - Redact sensitive fields; use structured JSON logging
+- Use placeholders `{}` in SLF4J log messages instead of string concatenation
 
 ## File Uploads
 

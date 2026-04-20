@@ -18,17 +18,15 @@ import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
 import java.util.concurrent.TimeoutException;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatusCode;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestClient;
 import org.springframework.web.client.RestClientException;
 
+@Slf4j
 @Component
 public class OpenLibraryClient implements SearchProvider {
-
-    private static final Logger LOGGER = LoggerFactory.getLogger(OpenLibraryClient.class);
 
     private final RestClient openLibraryRestClient;
     private final OpenLibraryProperties openLibraryProperties;
@@ -71,7 +69,7 @@ public class OpenLibraryClient implements SearchProvider {
         } catch (CallNotPermittedException exception) {
             meterRegistry.counter("catalog.provider.openlibrary.search.fallbacks", "reason", "circuit_open")
                     .increment();
-            LOGGER.warn("OpenLibrary search short-circuited by circuit breaker. query='{}'", query);
+            log.warn("OpenLibrary search short-circuited by circuit breaker. query='{}'", query);
             return List.of();
         } catch (RestClientException exception) {
             meterRegistry.counter("catalog.provider.openlibrary.search.fallbacks", "reason", "error")
@@ -93,7 +91,7 @@ public class OpenLibraryClient implements SearchProvider {
                     final String reason = timeout ? "timeout" : "error";
                     meterRegistry.counter("catalog.provider.openlibrary.search.fallbacks", "reason", reason)
                             .increment();
-                    LOGGER.warn("OpenLibrary async search fallback triggered. query='{}', reason='{}'", query, reason);
+                    log.warn("OpenLibrary async search fallback triggered. query='{}', reason='{}'", query, reason);
                     return List.of();
                 });
     }

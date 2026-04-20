@@ -11,17 +11,16 @@ import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
 import java.util.concurrent.TimeUnit;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+@Slf4j
 @Service
 public class SearchBooksService {
 
     private static final int DEFAULT_LIMIT = 20;
     private static final int MAX_LIMIT = 100;
-    private static final Logger LOGGER = LoggerFactory.getLogger(SearchBooksService.class);
 
     private final BookRepository bookRepository;
     private final SearchProvider searchProvider;
@@ -86,7 +85,7 @@ public class SearchBooksService {
 
         meterRegistry.timer("catalog.search.total.duration").record(System.nanoTime() - totalStart,
                 TimeUnit.NANOSECONDS);
-        LOGGER.info(
+        log.info(
                 "Catalog search completed query='{}' localCount={} externalCount={} mergedCount={} pageCount={} candidateLimit={}",
                 query,
                 localResults.size(),

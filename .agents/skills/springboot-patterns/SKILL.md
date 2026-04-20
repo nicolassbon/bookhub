@@ -160,11 +160,15 @@ public class NotificationService {
 
 ## Logging (SLF4J)
 
+- Use `@Slf4j` for logger declaration in Spring components and services
+- Use placeholders `{}` in SLF4J log messages instead of string concatenation
+- Avoid logging sensitive information
+- Use `snake_case` names for metrics
+
 ```java
+@Slf4j
 @Service
 public class ReportService {
-  private static final Logger log = LoggerFactory.getLogger(ReportService.class);
-
   public Report generate(Long marketId) {
     log.info("generate_report marketId={}", marketId);
     try {
@@ -181,10 +185,9 @@ public class ReportService {
 ## Middleware / Filters
 
 ```java
+@Slf4j
 @Component
 public class RequestLoggingFilter extends OncePerRequestFilter {
-  private static final Logger log = LoggerFactory.getLogger(RequestLoggingFilter.class);
-
   @Override
   protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response,
       FilterChain filterChain) throws ServletException, IOException {
@@ -300,7 +303,7 @@ Use Spring’s `@Scheduled` or integrate with queues (e.g., Kafka, SQS, RabbitMQ
 ## Observability
 
 - Structured logging (JSON) via Logback encoder
-- Metrics: Micrometer + Prometheus/OTel
+- Metrics: Micrometer + Prometheus/OTel; use `snake_case` names
 - Tracing: Micrometer Tracing with OpenTelemetry or Brave backend
 
 ## Production Defaults

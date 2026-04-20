@@ -128,10 +128,24 @@ src/test/java/... (mirrors main)
 ## Logging
 
 ```java
-private static final Logger log = LoggerFactory.getLogger(MarketService.class);
-log.info("fetch_market slug={}", slug);
-log.error("failed_fetch_market slug={}", slug, ex);
+@Slf4j
+public class MarketService {
+  void fetch(String slug) {
+    log.info("fetch_market slug={}", slug);
+    try {
+      // logic
+    } catch (RuntimeException ex) {
+      log.error("failed_fetch_market slug={}", slug, ex);
+      throw ex;
+    }
+  }
+}
 ```
+
+- Use `@Slf4j` for logger declaration in Spring components and services
+- Use SLF4J placeholders `{}` instead of string concatenation
+- Avoid logging sensitive information
+- Use `snake_case` names for metrics
 
 ## Null Handling
 
