@@ -229,6 +229,19 @@ class AuthControllerTest {
     }
 
     @Test
+    @DisplayName("Should return 400 with structured error when request body is missing")
+    void shouldReturn400WithStructuredErrorWhenRequestBodyIsMissing() throws Exception {
+        mockMvc.perform(post("/api/v1/auth/login")
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.status").value(400))
+                .andExpect(jsonPath("$.error").value("Bad Request"))
+                .andExpect(jsonPath("$.code").value("MALFORMED_REQUEST"))
+                .andExpect(jsonPath("$.message").value("Request body is required"))
+                .andExpect(jsonPath("$.path").value("/api/v1/auth/login"));
+    }
+
+    @Test
     @DisplayName("Should return 401 with structured error when credentials are invalid")
     void shouldReturn401WithStructuredErrorWhenCredentialsAreInvalid() throws Exception {
         when(authWebMapper.toLoginUserCommand(any(LoginRequest.class))).thenReturn(LoginUserCommand

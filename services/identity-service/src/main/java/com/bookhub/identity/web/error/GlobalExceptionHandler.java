@@ -8,17 +8,23 @@ import com.bookhub.identity.web.auth.ratelimit.RateLimitExceededException;
 import jakarta.servlet.http.HttpServletRequest;
 import java.time.Instant;
 import java.util.Comparator;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.FieldError;
+import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.web.bind.MissingRequestCookieException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.servlet.resource.NoResourceFoundException;
 
 @RestControllerAdvice
 public class GlobalExceptionHandler {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(GlobalExceptionHandler.class);
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<ErrorResponse> handleValidation(
@@ -37,6 +43,22 @@ public class GlobalExceptionHandler {
                 "Validation Error",
                 "VALIDATION_ERROR",
                 message,
+                request.getRequestURI());
+    }
+
+    @ExceptionHandler(HttpMessageNotReadableException.class)
+    public ResponseEntity<ErrorResponse> handleUnreadableRequestBody(
+            final HttpMessageNotReadableException exception,
+            final HttpServletRequest request) {
+        final String errorMessage = isMissingRequestBody(exception)
+                ? "Request body is required"
+                : "Malformed JSON request";
+
+        return buildErrorResponse(
+                HttpStatus.BAD_REQUEST,
+                "Bad Request",
+                "MALFORMED_REQUEST",
+                errorMessage,
                 request.getRequestURI());
     }
 
@@ -124,16 +146,44 @@ public class GlobalExceptionHandler {
                 request.getRequestURI());
     }
 
+    @ExceptionHandler(NoResourceFoundException.class)
+    public ResponseEntity<ErrorResponse> handleNoResourceFound(
+            final NoResourceFoundException exception,
+            final HttpServletRequest request) {
+        return buildErrorResponse(
+                HttpStatus.NOT_FOUND,
+                "Not Found",
+                "RESOURCE_NOT_FOUND",
+                "Resource not found",
+                request.getRequestURI());
+    }
+
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ErrorResponse> handleUnhandled(
             final Exception exception,
             final HttpServletRequest request) {
+        LOGGER.error(
+                "Unhandled server exception method={} path={} requestId={}",
+                request.getMethod(),
+                request.getRequestURI(),
+                requestId(request),
+                exception);
+
         return buildErrorResponse(
                 HttpStatus.INTERNAL_SERVER_ERROR,
                 "Internal Server Error",
                 "INTERNAL_ERROR",
                 "Unexpected error",
                 request.getRequestURI());
+    }
+
+    private boolean isMissingRequestBody(final HttpMessageNotReadableException exception) {
+        return exception.getMessage() != null && exception.getMessage().contains("Required request body is missing");
+    }
+
+    private String requestId(final HttpServletRequest request) {
+        final Object requestId = request.getAttribute("requestId");
+        return requestId == null ? "n/a" : requestId.toString();
     }
 
     private ResponseEntity<ErrorResponse> buildErrorResponse(
