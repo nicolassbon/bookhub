@@ -4,7 +4,6 @@ import com.bookhub.identity.domain.auth.RefreshToken;
 import com.bookhub.identity.domain.auth.RefreshTokenRepository;
 import java.time.Instant;
 import java.util.Optional;
-import java.util.UUID;
 import org.springframework.stereotype.Repository;
 
 @Repository
@@ -17,13 +16,13 @@ public class RefreshTokenRepositoryAdapter implements RefreshTokenRepository {
     }
 
     @Override
-    public Optional<RefreshToken> findByToken(final UUID token) {
-        return refreshTokenJpaRepository.findById(token);
+    public Optional<RefreshToken> findByTokenHash(final String tokenHash) {
+        return refreshTokenJpaRepository.findById(tokenHash);
     }
 
     @Override
-    public Optional<RefreshToken> findActiveByToken(final UUID token, final Instant now) {
-        return refreshTokenJpaRepository.findByTokenAndRevokedFalseAndExpiresAtAfter(token, now);
+    public Optional<RefreshToken> findActiveByTokenHashForUpdate(final String tokenHash, final Instant now) {
+        return refreshTokenJpaRepository.findByTokenHashAndRevokedFalseAndExpiresAtAfter(tokenHash, now);
     }
 
     @Override
@@ -32,8 +31,8 @@ public class RefreshTokenRepositoryAdapter implements RefreshTokenRepository {
     }
 
     @Override
-    public void revokeByToken(final UUID token) {
-        findByToken(token).ifPresent(refreshToken -> {
+    public void revokeByTokenHash(final String tokenHash) {
+        findByTokenHash(tokenHash).ifPresent(refreshToken -> {
             refreshToken.revoke(Instant.now());
             refreshTokenJpaRepository.save(refreshToken);
         });

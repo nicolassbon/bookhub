@@ -38,6 +38,7 @@ jwt:
 auth:
   refresh-token:
     expiration-seconds: ${REFRESH_TOKEN_EXPIRATION_SECONDS:604800}
+    hash-secret: ${REFRESH_TOKEN_HASH_SECRET:test-refresh-token-secret}
     cookie:
       name: ${REFRESH_TOKEN_COOKIE_NAME:refresh_token}
       path: ${REFRESH_TOKEN_COOKIE_PATH:/api/v1/auth}
@@ -58,3 +59,6 @@ auth:
     forgot-password:
       max-attempts: ${AUTH_RATE_LIMIT_FORGOT_PASSWORD_MAX_ATTEMPTS:10}
       window-seconds: ${AUTH_RATE_LIMIT_FORGOT_PASSWORD_WINDOW_SECONDS:60}
+    refresh:
+      max-attempts: ${AUTH_RATE_LIMIT_REFRESH_MAX_ATTEMPTS:20}
+      window-seconds: ${AUTH_RATE_LIMIT_REFRESH_WINDOW_SECONDS:60}

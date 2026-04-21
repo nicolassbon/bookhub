@@ -10,27 +10,31 @@ import org.springframework.transaction.annotation.Transactional;
 public class LogoutUserService {
 
     private final RefreshTokenRepository refreshTokenRepository;
+    private final RefreshTokenHasher refreshTokenHasher;
 
-    public LogoutUserService(final RefreshTokenRepository refreshTokenRepository) {
+    public LogoutUserService(
+            final RefreshTokenRepository refreshTokenRepository,
+            final RefreshTokenHasher refreshTokenHasher) {
         this.refreshTokenRepository = refreshTokenRepository;
+        this.refreshTokenHasher = refreshTokenHasher;
     }
 
     public void logout(final String refreshTokenValue) {
-        final UUID token = parseToken(refreshTokenValue);
+        final String token = parseToken(refreshTokenValue);
         if (token == null) {
             return;
         }
 
-        refreshTokenRepository.revokeByToken(token);
+        refreshTokenRepository.revokeByTokenHash(refreshTokenHasher.hash(token));
     }
 
-    private UUID parseToken(final String refreshTokenValue) {
+    private String parseToken(final String refreshTokenValue) {
         if (refreshTokenValue == null || refreshTokenValue.isBlank()) {
             return null;
         }
 
         try {
-            return UUID.fromString(refreshTokenValue);
+            return UUID.fromString(refreshTokenValue).toString();
         } catch (IllegalArgumentException exception) {
             return null;
         }

@@ -12,15 +12,14 @@ import jakarta.persistence.PreUpdate;
 import jakarta.persistence.Table;
 import java.time.Instant;
 import java.util.Objects;
-import java.util.UUID;
 
 @Entity
 @Table(name = "refresh_tokens")
 public class RefreshToken {
 
     @Id
-    @Column(name = "token", nullable = false, updatable = false)
-    private UUID token;
+    @Column(name = "token_hash", nullable = false, updatable = false, length = 64)
+    private String tokenHash;
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "user_id", nullable = false)
@@ -45,14 +44,14 @@ public class RefreshToken {
     }
 
     private RefreshToken(
-            final UUID token,
+            final String tokenHash,
             final User user,
             final Instant expiresAt,
             final boolean revoked,
             final Instant revokedAt,
             final Instant createdAt,
             final Instant updatedAt) {
-        this.token = token;
+        this.tokenHash = tokenHash;
         this.user = user;
         this.expiresAt = expiresAt;
         this.revoked = revoked;
@@ -62,19 +61,19 @@ public class RefreshToken {
     }
 
     public static RefreshToken issue(
-            final UUID token,
+            final String tokenHash,
             final User user,
             final Instant expiresAt) {
-        return new RefreshToken(token, user, expiresAt, false, null, null, null);
+        return new RefreshToken(tokenHash, user, expiresAt, false, null, null, null);
     }
 
     public static RefreshToken rehydrate(
-            final UUID token,
+            final String tokenHash,
             final User user,
             final Instant expiresAt,
             final boolean revoked,
             final Instant revokedAt) {
-        return new RefreshToken(token, user, expiresAt, revoked, revokedAt, null, null);
+        return new RefreshToken(tokenHash, user, expiresAt, revoked, revokedAt, null, null);
     }
 
     @PrePersist
@@ -99,8 +98,8 @@ public class RefreshToken {
         revokedAt = now;
     }
 
-    public UUID getToken() {
-        return token;
+    public String getTokenHash() {
+        return tokenHash;
     }
 
     public User getUser() {
@@ -123,11 +122,11 @@ public class RefreshToken {
         if (!(other instanceof RefreshToken refreshToken)) {
             return false;
         }
-        return token != null && Objects.equals(token, refreshToken.token);
+        return tokenHash != null && Objects.equals(tokenHash, refreshToken.tokenHash);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hashCode(token);
+        return Objects.hashCode(tokenHash);
     }
 }

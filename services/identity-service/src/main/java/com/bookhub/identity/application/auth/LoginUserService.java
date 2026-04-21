@@ -21,6 +21,7 @@ public class LoginUserService {
     private final PasswordEncoder passwordEncoder;
     private final TokenIssuer tokenIssuer;
     private final RefreshTokenRepository refreshTokenRepository;
+    private final RefreshTokenHasher refreshTokenHasher;
     private final RefreshTokenProperties refreshTokenProperties;
     private final Clock clock;
     private final AuthResultMapper authResultMapper;
@@ -30,6 +31,7 @@ public class LoginUserService {
             final PasswordEncoder passwordEncoder,
             final TokenIssuer tokenIssuer,
             final RefreshTokenRepository refreshTokenRepository,
+            final RefreshTokenHasher refreshTokenHasher,
             final RefreshTokenProperties refreshTokenProperties,
             final Clock clock,
             final AuthResultMapper authResultMapper) {
@@ -37,6 +39,7 @@ public class LoginUserService {
         this.passwordEncoder = passwordEncoder;
         this.tokenIssuer = tokenIssuer;
         this.refreshTokenRepository = refreshTokenRepository;
+        this.refreshTokenHasher = refreshTokenHasher;
         this.refreshTokenProperties = refreshTokenProperties;
         this.clock = clock;
         this.authResultMapper = authResultMapper;
@@ -70,14 +73,15 @@ public class LoginUserService {
     }
 
     private String issueRefreshToken(final User user) {
-        final UUID tokenValue = UUID.randomUUID();
+        final String tokenValue = UUID.randomUUID().toString();
+        final String tokenHash = refreshTokenHasher.hash(tokenValue);
         final Instant now = Instant.now(clock);
         final RefreshToken refreshToken = RefreshToken.issue(
-                tokenValue,
+                tokenHash,
                 user,
                 now.plusSeconds(refreshTokenProperties.expirationSeconds()));
 
         refreshTokenRepository.save(refreshToken);
-        return tokenValue.toString();
+        return tokenValue;
     }
 }

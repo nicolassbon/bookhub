@@ -28,6 +28,7 @@ jwt:
 auth:
   refresh-token:
     expiration-seconds: ${REFRESH_TOKEN_EXPIRATION_SECONDS:604800}
+    hash-secret: ${REFRESH_TOKEN_HASH_SECRET:local-refresh-token-secret}
     cookie:
       name: ${REFRESH_TOKEN_COOKIE_NAME:refresh_token}
       path: ${REFRESH_TOKEN_COOKIE_PATH:/api/v1/auth}
