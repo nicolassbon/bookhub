@@ -1,0 +1,301 @@
+{
+  "info": {
+    "name": "BookHub Identity Service - Auth Flows (Phase 1)",
+    "_postman_id": "85bba551-d4f9-4ac6-a25a-6bb1ee57dcf0",
+    "description": "Phase 1 mixed API testing collection for identity-service auth flows.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "event": [
+    {
+      "listen": "prerequest",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          "const baseUrl = pm.environment.get('baseUrl') || 'http://localhost:8081';",
+          "const authBasePath = pm.environment.get('authBasePath') || '/api/v1/auth';",
+          "pm.environment.set('baseUrl', baseUrl);",
+          "pm.environment.set('authBasePath', authBasePath);",
+          "if (!pm.environment.get('testPassword')) {",
+          "  pm.environment.set('testPassword', 'Bookhub!234');",
+          "}",
+          "if (!pm.environment.get('newPassword')) {",
+          "  pm.environment.set('newPassword', 'Bookhub!235');",
+          "}",
+          "if (!pm.environment.get('testEmail')) {",
+          "  const prefix = pm.environment.get('emailPrefix') || 'qa.identity';",
+          "  pm.environment.set('testEmail', `${prefix}.${Date.now()}@example.com`);",
+          "}",
+          "if (!pm.environment.get('testUsername')) {",
+          "  pm.environment.set('testUsername', `user_${Date.now()}`);",
+          "}",
+          "if (!pm.environment.get('testDisplayName')) {",
+          "  pm.environment.set('testDisplayName', 'Identity QA');",
+          "}"
+        ]
+      }
+    }
+  ],
+  "item": [
+    {
+      "name": "01 - Register",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"username\": \"{{testUsername}}\",\n  \"email\": \"{{testEmail}}\",\n  \"password\": \"{{testPassword}}\",\n  \"displayName\": \"{{testDisplayName}}\"\n}"
+        },
+        "url": "{{baseUrl}}{{authBasePath}}/register",
+        "description": "Creates a user for the rest of the auth flow."
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Register returns 201', function () {",
+              "  pm.response.to.have.status(201);",
+              "});",
+              "const body = pm.response.json();",
+              "pm.test('Register response contains userId', function () {",
+              "  pm.expect(body.userId).to.be.a('string').and.not.empty;",
+              "});",
+              "pm.environment.set('registeredUserId', body.userId || '');",
+              "pm.environment.set('registeredEmail', body.email || pm.environment.get('testEmail'));"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "02 - Login",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"email\": \"{{testEmail}}\",\n  \"password\": \"{{testPassword}}\"\n}"
+        },
+        "url": "{{baseUrl}}{{authBasePath}}/login",
+        "description": "Logs in and stores access token + refresh cookie value when possible."
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Login returns 200', function () {",
+              "  pm.response.to.have.status(200);",
+              "});",
+              "const body = pm.response.json();",
+              "pm.test('Login response includes access token', function () {",
+              "  pm.expect(body.accessToken).to.be.a('string').and.not.empty;",
+              "});",
+              "pm.environment.set('accessToken', body.accessToken || '');",
+              "pm.environment.set('tokenExpiresIn', body.expiresIn || '');",
+              "pm.environment.set('loggedInUserId', body.user && body.user.userId ? body.user.userId : '');",
+              "const cookieName = pm.environment.get('refreshCookieName') || 'refresh_token';",
+              "const setCookie = pm.response.headers.get('Set-Cookie') || '';",
+              "const match = setCookie.match(new RegExp(`${cookieName}=([^;]+)`));",
+              "if (match && match[1]) {",
+              "  pm.environment.set('refreshTokenValue', match[1]);",
+              "}"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "03 - Refresh",
+      "request": {
+        "method": "POST",
+        "header": [],
+        "url": "{{baseUrl}}{{authBasePath}}/refresh",
+        "description": "Refreshes session using stored cookie jar or manual Cookie header fallback."
+      },
+      "event": [
+        {
+          "listen": "prerequest",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "const useManual = (pm.environment.get('useManualRefreshCookie') || 'false') === 'true';",
+              "const cookieName = pm.environment.get('refreshCookieName') || 'refresh_token';",
+              "const token = pm.environment.get('refreshTokenValue') || '';",
+              "if (useManual && token) {",
+              "  pm.request.headers.upsert({ key: 'Cookie', value: `${cookieName}=${token}` });",
+              "} else {",
+              "  pm.request.headers.remove('Cookie');",
+              "}"
+            ]
+          }
+        },
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Refresh returns 200', function () {",
+              "  pm.response.to.have.status(200);",
+              "});",
+              "const body = pm.response.json();",
+              "pm.test('Refresh returns new access token', function () {",
+              "  pm.expect(body.accessToken).to.be.a('string').and.not.empty;",
+              "});",
+              "pm.environment.set('accessToken', body.accessToken || '');",
+              "const cookieName = pm.environment.get('refreshCookieName') || 'refresh_token';",
+              "const setCookie = pm.response.headers.get('Set-Cookie') || '';",
+              "const match = setCookie.match(new RegExp(`${cookieName}=([^;]+)`));",
+              "if (match && match[1]) {",
+              "  pm.environment.set('refreshTokenValue', match[1]);",
+              "}"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "04 - Logout",
+      "request": {
+        "method": "POST",
+        "header": [],
+        "url": "{{baseUrl}}{{authBasePath}}/logout",
+        "description": "Logs out and clears refresh cookie server-side."
+      },
+      "event": [
+        {
+          "listen": "prerequest",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "const useManual = (pm.environment.get('useManualRefreshCookie') || 'false') === 'true';",
+              "const cookieName = pm.environment.get('refreshCookieName') || 'refresh_token';",
+              "const token = pm.environment.get('refreshTokenValue') || '';",
+              "if (useManual && token) {",
+              "  pm.request.headers.upsert({ key: 'Cookie', value: `${cookieName}=${token}` });",
+              "} else {",
+              "  pm.request.headers.remove('Cookie');",
+              "}"
+            ]
+          }
+        },
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Logout returns 204', function () {",
+              "  pm.response.to.have.status(204);",
+              "});",
+              "pm.environment.unset('accessToken');",
+              "pm.environment.unset('refreshTokenValue');"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "05 - Forgot Password",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"email\": \"{{testEmail}}\"\n}"
+        },
+        "url": "{{baseUrl}}{{authBasePath}}/forgot-password",
+        "description": "Triggers password reset email generation."
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Forgot password returns 200', function () {",
+              "  pm.response.to.have.status(200);",
+              "});"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "06 - Reset Password",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"token\": \"{{resetToken}}\",\n  \"newPassword\": \"{{newPassword}}\"\n}"
+        },
+        "url": "{{baseUrl}}{{authBasePath}}/reset-password",
+        "description": "Manual-step request: requires reset token from mail inbox/log capture.",
+        "auth": {
+          "type": "noauth"
+        }
+      },
+      "event": [
+        {
+          "listen": "prerequest",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "const resetToken = pm.environment.get('resetToken');",
+              "pm.test('resetToken must be provided before reset-password', function () {",
+              "  pm.expect(resetToken, 'Set resetToken in environment').to.be.a('string').and.not.empty;",
+              "});"
+            ]
+          }
+        },
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Reset password returns 200', function () {",
+              "  pm.response.to.have.status(200);",
+              "});",
+              "const nextPassword = pm.environment.get('newPassword');",
+              "if (nextPassword) {",
+              "  pm.environment.set('testPassword', nextPassword);",
+              "}"
+            ]
+          }
+        }
+      ]
+    }
+  ],
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:8081"
+    },
+    {
+      "key": "authBasePath",
+      "value": "/api/v1/auth"
+    }
+  ]
+}
