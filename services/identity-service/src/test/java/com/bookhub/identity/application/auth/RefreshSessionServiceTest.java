@@ -34,6 +34,9 @@ class RefreshSessionServiceTest {
     private TokenIssuer tokenIssuer;
 
     @Mock
+    private RefreshTokenHasher refreshTokenHasher;
+
+    @Mock
     private RefreshTokenProperties refreshTokenProperties;
 
     @Mock
@@ -57,14 +60,17 @@ class RefreshSessionServiceTest {
                 UserRole.USER);
 
         final UUID tokenValue = UUID.fromString("d7cc2a0f-ea1a-4f74-8e64-3f3f4a5ba723");
+        final String tokenHash = "old-token-hash";
         final RefreshToken activeToken = RefreshToken.issue(
-                tokenValue,
+                tokenHash,
                 user,
                 Instant.parse("2026-04-20T13:00:00Z"));
 
+        when(refreshTokenHasher.hash(any(String.class))).thenReturn("new-token-hash");
+        when(refreshTokenHasher.hash(tokenValue.toString())).thenReturn(tokenHash);
         when(clock.instant()).thenReturn(Instant.parse("2026-04-12T13:00:00Z"));
         when(refreshTokenProperties.expirationSeconds()).thenReturn(604800L);
-        when(refreshTokenRepository.findActiveByToken(tokenValue, Instant.parse("2026-04-12T13:00:00Z")))
+        when(refreshTokenRepository.findActiveByTokenHashForUpdate(tokenHash, Instant.parse("2026-04-12T13:00:00Z")))
                 .thenReturn(Optional.of(activeToken));
         when(refreshTokenRepository.save(any(RefreshToken.class))).thenAnswer(invocation -> invocation.getArgument(0));
         when(tokenIssuer.issueFor(user)).thenReturn(TokenIssuer.IssuedTokenPair.builder()

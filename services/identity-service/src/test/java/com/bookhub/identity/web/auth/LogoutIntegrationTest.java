@@ -6,6 +6,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import com.bookhub.identity.application.auth.RefreshTokenHasher;
 import com.bookhub.identity.infrastructure.persistence.RefreshTokenJpaRepository;
 import com.bookhub.identity.infrastructure.persistence.UserJpaRepository;
 import java.time.Instant;
@@ -37,6 +38,9 @@ class LogoutIntegrationTest {
     @Autowired
     private PasswordEncoder passwordEncoder;
 
+    @Autowired
+    private RefreshTokenHasher refreshTokenHasher;
+
     @BeforeEach
     void setUp() {
         refreshTokenJpaRepository.deleteAll();
@@ -60,7 +64,7 @@ class LogoutIntegrationTest {
                 .andExpect(status().isNoContent())
                 .andExpect(header().string("Set-Cookie", containsString("Max-Age=0")));
 
-        assertThat(refreshTokenJpaRepository.findById(tokenValue))
+        assertThat(refreshTokenJpaRepository.findById(refreshTokenHasher.hash(tokenValue.toString())))
                 .isPresent()
                 .get()
                 .matches(refreshToken -> refreshToken.isRevoked(), "logout should revoke persisted token row");

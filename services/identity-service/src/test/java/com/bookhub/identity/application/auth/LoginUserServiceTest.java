@@ -42,6 +42,9 @@ class LoginUserServiceTest {
     private RefreshTokenRepository refreshTokenRepository;
 
     @Mock
+    private RefreshTokenHasher refreshTokenHasher;
+
+    @Mock
     private RefreshTokenProperties refreshTokenProperties;
 
     @Mock
@@ -73,6 +76,7 @@ class LoginUserServiceTest {
         when(passwordEncoder.matches("StrongPassword123!", "stored-hash")).thenReturn(true);
         when(refreshTokenProperties.expirationSeconds()).thenReturn(604800L);
         when(clock.instant()).thenReturn(Instant.parse("2026-04-12T12:00:00Z"));
+        when(refreshTokenHasher.hash(anyString())).thenReturn("hashed-refresh-token");
         when(tokenIssuer.issueFor(existingUser)).thenReturn(TokenIssuer.IssuedTokenPair.builder()
                 .accessToken("jwt-access-token")
                 .expiresIn(3600)

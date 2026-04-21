@@ -72,11 +72,11 @@ class RefreshIntegrationTest {
         final String setCookie = response.getResponse().getHeader("Set-Cookie");
         final UUID rotatedToken = extractRefreshToken(setCookie);
 
-        assertThat(refreshTokenJpaRepository.findById(oldToken))
+        assertThat(refreshTokenJpaRepository.findById(AuthIntegrationFixture.refreshTokenHash(oldToken)))
                 .isPresent()
                 .get()
                 .matches(refreshToken -> refreshToken.isRevoked(), "old token should be revoked");
-        assertThat(refreshTokenJpaRepository.findById(rotatedToken))
+        assertThat(refreshTokenJpaRepository.findById(AuthIntegrationFixture.refreshTokenHash(rotatedToken)))
                 .isPresent()
                 .get()
                 .matches(refreshToken -> !refreshToken.isRevoked(), "new token should be active");
@@ -120,7 +120,7 @@ class RefreshIntegrationTest {
 
         final UUID revokedToken = UUID.fromString("cb512f1d-6285-4c01-abee-a1553cc4065c");
         refreshTokenJpaRepository.save(RefreshToken.rehydrate(
-                revokedToken,
+                AuthIntegrationFixture.refreshTokenHash(revokedToken),
                 user,
                 Instant.now().plusSeconds(3600),
                 true,

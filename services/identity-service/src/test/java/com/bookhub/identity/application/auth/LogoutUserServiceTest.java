@@ -2,6 +2,7 @@ package com.bookhub.identity.application.auth;
 
 import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.when;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 
@@ -20,6 +21,9 @@ class LogoutUserServiceTest {
     @Mock
     private RefreshTokenRepository refreshTokenRepository;
 
+    @Mock
+    private RefreshTokenHasher refreshTokenHasher;
+
     @InjectMocks
     private LogoutUserService logoutUserService;
 
@@ -27,10 +31,11 @@ class LogoutUserServiceTest {
     @DisplayName("Should revoke refresh token when cookie value is present")
     void shouldRevokeRefreshTokenWhenCookieValueIsPresent() {
         final String tokenValue = UUID.fromString("e2b2f5d2-a101-4a3e-b1f2-250d58df1309").toString();
+        when(refreshTokenHasher.hash(tokenValue)).thenReturn("hashed-token");
 
         logoutUserService.logout(tokenValue);
 
-        verify(refreshTokenRepository).revokeByToken(UUID.fromString(tokenValue));
+        verify(refreshTokenRepository).revokeByTokenHash("hashed-token");
     }
 
     @Test
@@ -38,6 +43,6 @@ class LogoutUserServiceTest {
     void shouldBeANoOpWhenCookieValueIsMissing() {
         assertThatCode(() -> logoutUserService.logout(null)).doesNotThrowAnyException();
 
-        verify(refreshTokenRepository, never()).revokeByToken(any(UUID.class));
+        verify(refreshTokenRepository, never()).revokeByTokenHash(any(String.class));
     }
 }

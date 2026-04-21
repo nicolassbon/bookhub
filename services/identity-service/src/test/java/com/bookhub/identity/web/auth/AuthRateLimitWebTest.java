@@ -11,6 +11,7 @@ import com.bookhub.identity.application.auth.LoginUserCommand;
 import com.bookhub.identity.application.auth.LoginUserResult;
 import com.bookhub.identity.application.auth.LoginUserService;
 import com.bookhub.identity.application.auth.LogoutUserService;
+import com.bookhub.identity.application.auth.RefreshSessionResult;
 import com.bookhub.identity.application.auth.RefreshSessionService;
 import com.bookhub.identity.application.auth.RegisterUserCommand;
 import com.bookhub.identity.application.auth.RegisterUserResult;
@@ -43,7 +44,9 @@ import org.springframework.test.web.servlet.MockMvc;
         "auth.rate-limit.register.max-attempts=1",
         "auth.rate-limit.register.window-seconds=60",
         "auth.rate-limit.forgot-password.max-attempts=1",
-        "auth.rate-limit.forgot-password.window-seconds=60"
+        "auth.rate-limit.forgot-password.window-seconds=60",
+        "auth.rate-limit.refresh.max-attempts=1",
+        "auth.rate-limit.refresh.window-seconds=60"
 })
 class AuthRateLimitWebTest {
 
@@ -174,5 +177,38 @@ class AuthRateLimitWebTest {
                 .andExpect(jsonPath("$.status").value(429))
                 .andExpect(jsonPath("$.code").value("RATE_LIMIT_EXCEEDED"))
                 .andExpect(jsonPath("$.path").value("/api/v1/auth/forgot-password"));
+    }
+
+    @Test
+    void shouldReturn429WhenRefreshRateLimitIsExceeded() throws Exception {
+        when(refreshSessionService.refresh("old-refresh-token")).thenReturn(
+                RefreshSessionResult.builder()
+                        .accessToken("jwt-access-token")
+                        .expiresIn(3600)
+                        .refreshToken("new-refresh-token")
+                        .refreshTokenExpiresIn(604800)
+                        .user(LoginUserResult.LoginUserView.builder()
+                                .userId("usr_123")
+                                .username("nico")
+                                .displayName("Nicolas Bon")
+                                .role("USER")
+                                .build())
+                        .build());
+
+        when(authWebMapper.toLoginResponse(any(RefreshSessionResult.class)))
+                .thenReturn(LoginResponse.builder().accessToken("jwt-access-token").expiresIn(3600)
+                        .user(LoginResponse.LoginUserResponse.builder().userId("usr_123")
+                                .username("nico").displayName("Nicolas Bon").role("USER").build())
+                        .build());
+
+        mockMvc.perform(post("/api/v1/auth/refresh")
+                .cookie(new jakarta.servlet.http.Cookie("refresh_token", "old-refresh-token"))).andExpect(status().isOk());
+
+        mockMvc.perform(post("/api/v1/auth/refresh")
+                        .cookie(new jakarta.servlet.http.Cookie("refresh_token", "old-refresh-token")))
+                .andExpect(status().isTooManyRequests())
+                .andExpect(jsonPath("$.status").value(429))
+                .andExpect(jsonPath("$.code").value("RATE_LIMIT_EXCEEDED"))
+                .andExpect(jsonPath("$.path").value("/api/v1/auth/refresh"));
     }
 }
