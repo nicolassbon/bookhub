@@ -249,4 +249,3 @@ Likely failure indicators:
   1. `./scripts/run-identity-k6-phase2.sh rate-limit-suite`
   2. `REFRESH_REPLAY_BOOTSTRAP_EMAIL=... REFRESH_REPLAY_BOOTSTRAP_PASSWORD=... ./scripts/run-identity-k6-phase2.sh replay-suite`
 - `all` remains useful, but it can still become flaky when earlier scenarios leave limiter windows hot for later replay checks.
-- Legacy runner alias `refresh-replay` maps to `refresh-replay-semantics` for backward compatibility.

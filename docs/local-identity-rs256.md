@@ -38,29 +38,7 @@ Important fields for `identity-service`:
 
 Do **not** commit `.env`. It is intentionally ignored by Git.
 
-## 3. Load your local environment
-
-Use the provided loader script from the repository root:
-
-```bash
-source scripts/load-local-env.sh
-```
-
-What the script does:
-
-- sources `.env`
-- verifies required variables exist
-- detects placeholder values that were never replaced
-- validates that the RSA values look like PEM blocks
-- avoids printing secret values to the terminal
-
-You can also load a different file:
-
-```bash
-source scripts/load-local-env.sh .env.local
-```
-
-## 4. Start the service
+## 3. Start the service
 
 After loading the environment:
 
@@ -68,7 +46,7 @@ After loading the environment:
 mvn -pl services/identity-service spring-boot:run
 ```
 
-## 5. Common failure modes
+## 4. Common failure modes
 
 ### Missing key material
 

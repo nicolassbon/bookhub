@@ -21,8 +21,7 @@ From repository root:
 
 ```bash
 cp .env.example .env
-# edit .env and replace placeholders
-source scripts/load-local-env.sh
+#edit .env and replace placeholders
 ```
 
 At minimum, ensure these are set:
