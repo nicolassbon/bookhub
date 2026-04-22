@@ -26,9 +26,10 @@ The **default Newman runner** executes only the automated subset:
 
 1. `register`
 2. `login`
-3. `refresh`
-4. `logout`
-5. `forgot-password`
+3. `get current user (me)`
+4. `refresh`
+5. `logout`
+6. `forgot-password`
 
 `reset-password` remains in the collection as a **manual-assisted** request because it requires an out-of-band reset token.
 
@@ -66,6 +67,7 @@ Pass extra Newman args after the env file (example: verbose output):
 ## Practical Notes
 
 - `register` auto-generates email/username values if they are empty.
+- Set `autoGenerateIdentityData=false` to keep manually provided `testEmail` / `testUsername`.
 - `login` stores:
   - `accessToken`
   - `refreshTokenValue` (parsed from `Set-Cookie` when available)
@@ -86,6 +88,5 @@ If `resetToken` is empty, the request will fail fast in pre-request checks.
 ## What Is Not Covered in Phase 1
 
 - Contract/schema validation beyond core status/body assertions.
-- Negative/error-path scenarios (invalid credentials, expired tokens, validation edge cases).
 - CI pipeline integration for Newman reports.
 - Automated extraction of password reset tokens from mail providers.

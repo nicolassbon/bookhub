@@ -31,9 +31,10 @@ fi
 AUTOMATED_ITEMS=(
   "01 - Register"
   "02 - Login"
-  "03 - Refresh"
-  "04 - Logout"
-  "05 - Forgot Password"
+  "03 - Get Current User (Me)"
+  "04 - Refresh"
+  "05 - Logout"
+  "06 - Forgot Password"
 )
 
 FOLDER_ARGS=()
