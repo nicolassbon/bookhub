@@ -1,11 +1,11 @@
 package com.bookhub.identity.application.auth;
 
-import com.bookhub.identity.domain.auth.PasswordResetToken;
 import com.bookhub.identity.domain.auth.PasswordResetTokenRepository;
 import com.bookhub.identity.domain.user.User;
 import com.bookhub.identity.domain.user.UserRepository;
 import java.time.Clock;
 import java.time.Instant;
+import java.util.UUID;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -36,21 +36,14 @@ public class ResetPasswordService {
     public void reset(final String token, final String newPassword) {
         final Instant now = Instant.now(clock);
         final String tokenHash = passwordResetTokenHasher.hash(token);
-        final PasswordResetToken passwordResetToken = passwordResetTokenRepository.findByTokenHash(tokenHash)
+        final UUID userId = passwordResetTokenRepository.consumeUserIdByTokenHash(tokenHash, now)
                 .orElseThrow(InvalidPasswordResetTokenException::new);
 
-        if (passwordResetToken.getExpiresAt().isBefore(now)) {
-            throw new InvalidPasswordResetTokenException();
-        }
-
-        final User user = userRepository.findById(passwordResetToken.getUserId())
+        final User user = userRepository.findById(userId)
                 .orElseThrow(InvalidPasswordResetTokenException::new);
 
         final String encodedPassword = passwordEncoder.encode(newPassword);
         user.updatePassword(encodedPassword);
         userRepository.save(user);
-
-        passwordResetTokenRepository.delete(passwordResetToken);
-        passwordResetTokenRepository.deleteByUserId(user.getId());
     }
 }

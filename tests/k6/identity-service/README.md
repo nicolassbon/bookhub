@@ -134,8 +134,8 @@ REFRESH_REPLAY_BOOTSTRAP_PASSWORD='BookHub!2345' \
 ```bash
 ./scripts/run-identity-k6-phase2.sh login-rate-limit
 ./scripts/run-identity-k6-phase2.sh refresh-rate-limit
-./scripts/run-identity-k6-phase2.sh refresh-replay-semantics
 ./scripts/run-identity-k6-phase2.sh refresh-replay-pressure
+./scripts/run-identity-k6-phase2.sh refresh-replay-semantics
 ```
 
 ### Pass extra k6 args

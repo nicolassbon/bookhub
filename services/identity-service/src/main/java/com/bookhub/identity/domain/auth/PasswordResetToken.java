@@ -14,7 +14,8 @@ import java.util.UUID;
 @Table(
         name = "password_reset_tokens",
         uniqueConstraints = {
-            @UniqueConstraint(name = "uk_password_reset_tokens_token_hash", columnNames = "token_hash")
+            @UniqueConstraint(name = "uk_password_reset_tokens_token_hash", columnNames = "token_hash"),
+            @UniqueConstraint(name = "uk_password_reset_tokens_user_id", columnNames = "user_id")
         })
 public class PasswordResetToken {
 

@@ -7,16 +7,20 @@ import com.bookhub.catalog.domain.Book;
 import com.bookhub.catalog.domain.BookIdentifier;
 import com.bookhub.catalog.domain.BookRepository;
 import com.bookhub.catalog.domain.SearchProvider;
+import java.sql.SQLException;
+import java.util.Locale;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 @Service
 public class GetBookDetailService {
 
     private static final String DEGRADED_CODE = "OPENLIBRARY_UNAVAILABLE";
     private static final String DEGRADED_MESSAGE = "OpenLibrary is temporarily unavailable. Please retry later.";
+    private static final String SOURCE_REFERENCE_COLUMN = "source_reference";
+    private static final String SOURCE_REFERENCE_CONSTRAINT = "uk_books_source_reference";
+    private static final String POSTGRES_UNIQUE_VIOLATION_SQL_STATE = "23505";
 
     private final BookRepository bookRepository;
     private final SearchProvider searchProvider;
@@ -36,7 +40,6 @@ public class GetBookDetailService {
         this.defaultRetryAfterSeconds = defaultRetryAfterSeconds;
     }
 
-    @Transactional
     public BookDetailResult getById(final String rawId) {
         final BookIdentifier bookIdentifier = BookIdentifier.parse(rawId);
         if (bookIdentifier.isLocal()) {
@@ -69,6 +72,9 @@ public class GetBookDetailService {
 
             return BookDetailResult.success(bookRepository.save(normalizedBook));
         } catch (DataIntegrityViolationException exception) {
+            if (!isSourceReferenceDuplicateViolation(exception)) {
+                throw exception;
+            }
             final Book persistedBook = bookRepository.findBySourceReference(sourceReference)
                     .orElseThrow(() -> new BookNotFoundException("Book not found after concurrent import"));
             return BookDetailResult.success(persistedBook);
@@ -84,6 +90,43 @@ public class GetBookDetailService {
         } catch (ExternalProviderException exception) {
             throw exception;
         }
+    }
+
+    private boolean isSourceReferenceDuplicateViolation(final DataIntegrityViolationException exception) {
+        Throwable current = exception;
+        while (current != null) {
+            if (current instanceof org.hibernate.exception.ConstraintViolationException constraintViolationException
+                    && isSourceReferenceConstraint(constraintViolationException.getConstraintName())) {
+                return true;
+            }
+            if (current instanceof SQLException sqlException
+                    && isUniqueViolationOnSourceReference(sqlException)) {
+                return true;
+            }
+            current = current.getCause();
+        }
+
+        return messageSuggestsSourceReferenceDuplicate(exception.getMessage());
+    }
+
+    private boolean isSourceReferenceConstraint(final String constraintName) {
+        return constraintName != null
+                && constraintName.toLowerCase(Locale.ROOT).contains(SOURCE_REFERENCE_CONSTRAINT);
+    }
+
+    private boolean isUniqueViolationOnSourceReference(final SQLException sqlException) {
+        return POSTGRES_UNIQUE_VIOLATION_SQL_STATE.equals(sqlException.getSQLState())
+                && messageSuggestsSourceReferenceDuplicate(sqlException.getMessage());
+    }
+
+    private boolean messageSuggestsSourceReferenceDuplicate(final String message) {
+        if (message == null || message.isBlank()) {
+            return false;
+        }
+
+        final String normalizedMessage = message.toLowerCase(Locale.ROOT);
+        return normalizedMessage.contains("duplicate")
+                && normalizedMessage.contains(SOURCE_REFERENCE_COLUMN);
     }
 
     private String normalizeAuthorName(final String authorName) {

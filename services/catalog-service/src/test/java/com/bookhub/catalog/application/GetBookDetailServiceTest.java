@@ -118,11 +118,28 @@ class GetBookDetailServiceTest {
                 .thenReturn(Optional.of(persisted));
         when(searchProvider.fetchDetail("OL262758W")).thenReturn(fetched);
         when(bookRepository.save(any(Book.class)))
-                .thenThrow(new DataIntegrityViolationException("duplicate"));
+                .thenThrow(new DataIntegrityViolationException("duplicate key value violates unique constraint uk_books_source_reference"));
 
         final GetBookDetailService.BookDetailResult result = getBookDetailService.getById("ext:ol:OL262758W");
 
         assertThat(result.book().getId()).isEqualTo(UUID.fromString("123e4567-e89b-12d3-a456-426614174000"));
+    }
+
+    @Test
+    void shouldRethrowDataIntegrityViolationWhenItIsNotSourceReferenceDuplicate() {
+        final Book fetched = Book.builder()
+                .title("The Hobbit")
+                .sourceReference("OL262758W")
+                .build();
+
+        when(bookRepository.findBySourceReference("OL262758W")).thenReturn(Optional.empty());
+        when(searchProvider.fetchDetail("OL262758W")).thenReturn(fetched);
+        when(bookRepository.save(any(Book.class)))
+                .thenThrow(new DataIntegrityViolationException("violates check constraint ck_books_published_year"));
+
+        assertThatThrownBy(() -> getBookDetailService.getById("ext:ol:OL262758W"))
+                .isInstanceOf(DataIntegrityViolationException.class)
+                .hasMessageContaining("ck_books_published_year");
     }
 
     @Test

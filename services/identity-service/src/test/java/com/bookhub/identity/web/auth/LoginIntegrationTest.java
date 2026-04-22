@@ -9,21 +9,18 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import com.bookhub.identity.infrastructure.persistence.RefreshTokenJpaRepository;
 import com.bookhub.identity.infrastructure.persistence.UserJpaRepository;
+import com.bookhub.identity.support.PostgreSqlIntegrationTest;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
-import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
 import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 
-@SpringBootTest
 @AutoConfigureMockMvc
-@ActiveProfiles("test")
-class LoginIntegrationTest {
+class LoginIntegrationTest extends PostgreSqlIntegrationTest {
 
     @Autowired
     private MockMvc mockMvc;

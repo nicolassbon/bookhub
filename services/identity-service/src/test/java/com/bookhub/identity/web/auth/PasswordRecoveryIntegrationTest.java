@@ -9,28 +9,23 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import com.bookhub.identity.domain.auth.MailSenderPort;
 import com.bookhub.identity.domain.auth.PasswordResetToken;
-import com.bookhub.identity.infrastructure.persistence.RefreshTokenJpaRepository;
 import com.bookhub.identity.infrastructure.persistence.PasswordResetTokenJpaRepository;
 import com.bookhub.identity.infrastructure.persistence.UserJpaRepository;
+import com.bookhub.identity.support.PostgreSqlIntegrationTest;
 import java.time.Instant;
 import java.util.UUID;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
-import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
 import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
-@SpringBootTest
 @AutoConfigureMockMvc
-@ActiveProfiles("test")
-class PasswordRecoveryIntegrationTest {
+class PasswordRecoveryIntegrationTest extends PostgreSqlIntegrationTest {
 
     @Autowired
     private MockMvc mockMvc;
@@ -42,9 +37,6 @@ class PasswordRecoveryIntegrationTest {
     private PasswordResetTokenJpaRepository passwordResetTokenJpaRepository;
 
     @Autowired
-    private RefreshTokenJpaRepository refreshTokenJpaRepository;
-
-    @Autowired
     private PasswordEncoder passwordEncoder;
 
     @Autowired
@@ -52,29 +44,6 @@ class PasswordRecoveryIntegrationTest {
 
     @MockitoBean
     private MailSenderPort mailSenderPort;
-
-    @BeforeEach
-    void setUp() {
-        refreshTokenJpaRepository.deleteAll();
-        passwordResetTokenJpaRepository.deleteAll();
-        userJpaRepository.deleteAll();
-    }
-
-    @Test
-    @DisplayName("Should clear refresh tokens before deleting users in test setup")
-    void shouldClearRefreshTokensBeforeDeletingUsersInTestSetup() {
-        final var user = userJpaRepository.save(AuthIntegrationFixture.user("nico",
-                "nico@example.com", passwordEncoder.encode("StrongPassword123!"), "Nico"));
-
-        refreshTokenJpaRepository.save(AuthIntegrationFixture.refreshToken(
-                UUID.fromString("2d99ac5e-722f-451f-abd4-ac035f4f1420"), user,
-                Instant.now().plusSeconds(3600)));
-
-        setUp();
-
-        assertThat(refreshTokenJpaRepository.count()).isZero();
-        assertThat(userJpaRepository.count()).isZero();
-    }
 
     @Test
     @DisplayName("Should complete password reset flow and reject token reuse")

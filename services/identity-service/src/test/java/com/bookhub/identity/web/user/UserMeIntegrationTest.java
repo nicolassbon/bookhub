@@ -8,6 +8,7 @@ import com.bookhub.identity.domain.user.User;
 import com.bookhub.identity.domain.user.UserRole;
 import com.bookhub.identity.infrastructure.persistence.RefreshTokenJpaRepository;
 import com.bookhub.identity.infrastructure.persistence.UserJpaRepository;
+import com.bookhub.identity.support.PostgreSqlIntegrationTest;
 import com.bookhub.identity.web.JwtTestTokenFactory;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
@@ -16,15 +17,11 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
-import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.security.oauth2.jwt.JwtEncoder;
-import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 
-@SpringBootTest
 @AutoConfigureMockMvc
-@ActiveProfiles("test")
-class UserMeIntegrationTest {
+class UserMeIntegrationTest extends PostgreSqlIntegrationTest {
 
     @Autowired
     private MockMvc mockMvc;

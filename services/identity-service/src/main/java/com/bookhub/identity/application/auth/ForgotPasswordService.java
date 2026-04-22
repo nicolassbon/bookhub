@@ -2,7 +2,6 @@ package com.bookhub.identity.application.auth;
 
 import com.bookhub.identity.config.PasswordResetProperties;
 import com.bookhub.identity.domain.auth.MailSenderPort;
-import com.bookhub.identity.domain.auth.PasswordResetToken;
 import com.bookhub.identity.domain.auth.PasswordResetTokenRepository;
 import com.bookhub.identity.domain.user.User;
 import com.bookhub.identity.domain.user.UserRepository;
@@ -13,6 +12,8 @@ import java.util.Optional;
 import java.util.UUID;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.support.TransactionSynchronization;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 import org.springframework.transaction.annotation.Transactional;
 
 @Slf4j
@@ -49,22 +50,31 @@ public class ForgotPasswordService {
             return;
         }
 
-        final User user = userOptional.get();
+        final User user = userOptional.orElseThrow();
         final String rawToken = UUID.randomUUID().toString();
         final String tokenHash = passwordResetTokenHasher.hash(rawToken);
         final Instant now = Instant.now(clock);
+        final Instant expiresAt = now.plusSeconds(passwordResetProperties.expirationSeconds());
 
-        passwordResetTokenRepository.deleteByUserId(user.getId());
-        final PasswordResetToken passwordResetToken = PasswordResetToken.issue(
-                tokenHash,
-                user.getId(),
-                now.plusSeconds(passwordResetProperties.expirationSeconds()));
-        passwordResetTokenRepository.save(passwordResetToken);
+        passwordResetTokenRepository.replaceForUser(user.getId(), tokenHash, expiresAt);
+        if (TransactionSynchronizationManager.isActualTransactionActive()) {
+            TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+                @Override
+                public void afterCommit() {
+                    sendResetEmail(user.getEmail(), rawToken, normalizedEmail);
+                }
+            });
+            return;
+        }
+        sendResetEmail(user.getEmail(), rawToken, normalizedEmail);
+    }
 
+    private void sendResetEmail(final String email, final String rawToken, final String normalizedEmail) {
         try {
-            mailSenderPort.sendPasswordResetEmail(user.getEmail(), rawToken);
+            mailSenderPort.sendPasswordResetEmail(email, rawToken);
         } catch (RuntimeException exception) {
-            log.warn("Password reset mail delivery failed for {}", normalizedEmail, exception);
+            log.error("Password reset mail delivery failed for {}", normalizedEmail, exception);
+            throw new PasswordResetEmailDeliveryException(normalizedEmail, exception);
         }
     }
 
