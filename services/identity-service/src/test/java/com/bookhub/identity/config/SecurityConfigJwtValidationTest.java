@@ -19,12 +19,13 @@ import org.springframework.security.oauth2.jwt.JwtClaimsSet;
 import org.springframework.security.oauth2.jwt.JwtEncoder;
 import org.springframework.security.oauth2.jwt.JwtEncoderParameters;
 import org.springframework.security.oauth2.jwt.NimbusJwtEncoder;
+import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.web.servlet.MockMvc;
 
 import com.nimbusds.jose.jwk.source.ImmutableSecret;
 
 @AutoConfigureMockMvc
-@org.springframework.test.context.TestPropertySource(properties = "management.health.mail.enabled=false")
+@TestPropertySource(properties = "management.health.mail.enabled=false")
 class SecurityConfigJwtValidationTest extends PostgreSqlIntegrationTest {
 
     @Autowired
@@ -36,13 +37,13 @@ class SecurityConfigJwtValidationTest extends PostgreSqlIntegrationTest {
     @Test
     @DisplayName("Should accept RS256 token with valid issuer and audience")
     void shouldAcceptRs256Token() throws Exception {
-        final JwtClaimsSet claims = baseClaimsBuilder()
-                .issuer("bookhub-identity")
-                .audience(java.util.List.of("bookhub-api"))
-                .build();
-        final String token = jwtEncoder.encode(JwtEncoderParameters.from(
-                JwsHeader.with(SignatureAlgorithm.RS256).build(),
-                claims)).getTokenValue();
+        final JwtClaimsSet claims = baseClaimsBuilder().issuer("bookhub-identity")
+                .audience(java.util.List.of("bookhub-api")).build();
+        final String token =
+                jwtEncoder
+                        .encode(JwtEncoderParameters
+                                .from(JwsHeader.with(SignatureAlgorithm.RS256).build(), claims))
+                        .getTokenValue();
 
         mockMvc.perform(get("/api/v1/users/me").header("Authorization", "Bearer " + token))
                 .andExpect(status().isOk());
@@ -53,15 +54,14 @@ class SecurityConfigJwtValidationTest extends PostgreSqlIntegrationTest {
     void shouldRejectLegacyHs256Token() throws Exception {
         final byte[] hmacKeyBytes = new byte[32];
         new SecureRandom().nextBytes(hmacKeyBytes);
-        final NimbusJwtEncoder hsEncoder = new NimbusJwtEncoder(new ImmutableSecret<>(
-                new SecretKeySpec(hmacKeyBytes, "HmacSHA256")));
+        final NimbusJwtEncoder hsEncoder = new NimbusJwtEncoder(
+                new ImmutableSecret<>(new SecretKeySpec(hmacKeyBytes, "HmacSHA256")));
 
-        final JwtClaimsSet claims = baseClaimsBuilder()
-                .issuer("bookhub-identity")
-                .audience(java.util.List.of("bookhub-api"))
-                .build();
+        final JwtClaimsSet claims = baseClaimsBuilder().issuer("bookhub-identity")
+                .audience(java.util.List.of("bookhub-api")).build();
         final JwsHeader header = JwsHeader.with(MacAlgorithm.HS256).build();
-        final String token = hsEncoder.encode(JwtEncoderParameters.from(header, claims)).getTokenValue();
+        final String token =
+                hsEncoder.encode(JwtEncoderParameters.from(header, claims)).getTokenValue();
 
         mockMvc.perform(get("/api/v1/users/me").header("Authorization", "Bearer " + token))
                 .andExpect(status().isUnauthorized());
@@ -70,13 +70,13 @@ class SecurityConfigJwtValidationTest extends PostgreSqlIntegrationTest {
     @Test
     @DisplayName("Should reject token with invalid issuer")
     void shouldRejectTokenWithInvalidIssuer() throws Exception {
-        final JwtClaimsSet claims = baseClaimsBuilder()
-                .issuer("other-issuer")
-                .audience(java.util.List.of("bookhub-api"))
-                .build();
-        final String token = jwtEncoder.encode(JwtEncoderParameters.from(
-                JwsHeader.with(SignatureAlgorithm.RS256).build(),
-                claims)).getTokenValue();
+        final JwtClaimsSet claims = baseClaimsBuilder().issuer("other-issuer")
+                .audience(java.util.List.of("bookhub-api")).build();
+        final String token =
+                jwtEncoder
+                        .encode(JwtEncoderParameters
+                                .from(JwsHeader.with(SignatureAlgorithm.RS256).build(), claims))
+                        .getTokenValue();
 
         mockMvc.perform(get("/api/v1/users/me").header("Authorization", "Bearer " + token))
                 .andExpect(status().isUnauthorized());
@@ -85,13 +85,13 @@ class SecurityConfigJwtValidationTest extends PostgreSqlIntegrationTest {
     @Test
     @DisplayName("Should reject token with invalid audience")
     void shouldRejectTokenWithInvalidAudience() throws Exception {
-        final JwtClaimsSet claims = baseClaimsBuilder()
-                .issuer("bookhub-identity")
-                .audience(java.util.List.of("other-audience"))
-                .build();
-        final String token = jwtEncoder.encode(JwtEncoderParameters.from(
-                JwsHeader.with(SignatureAlgorithm.RS256).build(),
-                claims)).getTokenValue();
+        final JwtClaimsSet claims = baseClaimsBuilder().issuer("bookhub-identity")
+                .audience(java.util.List.of("other-audience")).build();
+        final String token =
+                jwtEncoder
+                        .encode(JwtEncoderParameters
+                                .from(JwsHeader.with(SignatureAlgorithm.RS256).build(), claims))
+                        .getTokenValue();
 
         mockMvc.perform(get("/api/v1/users/me").header("Authorization", "Bearer " + token))
                 .andExpect(status().isUnauthorized());
@@ -109,13 +109,9 @@ class SecurityConfigJwtValidationTest extends PostgreSqlIntegrationTest {
     }
 
     private JwtClaimsSet.Builder baseClaimsBuilder() {
-        return JwtClaimsSet.builder()
-                .subject("6676f2d8-0f65-40ae-b102-66145e24f3fd")
-                .issuedAt(Instant.now())
-                .expiresAt(Instant.now().plus(1, ChronoUnit.HOURS))
-                .claim("username", "nico")
-                .claim("displayName", "Nicolas Bon")
-                .claim("role", "USER")
+        return JwtClaimsSet.builder().subject("6676f2d8-0f65-40ae-b102-66145e24f3fd")
+                .issuedAt(Instant.now()).expiresAt(Instant.now().plus(1, ChronoUnit.HOURS))
+                .claim("username", "nico").claim("displayName", "Nicolas Bon").claim("role", "USER")
                 .claim("email", "nico@example.com");
     }
 }

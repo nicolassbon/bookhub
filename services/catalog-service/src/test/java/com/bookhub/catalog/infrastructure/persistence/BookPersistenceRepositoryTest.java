@@ -15,9 +15,9 @@ import org.springframework.context.annotation.Import;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
-import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
+import org.testcontainers.postgresql.PostgreSQLContainer;
 
 @DataJpaTest
 @Testcontainers(disabledWithoutDocker = true)
@@ -26,8 +26,8 @@ import org.testcontainers.junit.jupiter.Testcontainers;
 class BookPersistenceRepositoryTest {
 
     @Container
-    static final PostgreSQLContainer<?> POSTGRESQL_CONTAINER =
-            new PostgreSQLContainer<>("postgres:16-alpine");
+    static final PostgreSQLContainer POSTGRESQL_CONTAINER =
+            new PostgreSQLContainer("postgres:16-alpine");
 
     @DynamicPropertySource
     static void configureDataSource(final DynamicPropertyRegistry registry) {
@@ -61,34 +61,21 @@ class BookPersistenceRepositoryTest {
     @Test
     void shouldFindByMiddleSubstringInTitleAndAuthor() {
         bookRepository.save(baseBook("OL123W"));
-        bookRepository.save(Book.builder()
-                .id(UUID.randomUUID())
-                .title("Clean Architecture")
-                .authorName("Robert Martin")
-                .isbn13("9780134494166")
-                .sourceReference("OL456W")
+        bookRepository.save(Book.builder().id(UUID.randomUUID()).title("Clean Architecture")
+                .authorName("Robert Martin").isbn13("9780134494166").sourceReference("OL456W")
                 .build());
 
         final var titleMatches = bookRepository.searchByQuery("obbi", 10);
         final var authorMatches = bookRepository.searchByQuery("mart", 10);
 
-        assertThat(titleMatches)
-                .extracting(Book::getSourceReference)
-                .contains("OL123W");
-        assertThat(authorMatches)
-                .extracting(Book::getSourceReference)
-                .contains("OL456W");
+        assertThat(titleMatches).extracting(Book::getSourceReference).contains("OL123W");
+        assertThat(authorMatches).extracting(Book::getSourceReference).contains("OL456W");
     }
 
     private Book baseBook(final String sourceReference) {
-        return Book.builder()
-                .id(UUID.randomUUID())
-                .title("The Hobbit")
-                .authorName("J.R.R. Tolkien")
-                .isbn13("9780261103344")
-                .sourceReference(sourceReference)
-                .coverUrl("https://covers.openlibrary.org/b/id/123-L.jpg")
-                .publishedYear(1937)
+        return Book.builder().id(UUID.randomUUID()).title("The Hobbit").authorName("J.R.R. Tolkien")
+                .isbn13("9780261103344").sourceReference(sourceReference)
+                .coverUrl("https://covers.openlibrary.org/b/id/123-L.jpg").publishedYear(1937)
                 .build();
     }
 }
