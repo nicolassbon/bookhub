@@ -70,15 +70,30 @@ export function extractCookieValue(response, cookieName) {
   return '';
 }
 
+function readOptionalEnv(name) {
+  const value = __ENV[name];
+  if (value === undefined || value === null) {
+    return '';
+  }
+
+  return String(value).trim();
+}
+
+function generateRuntimePassword(seed) {
+  const randomPart = Math.random().toString(36).slice(2, 10);
+  return `Bh!${seed}${randomPart}Aa1`;
+}
+
 export function buildRandomUser(prefix = 'k6') {
   const vu = typeof __VU !== 'undefined' ? __VU : 'setup';
   const iter = typeof __ITER !== 'undefined' ? __ITER : Math.floor(Math.random() * 1000000);
   const uniquePart = `${Date.now()}-${vu}-${iter}`;
   const username = `${prefix}-${vu}-${Math.abs(Date.now() % 100000)}`;
+  const configuredPassword = readOptionalEnv('K6_TEST_PASSWORD') || readOptionalEnv('IDENTITY_TEST_PASSWORD');
   return {
     username,
     email: `${prefix}.${uniquePart}@example.test`,
-    password: 'BookHub!2345',
+    password: configuredPassword || generateRuntimePassword(uniquePart),
     displayName: `K6 ${uniquePart}`,
   };
 }
@@ -129,15 +144,6 @@ export function assertBootstrapLogin(response, refreshCookieName) {
   }
 
   return refreshToken;
-}
-
-function readOptionalEnv(name) {
-  const value = __ENV[name];
-  if (value === undefined || value === null) {
-    return '';
-  }
-
-  return String(value).trim();
 }
 
 export function bootstrapReplayRefreshToken(baseConfig, options) {
