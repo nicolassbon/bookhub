@@ -3,10 +3,10 @@ package com.bookhub.catalog.application;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
-import static org.mockito.ArgumentMatchers.argThat;
 
 import com.bookhub.catalog.application.error.BookNotFoundException;
 import com.bookhub.catalog.application.error.ExternalServiceUnavailableException;
@@ -26,182 +26,195 @@ import org.springframework.dao.DataIntegrityViolationException;
 @ExtendWith(MockitoExtension.class)
 class GetBookDetailServiceTest {
 
-    @Mock
-    private BookRepository bookRepository;
+  @Mock private BookRepository bookRepository;
 
-    @Mock
-    private SearchProvider searchProvider;
+  @Mock private SearchProvider searchProvider;
 
-    private GetBookDetailService getBookDetailService;
+  private GetBookDetailService getBookDetailService;
 
-    @BeforeEach
-    void setUp() {
-        getBookDetailService = new GetBookDetailService(bookRepository, searchProvider, 30);
-    }
+  @BeforeEach
+  void setUp() {
+    getBookDetailService = new GetBookDetailService(bookRepository, searchProvider, 30);
+  }
 
-    @Test
-    void shouldFetchAndPersistWhenBookIdIsEphemeral() {
-        final Book fetched = Book.builder()
-                .title("The Hobbit")
-                .authorName("J.R.R. Tolkien")
-                .isbn13("9780261103344")
-                .publishedYear(1937)
-                .sourceReference("OL262758W")
-                .build();
-        final Book persisted = Book.builder()
-                .id(UUID.fromString("123e4567-e89b-12d3-a456-426614174000"))
-                .title("The Hobbit")
-                .sourceReference("OL262758W")
-                .build();
+  @Test
+  void shouldFetchAndPersistWhenBookIdIsEphemeral() {
+    final Book fetched =
+        Book.builder()
+            .title("The Hobbit")
+            .authorName("J.R.R. Tolkien")
+            .isbn13("9780261103344")
+            .publishedYear(1937)
+            .sourceReference("OL262758W")
+            .build();
+    final Book persisted =
+        Book.builder()
+            .id(UUID.fromString("123e4567-e89b-12d3-a456-426614174000"))
+            .title("The Hobbit")
+            .sourceReference("OL262758W")
+            .build();
 
-        when(bookRepository.findBySourceReference("OL262758W")).thenReturn(Optional.empty());
-        when(searchProvider.fetchDetail("OL262758W")).thenReturn(fetched);
-        when(bookRepository.save(any(Book.class))).thenReturn(persisted);
+    when(bookRepository.findBySourceReference("OL262758W")).thenReturn(Optional.empty());
+    when(searchProvider.fetchDetail("OL262758W")).thenReturn(fetched);
+    when(bookRepository.save(any(Book.class))).thenReturn(persisted);
 
-        final GetBookDetailService.BookDetailResult result = getBookDetailService.getById("ext:ol:OL262758W");
+    final GetBookDetailService.BookDetailResult result =
+        getBookDetailService.getById("ext:ol:OL262758W");
 
-        assertThat(result.isDegraded()).isFalse();
-        assertThat(result.book().getId()).isEqualTo(UUID.fromString("123e4567-e89b-12d3-a456-426614174000"));
-        verify(bookRepository).save(argThat(book ->
-                "J.R.R. Tolkien".equals(book.getAuthorName())
+    assertThat(result.isDegraded()).isFalse();
+    assertThat(result.book().getId())
+        .isEqualTo(UUID.fromString("123e4567-e89b-12d3-a456-426614174000"));
+    verify(bookRepository)
+        .save(
+            argThat(
+                book ->
+                    "J.R.R. Tolkien".equals(book.getAuthorName())
                         && "9780261103344".equals(book.getIsbn13())
                         && Integer.valueOf(1937).equals(book.getPublishedYear())));
-    }
+  }
 
-    @Test
-    void shouldApplySafeDefaultsWhenFetchedDetailIsMalformed() {
-        final Book fetched = Book.builder()
-                .title("Unknown Work")
-                .authorName(null)
-                .isbn13(null)
-                .publishedYear(null)
-                .sourceReference("OLMALFORMEDW")
-                .build();
+  @Test
+  void shouldApplySafeDefaultsWhenFetchedDetailIsMalformed() {
+    final Book fetched =
+        Book.builder()
+            .title("Unknown Work")
+            .authorName(null)
+            .isbn13(null)
+            .publishedYear(null)
+            .sourceReference("OLMALFORMEDW")
+            .build();
 
-        final Book persisted = Book.builder()
-                .id(UUID.fromString("123e4567-e89b-12d3-a456-426614174001"))
-                .title("Unknown Work")
-                .authorName("Unknown")
-                .isbn13(null)
-                .publishedYear(null)
-                .sourceReference("OLMALFORMEDW")
-                .build();
+    final Book persisted =
+        Book.builder()
+            .id(UUID.fromString("123e4567-e89b-12d3-a456-426614174001"))
+            .title("Unknown Work")
+            .authorName("Unknown")
+            .isbn13(null)
+            .publishedYear(null)
+            .sourceReference("OLMALFORMEDW")
+            .build();
 
-        when(bookRepository.findBySourceReference("OLMALFORMEDW")).thenReturn(Optional.empty());
-        when(searchProvider.fetchDetail("OLMALFORMEDW")).thenReturn(fetched);
-        when(bookRepository.save(any(Book.class))).thenReturn(persisted);
+    when(bookRepository.findBySourceReference("OLMALFORMEDW")).thenReturn(Optional.empty());
+    when(searchProvider.fetchDetail("OLMALFORMEDW")).thenReturn(fetched);
+    when(bookRepository.save(any(Book.class))).thenReturn(persisted);
 
-        final GetBookDetailService.BookDetailResult result = getBookDetailService.getById("ext:ol:OLMALFORMEDW");
+    final GetBookDetailService.BookDetailResult result =
+        getBookDetailService.getById("ext:ol:OLMALFORMEDW");
 
-        assertThat(result.isDegraded()).isFalse();
-        assertThat(result.book().getAuthorName()).isEqualTo("Unknown");
-        verify(bookRepository).save(argThat(book ->
-                "Unknown".equals(book.getAuthorName())
+    assertThat(result.isDegraded()).isFalse();
+    assertThat(result.book().getAuthorName()).isEqualTo("Unknown");
+    verify(bookRepository)
+        .save(
+            argThat(
+                book ->
+                    "Unknown".equals(book.getAuthorName())
                         && book.getIsbn13() == null
                         && book.getPublishedYear() == null));
-    }
+  }
 
-    @Test
-    void shouldReturnPersistedBookWhenDuplicateInsertHappensOnConcurrentRequests() {
-        final Book fetched = Book.builder()
-                .title("The Hobbit")
-                .sourceReference("OL262758W")
-                .build();
-        final Book persisted = Book.builder()
-                .id(UUID.fromString("123e4567-e89b-12d3-a456-426614174000"))
-                .title("The Hobbit")
-                .sourceReference("OL262758W")
-                .build();
+  @Test
+  void shouldReturnPersistedBookWhenDuplicateInsertHappensOnConcurrentRequests() {
+    final Book fetched = Book.builder().title("The Hobbit").sourceReference("OL262758W").build();
+    final Book persisted =
+        Book.builder()
+            .id(UUID.fromString("123e4567-e89b-12d3-a456-426614174000"))
+            .title("The Hobbit")
+            .sourceReference("OL262758W")
+            .build();
 
-        when(bookRepository.findBySourceReference("OL262758W"))
-                .thenReturn(Optional.empty())
-                .thenReturn(Optional.of(persisted));
-        when(searchProvider.fetchDetail("OL262758W")).thenReturn(fetched);
-        when(bookRepository.save(any(Book.class)))
-                .thenThrow(new DataIntegrityViolationException("duplicate key value violates unique constraint uk_books_source_reference"));
+    when(bookRepository.findBySourceReference("OL262758W"))
+        .thenReturn(Optional.empty())
+        .thenReturn(Optional.of(persisted));
+    when(searchProvider.fetchDetail("OL262758W")).thenReturn(fetched);
+    when(bookRepository.save(any(Book.class)))
+        .thenThrow(
+            new DataIntegrityViolationException(
+                "duplicate key value violates unique constraint uk_books_source_reference"));
 
-        final GetBookDetailService.BookDetailResult result = getBookDetailService.getById("ext:ol:OL262758W");
+    final GetBookDetailService.BookDetailResult result =
+        getBookDetailService.getById("ext:ol:OL262758W");
 
-        assertThat(result.book().getId()).isEqualTo(UUID.fromString("123e4567-e89b-12d3-a456-426614174000"));
-    }
+    assertThat(result.book().getId())
+        .isEqualTo(UUID.fromString("123e4567-e89b-12d3-a456-426614174000"));
+  }
 
-    @Test
-    void shouldRethrowDataIntegrityViolationWhenItIsNotSourceReferenceDuplicate() {
-        final Book fetched = Book.builder()
-                .title("The Hobbit")
-                .sourceReference("OL262758W")
-                .build();
+  @Test
+  void shouldRethrowDataIntegrityViolationWhenItIsNotSourceReferenceDuplicate() {
+    final Book fetched = Book.builder().title("The Hobbit").sourceReference("OL262758W").build();
 
-        when(bookRepository.findBySourceReference("OL262758W")).thenReturn(Optional.empty());
-        when(searchProvider.fetchDetail("OL262758W")).thenReturn(fetched);
-        when(bookRepository.save(any(Book.class)))
-                .thenThrow(new DataIntegrityViolationException("violates check constraint ck_books_published_year"));
+    when(bookRepository.findBySourceReference("OL262758W")).thenReturn(Optional.empty());
+    when(searchProvider.fetchDetail("OL262758W")).thenReturn(fetched);
+    when(bookRepository.save(any(Book.class)))
+        .thenThrow(
+            new DataIntegrityViolationException(
+                "violates check constraint ck_books_published_year"));
 
-        assertThatThrownBy(() -> getBookDetailService.getById("ext:ol:OL262758W"))
-                .isInstanceOf(DataIntegrityViolationException.class)
-                .hasMessageContaining("ck_books_published_year");
-    }
+    assertThatThrownBy(() -> getBookDetailService.getById("ext:ol:OL262758W"))
+        .isInstanceOf(DataIntegrityViolationException.class)
+        .hasMessageContaining("ck_books_published_year");
+  }
 
-    @Test
-    void shouldShortCircuitExternalLookupWhenBookIdIsLocalUuid() {
-        final UUID bookId = UUID.fromString("123e4567-e89b-12d3-a456-426614174000");
-        final Book persisted = Book.builder()
-                .id(bookId)
-                .title("The Hobbit")
-                .sourceReference("OL262758W")
-                .build();
+  @Test
+  void shouldShortCircuitExternalLookupWhenBookIdIsLocalUuid() {
+    final UUID bookId = UUID.fromString("123e4567-e89b-12d3-a456-426614174000");
+    final Book persisted =
+        Book.builder().id(bookId).title("The Hobbit").sourceReference("OL262758W").build();
 
-        when(bookRepository.findById(bookId)).thenReturn(Optional.of(persisted));
+    when(bookRepository.findById(bookId)).thenReturn(Optional.of(persisted));
 
-        final GetBookDetailService.BookDetailResult result = getBookDetailService.getById(bookId.toString());
+    final GetBookDetailService.BookDetailResult result =
+        getBookDetailService.getById(bookId.toString());
 
-        assertThat(result.isDegraded()).isFalse();
-        assertThat(result.book().getId()).isEqualTo(bookId);
-        verify(searchProvider, never()).fetchDetail(any());
-    }
+    assertThat(result.isDegraded()).isFalse();
+    assertThat(result.book().getId()).isEqualTo(bookId);
+    verify(searchProvider, never()).fetchDetail(any());
+  }
 
-    @Test
-    void shouldReturnDegradedResultWhenProviderIsUnavailableAndBookIsNotCached() {
-        when(bookRepository.findBySourceReference("OLOUTAGEW")).thenReturn(Optional.empty());
-        when(searchProvider.fetchDetail("OLOUTAGEW"))
-                .thenThrow(new ExternalServiceUnavailableException("OpenLibrary unavailable", 45));
+  @Test
+  void shouldReturnDegradedResultWhenProviderIsUnavailableAndBookIsNotCached() {
+    when(bookRepository.findBySourceReference("OLOUTAGEW")).thenReturn(Optional.empty());
+    when(searchProvider.fetchDetail("OLOUTAGEW"))
+        .thenThrow(new ExternalServiceUnavailableException("OpenLibrary unavailable", 45));
 
-        final GetBookDetailService.BookDetailResult result = getBookDetailService.getById("ext:ol:OLOUTAGEW");
+    final GetBookDetailService.BookDetailResult result =
+        getBookDetailService.getById("ext:ol:OLOUTAGEW");
 
-        assertThat(result.isDegraded()).isTrue();
-        assertThat(result.book()).isNull();
-        assertThat(result.degraded().code()).isEqualTo("OPENLIBRARY_UNAVAILABLE");
-        assertThat(result.degraded().retryAfterSeconds()).isEqualTo(45);
-    }
+    assertThat(result.isDegraded()).isTrue();
+    assertThat(result.book()).isNull();
+    assertThat(result.degraded().code()).isEqualTo("OPENLIBRARY_UNAVAILABLE");
+    assertThat(result.degraded().retryAfterSeconds()).isEqualTo(45);
+  }
 
-    @Test
-    void shouldReturnCachedBookWhenProviderIsUnavailableButBookExistsLocally() {
-        final Book cachedBook = Book.builder()
-                .id(UUID.fromString("123e4567-e89b-12d3-a456-426614174099"))
-                .title("Cached Book")
-                .sourceReference("OLCACHEDW")
-                .build();
-        when(bookRepository.findBySourceReference("OLCACHEDW")).thenReturn(Optional.of(cachedBook));
+  @Test
+  void shouldReturnCachedBookWhenProviderIsUnavailableButBookExistsLocally() {
+    final Book cachedBook =
+        Book.builder()
+            .id(UUID.fromString("123e4567-e89b-12d3-a456-426614174099"))
+            .title("Cached Book")
+            .sourceReference("OLCACHEDW")
+            .build();
+    when(bookRepository.findBySourceReference("OLCACHEDW")).thenReturn(Optional.of(cachedBook));
 
-        final GetBookDetailService.BookDetailResult result = getBookDetailService.getById("ext:ol:OLCACHEDW");
+    final GetBookDetailService.BookDetailResult result =
+        getBookDetailService.getById("ext:ol:OLCACHEDW");
 
-        assertThat(result.isDegraded()).isFalse();
-        assertThat(result.book().getId()).isEqualTo(cachedBook.getId());
-        verify(searchProvider, never()).fetchDetail(any());
-    }
+    assertThat(result.isDegraded()).isFalse();
+    assertThat(result.book().getId()).isEqualTo(cachedBook.getId());
+    verify(searchProvider, never()).fetchDetail(any());
+  }
 
-    @Test
-    void shouldRejectInvalidBookIdFormat() {
-        assertThatThrownBy(() -> getBookDetailService.getById("invalid-id"))
-                .isInstanceOf(InvalidBookIdException.class);
-    }
+  @Test
+  void shouldRejectInvalidBookIdFormat() {
+    assertThatThrownBy(() -> getBookDetailService.getById("invalid-id"))
+        .isInstanceOf(InvalidBookIdException.class);
+  }
 
-    @Test
-    void shouldFailWhenBookDoesNotExist() {
-        final UUID bookId = UUID.fromString("123e4567-e89b-12d3-a456-426614174000");
-        when(bookRepository.findById(bookId)).thenReturn(Optional.empty());
+  @Test
+  void shouldFailWhenBookDoesNotExist() {
+    final UUID bookId = UUID.fromString("123e4567-e89b-12d3-a456-426614174000");
+    when(bookRepository.findById(bookId)).thenReturn(Optional.empty());
 
-        assertThatThrownBy(() -> getBookDetailService.getById(bookId.toString()))
-                .isInstanceOf(BookNotFoundException.class);
-    }
+    assertThatThrownBy(() -> getBookDetailService.getById(bookId.toString()))
+        .isInstanceOf(BookNotFoundException.class);
+  }
 }

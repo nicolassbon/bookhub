@@ -12,73 +12,76 @@ import java.util.Optional;
 import java.util.UUID;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.support.TransactionSynchronization;
 import org.springframework.transaction.support.TransactionSynchronizationManager;
-import org.springframework.transaction.annotation.Transactional;
 
 @Slf4j
 @Service
 @Transactional(readOnly = true)
 public class ForgotPasswordService {
 
-    private final UserRepository userRepository;
-    private final PasswordResetTokenRepository passwordResetTokenRepository;
-    private final MailSenderPort mailSenderPort;
-    private final PasswordResetProperties passwordResetProperties;
-    private final PasswordResetTokenHasher passwordResetTokenHasher;
-    private final Clock clock;
+  private final UserRepository userRepository;
+  private final PasswordResetTokenRepository passwordResetTokenRepository;
+  private final MailSenderPort mailSenderPort;
+  private final PasswordResetProperties passwordResetProperties;
+  private final PasswordResetTokenHasher passwordResetTokenHasher;
+  private final Clock clock;
 
-    public ForgotPasswordService(final UserRepository userRepository,
-            final PasswordResetTokenRepository passwordResetTokenRepository,
-            final MailSenderPort mailSenderPort,
-            final PasswordResetProperties passwordResetProperties,
-            final PasswordResetTokenHasher passwordResetTokenHasher,
-            final Clock clock) {
-        this.userRepository = userRepository;
-        this.passwordResetTokenRepository = passwordResetTokenRepository;
-        this.mailSenderPort = mailSenderPort;
-        this.passwordResetProperties = passwordResetProperties;
-        this.passwordResetTokenHasher = passwordResetTokenHasher;
-        this.clock = clock;
+  public ForgotPasswordService(
+      final UserRepository userRepository,
+      final PasswordResetTokenRepository passwordResetTokenRepository,
+      final MailSenderPort mailSenderPort,
+      final PasswordResetProperties passwordResetProperties,
+      final PasswordResetTokenHasher passwordResetTokenHasher,
+      final Clock clock) {
+    this.userRepository = userRepository;
+    this.passwordResetTokenRepository = passwordResetTokenRepository;
+    this.mailSenderPort = mailSenderPort;
+    this.passwordResetProperties = passwordResetProperties;
+    this.passwordResetTokenHasher = passwordResetTokenHasher;
+    this.clock = clock;
+  }
+
+  @Transactional
+  public void request(final String email) {
+    final String normalizedEmail = normalize(email);
+    final Optional<User> userOptional = userRepository.findByEmail(normalizedEmail);
+    if (userOptional.isEmpty()) {
+      return;
     }
 
-    @Transactional
-    public void request(final String email) {
-        final String normalizedEmail = normalize(email);
-        final Optional<User> userOptional = userRepository.findByEmail(normalizedEmail);
-        if (userOptional.isEmpty()) {
-            return;
-        }
+    final User user = userOptional.orElseThrow();
+    final String rawToken = UUID.randomUUID().toString();
+    final String tokenHash = passwordResetTokenHasher.hash(rawToken);
+    final Instant now = Instant.now(clock);
+    final Instant expiresAt = now.plusSeconds(passwordResetProperties.expirationSeconds());
 
-        final User user = userOptional.orElseThrow();
-        final String rawToken = UUID.randomUUID().toString();
-        final String tokenHash = passwordResetTokenHasher.hash(rawToken);
-        final Instant now = Instant.now(clock);
-        final Instant expiresAt = now.plusSeconds(passwordResetProperties.expirationSeconds());
-
-        passwordResetTokenRepository.replaceForUser(user.getId(), tokenHash, expiresAt);
-        if (TransactionSynchronizationManager.isActualTransactionActive()) {
-            TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
-                @Override
-                public void afterCommit() {
-                    sendResetEmail(user.getEmail(), rawToken, normalizedEmail);
-                }
-            });
-            return;
-        }
-        sendResetEmail(user.getEmail(), rawToken, normalizedEmail);
+    passwordResetTokenRepository.replaceForUser(user.getId(), tokenHash, expiresAt);
+    if (TransactionSynchronizationManager.isActualTransactionActive()) {
+      TransactionSynchronizationManager.registerSynchronization(
+          new TransactionSynchronization() {
+            @Override
+            public void afterCommit() {
+              sendResetEmail(user.getEmail(), rawToken, normalizedEmail);
+            }
+          });
+      return;
     }
+    sendResetEmail(user.getEmail(), rawToken, normalizedEmail);
+  }
 
-    private void sendResetEmail(final String email, final String rawToken, final String normalizedEmail) {
-        try {
-            mailSenderPort.sendPasswordResetEmail(email, rawToken);
-        } catch (RuntimeException exception) {
-            log.error("Password reset mail delivery failed for {}", normalizedEmail, exception);
-            throw new PasswordResetEmailDeliveryException(normalizedEmail, exception);
-        }
+  private void sendResetEmail(
+      final String email, final String rawToken, final String normalizedEmail) {
+    try {
+      mailSenderPort.sendPasswordResetEmail(email, rawToken);
+    } catch (RuntimeException exception) {
+      log.error("Password reset mail delivery failed for {}", normalizedEmail, exception);
+      throw new PasswordResetEmailDeliveryException(normalizedEmail, exception);
     }
+  }
 
-    private String normalize(final String value) {
-        return value == null ? null : value.trim().toLowerCase(Locale.ROOT);
-    }
+  private String normalize(final String value) {
+    return value == null ? null : value.trim().toLowerCase(Locale.ROOT);
+  }
 }

@@ -1,9 +1,9 @@
 package com.bookhub.identity.web.auth;
 
+import com.bookhub.identity.application.auth.ForgotPasswordService;
 import com.bookhub.identity.application.auth.LoginUserCommand;
 import com.bookhub.identity.application.auth.LoginUserResult;
 import com.bookhub.identity.application.auth.LoginUserService;
-import com.bookhub.identity.application.auth.ForgotPasswordService;
 import com.bookhub.identity.application.auth.LogoutUserService;
 import com.bookhub.identity.application.auth.RefreshSessionResult;
 import com.bookhub.identity.application.auth.RefreshSessionService;
@@ -27,105 +27,113 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("/api/v1/auth")
 public class AuthController {
 
-    private final RegisterUserService registerUserService;
-    private final LoginUserService loginUserService;
-    private final RefreshSessionService refreshSessionService;
-    private final LogoutUserService logoutUserService;
-    private final ForgotPasswordService forgotPasswordService;
-    private final ResetPasswordService resetPasswordService;
-    private final AuthWebMapper authWebMapper;
-    private final RefreshTokenProperties refreshTokenProperties;
+  private final RegisterUserService registerUserService;
+  private final LoginUserService loginUserService;
+  private final RefreshSessionService refreshSessionService;
+  private final LogoutUserService logoutUserService;
+  private final ForgotPasswordService forgotPasswordService;
+  private final ResetPasswordService resetPasswordService;
+  private final AuthWebMapper authWebMapper;
+  private final RefreshTokenProperties refreshTokenProperties;
 
-    public AuthController(
-            final RegisterUserService registerUserService,
-            final LoginUserService loginUserService,
-            final RefreshSessionService refreshSessionService,
-            final LogoutUserService logoutUserService,
-            final ForgotPasswordService forgotPasswordService,
-            final ResetPasswordService resetPasswordService,
-            final AuthWebMapper authWebMapper,
-            final RefreshTokenProperties refreshTokenProperties) {
-        this.registerUserService = registerUserService;
-        this.loginUserService = loginUserService;
-        this.refreshSessionService = refreshSessionService;
-        this.logoutUserService = logoutUserService;
-        this.forgotPasswordService = forgotPasswordService;
-        this.resetPasswordService = resetPasswordService;
-        this.authWebMapper = authWebMapper;
-        this.refreshTokenProperties = refreshTokenProperties;
-    }
+  public AuthController(
+      final RegisterUserService registerUserService,
+      final LoginUserService loginUserService,
+      final RefreshSessionService refreshSessionService,
+      final LogoutUserService logoutUserService,
+      final ForgotPasswordService forgotPasswordService,
+      final ResetPasswordService resetPasswordService,
+      final AuthWebMapper authWebMapper,
+      final RefreshTokenProperties refreshTokenProperties) {
+    this.registerUserService = registerUserService;
+    this.loginUserService = loginUserService;
+    this.refreshSessionService = refreshSessionService;
+    this.logoutUserService = logoutUserService;
+    this.forgotPasswordService = forgotPasswordService;
+    this.resetPasswordService = resetPasswordService;
+    this.authWebMapper = authWebMapper;
+    this.refreshTokenProperties = refreshTokenProperties;
+  }
 
-    @PostMapping("/register")
-    public ResponseEntity<RegisterResponse> register(@Valid @RequestBody final RegisterRequest request) {
-        final RegisterUserCommand command = authWebMapper.toRegisterUserCommand(request);
-        final RegisterUserResult result = registerUserService.register(command);
-        final RegisterResponse response = authWebMapper.toRegisterResponse(result);
+  @PostMapping("/register")
+  public ResponseEntity<RegisterResponse> register(
+      @Valid @RequestBody final RegisterRequest request) {
+    final RegisterUserCommand command = authWebMapper.toRegisterUserCommand(request);
+    final RegisterUserResult result = registerUserService.register(command);
+    final RegisterResponse response = authWebMapper.toRegisterResponse(result);
 
-        return ResponseEntity.status(HttpStatus.CREATED).body(response);
-    }
+    return ResponseEntity.status(HttpStatus.CREATED).body(response);
+  }
 
-    @PostMapping("/login")
-    public ResponseEntity<LoginResponse> login(@Valid @RequestBody final LoginRequest request) {
-        final LoginUserCommand command = authWebMapper.toLoginUserCommand(request);
-        final LoginUserResult result = loginUserService.login(command);
-        final LoginResponse response = authWebMapper.toLoginResponse(result);
+  @PostMapping("/login")
+  public ResponseEntity<LoginResponse> login(@Valid @RequestBody final LoginRequest request) {
+    final LoginUserCommand command = authWebMapper.toLoginUserCommand(request);
+    final LoginUserResult result = loginUserService.login(command);
+    final LoginResponse response = authWebMapper.toLoginResponse(result);
 
-        return ResponseEntity.ok()
-                .header(HttpHeaders.SET_COOKIE, refreshCookie(result.refreshToken(), result.refreshTokenExpiresIn()).toString())
-                .body(response);
-    }
+    return ResponseEntity.ok()
+        .header(
+            HttpHeaders.SET_COOKIE,
+            refreshCookie(result.refreshToken(), result.refreshTokenExpiresIn()).toString())
+        .body(response);
+  }
 
-    @PostMapping("/refresh")
-    public ResponseEntity<LoginResponse> refresh(
-            @CookieValue(name = "${auth.refresh-token.cookie.name:refresh_token}") final String refreshToken) {
-        final RefreshSessionResult result = refreshSessionService.refresh(refreshToken);
-        final LoginResponse response = authWebMapper.toLoginResponse(result);
+  @PostMapping("/refresh")
+  public ResponseEntity<LoginResponse> refresh(
+      @CookieValue(name = "${auth.refresh-token.cookie.name:refresh_token}")
+          final String refreshToken) {
+    final RefreshSessionResult result = refreshSessionService.refresh(refreshToken);
+    final LoginResponse response = authWebMapper.toLoginResponse(result);
 
-        return ResponseEntity.ok()
-                .header(HttpHeaders.SET_COOKIE, refreshCookie(result.refreshToken(), result.refreshTokenExpiresIn()).toString())
-                .body(response);
-    }
+    return ResponseEntity.ok()
+        .header(
+            HttpHeaders.SET_COOKIE,
+            refreshCookie(result.refreshToken(), result.refreshTokenExpiresIn()).toString())
+        .body(response);
+  }
 
-    @PostMapping("/logout")
-    public ResponseEntity<Void> logout(
-            @CookieValue(name = "${auth.refresh-token.cookie.name:refresh_token}", required = false)
-            final String refreshToken) {
-        logoutUserService.logout(refreshToken);
+  @PostMapping("/logout")
+  public ResponseEntity<Void> logout(
+      @CookieValue(name = "${auth.refresh-token.cookie.name:refresh_token}", required = false)
+          final String refreshToken) {
+    logoutUserService.logout(refreshToken);
 
-        return ResponseEntity.noContent()
-                .header(HttpHeaders.SET_COOKIE, clearRefreshCookie().toString())
-                .build();
-    }
+    return ResponseEntity.noContent()
+        .header(HttpHeaders.SET_COOKIE, clearRefreshCookie().toString())
+        .build();
+  }
 
-    @PostMapping("/forgot-password")
-    public ResponseEntity<Void> forgotPassword(@Valid @RequestBody final ForgotPasswordRequest request) {
-        forgotPasswordService.request(request.email());
-        return ResponseEntity.ok().build();
-    }
+  @PostMapping("/forgot-password")
+  public ResponseEntity<Void> forgotPassword(
+      @Valid @RequestBody final ForgotPasswordRequest request) {
+    forgotPasswordService.request(request.email());
+    return ResponseEntity.ok().build();
+  }
 
-    @PostMapping("/reset-password")
-    public ResponseEntity<Void> resetPassword(@Valid @RequestBody final ResetPasswordRequest request) {
-        resetPasswordService.reset(request.token(), request.newPassword());
-        return ResponseEntity.ok().build();
-    }
+  @PostMapping("/reset-password")
+  public ResponseEntity<Void> resetPassword(
+      @Valid @RequestBody final ResetPasswordRequest request) {
+    resetPasswordService.reset(request.token(), request.newPassword());
+    return ResponseEntity.ok().build();
+  }
 
-    private ResponseCookie refreshCookie(final String token, final long maxAgeSeconds) {
-        return ResponseCookie.from(refreshTokenProperties.cookieName(), token)
-                .httpOnly(true)
-                .secure(refreshTokenProperties.cookieSecure())
-                .path(refreshTokenProperties.cookiePath())
-                .sameSite(refreshTokenProperties.cookieSameSite())
-                .maxAge(maxAgeSeconds)
-                .build();
-    }
+  private ResponseCookie refreshCookie(final String token, final long maxAgeSeconds) {
+    return ResponseCookie.from(refreshTokenProperties.cookieName(), token)
+        .httpOnly(true)
+        .secure(refreshTokenProperties.cookieSecure())
+        .path(refreshTokenProperties.cookiePath())
+        .sameSite(refreshTokenProperties.cookieSameSite())
+        .maxAge(maxAgeSeconds)
+        .build();
+  }
 
-    private ResponseCookie clearRefreshCookie() {
-        return ResponseCookie.from(refreshTokenProperties.cookieName(), "")
-                .httpOnly(true)
-                .secure(refreshTokenProperties.cookieSecure())
-                .path(refreshTokenProperties.cookiePath())
-                .sameSite(refreshTokenProperties.cookieSameSite())
-                .maxAge(0)
-                .build();
-    }
+  private ResponseCookie clearRefreshCookie() {
+    return ResponseCookie.from(refreshTokenProperties.cookieName(), "")
+        .httpOnly(true)
+        .secure(refreshTokenProperties.cookieSecure())
+        .path(refreshTokenProperties.cookiePath())
+        .sameSite(refreshTokenProperties.cookieSameSite())
+        .maxAge(0)
+        .build();
+  }
 }

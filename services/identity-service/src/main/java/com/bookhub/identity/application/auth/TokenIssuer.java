@@ -5,11 +5,8 @@ import lombok.Builder;
 
 public interface TokenIssuer {
 
-    IssuedTokenPair issueFor(User user);
+  IssuedTokenPair issueFor(User user);
 
-    @Builder
-    record IssuedTokenPair(
-            String accessToken,
-            long expiresIn) {
-    }
+  @Builder
+  record IssuedTokenPair(String accessToken, long expiresIn) {}
 }

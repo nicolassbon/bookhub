@@ -5,11 +5,11 @@ import java.util.Optional;
 
 public interface RefreshTokenRepository {
 
-    Optional<RefreshToken> findByTokenHash(String tokenHash);
+  Optional<RefreshToken> findByTokenHash(String tokenHash);
 
-    Optional<RefreshToken> findActiveByTokenHashForUpdate(String tokenHash, Instant now);
+  Optional<RefreshToken> findActiveByTokenHashForUpdate(String tokenHash, Instant now);
 
-    RefreshToken save(RefreshToken refreshToken);
+  RefreshToken save(RefreshToken refreshToken);
 
-    void revokeByTokenHash(String tokenHash);
+  void revokeByTokenHash(String tokenHash);
 }

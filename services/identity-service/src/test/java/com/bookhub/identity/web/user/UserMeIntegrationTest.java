@@ -23,77 +23,70 @@ import org.springframework.test.web.servlet.MockMvc;
 @AutoConfigureMockMvc
 class UserMeIntegrationTest extends PostgreSqlIntegrationTest {
 
-    @Autowired
-    private MockMvc mockMvc;
+  @Autowired private MockMvc mockMvc;
 
-    @Autowired
-    private UserJpaRepository userJpaRepository;
+  @Autowired private UserJpaRepository userJpaRepository;
 
-    @Autowired
-    private RefreshTokenJpaRepository refreshTokenJpaRepository;
+  @Autowired private RefreshTokenJpaRepository refreshTokenJpaRepository;
 
-    @Autowired
-    private JwtEncoder jwtEncoder;
+  @Autowired private JwtEncoder jwtEncoder;
 
-    @BeforeEach
-    void setUp() {
-        refreshTokenJpaRepository.deleteAll();
-        userJpaRepository.deleteAll();
-    }
+  @BeforeEach
+  void setUp() {
+    refreshTokenJpaRepository.deleteAll();
+    userJpaRepository.deleteAll();
+  }
 
-    @Test
-    @DisplayName("Should return authenticated user profile when access token is valid")
-    void shouldReturnAuthenticatedUserProfileWhenAccessTokenIsValid() throws Exception {
-        final User savedUser = userJpaRepository.save(User.create(
-                "nico",
-                "nico@example.com",
-                "ignored",
-                "Nicolas Bon",
-                UserRole.USER));
+  @Test
+  @DisplayName("Should return authenticated user profile when access token is valid")
+  void shouldReturnAuthenticatedUserProfileWhenAccessTokenIsValid() throws Exception {
+    final User savedUser =
+        userJpaRepository.save(
+            User.create("nico", "nico@example.com", "ignored", "Nicolas Bon", UserRole.USER));
 
-        final String token = JwtTestTokenFactory.createAccessToken(
-                jwtEncoder,
-                savedUser.getId().toString(),
-                savedUser.getUsername(),
-                savedUser.getDisplayName(),
-                savedUser.getRole().name(),
-                savedUser.getEmail(),
-                Instant.now(),
-                Instant.now().plus(1, ChronoUnit.HOURS));
+    final String token =
+        JwtTestTokenFactory.createAccessToken(
+            jwtEncoder,
+            savedUser.getId().toString(),
+            savedUser.getUsername(),
+            savedUser.getDisplayName(),
+            savedUser.getRole().name(),
+            savedUser.getEmail(),
+            Instant.now(),
+            Instant.now().plus(1, ChronoUnit.HOURS));
 
-        mockMvc.perform(get("/api/v1/users/me")
-                        .header("Authorization", "Bearer " + token))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.userId").value(savedUser.getId().toString()))
-                .andExpect(jsonPath("$.username").value("nico"))
-                .andExpect(jsonPath("$.displayName").value("Nicolas Bon"))
-                .andExpect(jsonPath("$.email").value("nico@example.com"))
-                .andExpect(jsonPath("$.role").value("USER"));
-    }
+    mockMvc
+        .perform(get("/api/v1/users/me").header("Authorization", "Bearer " + token))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.userId").value(savedUser.getId().toString()))
+        .andExpect(jsonPath("$.username").value("nico"))
+        .andExpect(jsonPath("$.displayName").value("Nicolas Bon"))
+        .andExpect(jsonPath("$.email").value("nico@example.com"))
+        .andExpect(jsonPath("$.role").value("USER"));
+  }
 
-    @Test
-    @DisplayName("Should return 401 when access token is missing")
-    void shouldReturn401WhenAccessTokenIsMissing() throws Exception {
-        mockMvc.perform(get("/api/v1/users/me"))
-                .andExpect(status().isUnauthorized());
-    }
+  @Test
+  @DisplayName("Should return 401 when access token is missing")
+  void shouldReturn401WhenAccessTokenIsMissing() throws Exception {
+    mockMvc.perform(get("/api/v1/users/me")).andExpect(status().isUnauthorized());
+  }
 
-    @Test
-    @DisplayName("Should return 401 when access token is invalid or expired")
-    void shouldReturn401WhenAccessTokenIsInvalidOrExpired() throws Exception {
-        final String expiredToken = JwtTestTokenFactory.createAccessToken(
-                jwtEncoder,
-                "6676f2d8-0f65-40ae-b102-66145e24f3fd",
-                "nico",
-                "Nicolas Bon",
-                "USER",
-                "nico@example.com",
-                Instant.now().minus(2, ChronoUnit.HOURS),
-                Instant.now().minus(1, ChronoUnit.HOURS));
+  @Test
+  @DisplayName("Should return 401 when access token is invalid or expired")
+  void shouldReturn401WhenAccessTokenIsInvalidOrExpired() throws Exception {
+    final String expiredToken =
+        JwtTestTokenFactory.createAccessToken(
+            jwtEncoder,
+            "6676f2d8-0f65-40ae-b102-66145e24f3fd",
+            "nico",
+            "Nicolas Bon",
+            "USER",
+            "nico@example.com",
+            Instant.now().minus(2, ChronoUnit.HOURS),
+            Instant.now().minus(1, ChronoUnit.HOURS));
 
-        mockMvc.perform(get("/api/v1/users/me")
-                        .header("Authorization", "Bearer " + expiredToken))
-                .andExpect(status().isUnauthorized());
-    }
-
+    mockMvc
+        .perform(get("/api/v1/users/me").header("Authorization", "Bearer " + expiredToken))
+        .andExpect(status().isUnauthorized());
+  }
 }

@@ -2,9 +2,9 @@ package com.bookhub.identity.application.auth;
 
 import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.when;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 import com.bookhub.identity.domain.auth.RefreshTokenRepository;
 import java.util.UUID;
@@ -18,31 +18,28 @@ import org.mockito.junit.jupiter.MockitoExtension;
 @ExtendWith(MockitoExtension.class)
 class LogoutUserServiceTest {
 
-    @Mock
-    private RefreshTokenRepository refreshTokenRepository;
+  @Mock private RefreshTokenRepository refreshTokenRepository;
 
-    @Mock
-    private RefreshTokenHasher refreshTokenHasher;
+  @Mock private RefreshTokenHasher refreshTokenHasher;
 
-    @InjectMocks
-    private LogoutUserService logoutUserService;
+  @InjectMocks private LogoutUserService logoutUserService;
 
-    @Test
-    @DisplayName("Should revoke refresh token when cookie value is present")
-    void shouldRevokeRefreshTokenWhenCookieValueIsPresent() {
-        final String tokenValue = UUID.fromString("e2b2f5d2-a101-4a3e-b1f2-250d58df1309").toString();
-        when(refreshTokenHasher.hash(tokenValue)).thenReturn("hashed-token");
+  @Test
+  @DisplayName("Should revoke refresh token when cookie value is present")
+  void shouldRevokeRefreshTokenWhenCookieValueIsPresent() {
+    final String tokenValue = UUID.fromString("e2b2f5d2-a101-4a3e-b1f2-250d58df1309").toString();
+    when(refreshTokenHasher.hash(tokenValue)).thenReturn("hashed-token");
 
-        logoutUserService.logout(tokenValue);
+    logoutUserService.logout(tokenValue);
 
-        verify(refreshTokenRepository).revokeByTokenHash("hashed-token");
-    }
+    verify(refreshTokenRepository).revokeByTokenHash("hashed-token");
+  }
 
-    @Test
-    @DisplayName("Should be a no-op when cookie value is missing")
-    void shouldBeANoOpWhenCookieValueIsMissing() {
-        assertThatCode(() -> logoutUserService.logout(null)).doesNotThrowAnyException();
+  @Test
+  @DisplayName("Should be a no-op when cookie value is missing")
+  void shouldBeANoOpWhenCookieValueIsMissing() {
+    assertThatCode(() -> logoutUserService.logout(null)).doesNotThrowAnyException();
 
-        verify(refreshTokenRepository, never()).revokeByTokenHash(any(String.class));
-    }
+    verify(refreshTokenRepository, never()).revokeByTokenHash(any(String.class));
+  }
 }

@@ -8,11 +8,11 @@ import org.mapstruct.MappingConstants;
 @Mapper(componentModel = MappingConstants.ComponentModel.SPRING)
 public interface AuthResultMapper {
 
-    @Mapping(target = "userId", expression = "java(user.getId().toString())")
-    @Mapping(target = "role", expression = "java(user.getRole().name())")
-    RegisterUserResult toRegisterUserResult(User user);
+  @Mapping(target = "userId", expression = "java(user.getId().toString())")
+  @Mapping(target = "role", expression = "java(user.getRole().name())")
+  RegisterUserResult toRegisterUserResult(User user);
 
-    @Mapping(target = "userId", expression = "java(user.getId().toString())")
-    @Mapping(target = "role", expression = "java(user.getRole().name())")
-    LoginUserResult.LoginUserView toLoginUserView(User user);
+  @Mapping(target = "userId", expression = "java(user.getId().toString())")
+  @Mapping(target = "role", expression = "java(user.getRole().name())")
+  LoginUserResult.LoginUserView toLoginUserView(User user);
 }

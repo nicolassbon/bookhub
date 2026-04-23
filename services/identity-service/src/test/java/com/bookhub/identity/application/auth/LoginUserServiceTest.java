@@ -29,123 +29,118 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 @ExtendWith(MockitoExtension.class)
 class LoginUserServiceTest {
 
-    @Mock
-    private UserRepository userRepository;
+  @Mock private UserRepository userRepository;
 
-    @Mock
-    private PasswordEncoder passwordEncoder;
+  @Mock private PasswordEncoder passwordEncoder;
 
-    @Mock
-    private TokenIssuer tokenIssuer;
+  @Mock private TokenIssuer tokenIssuer;
 
-    @Mock
-    private RefreshTokenRepository refreshTokenRepository;
+  @Mock private RefreshTokenRepository refreshTokenRepository;
 
-    @Mock
-    private RefreshTokenHasher refreshTokenHasher;
+  @Mock private RefreshTokenHasher refreshTokenHasher;
 
-    @Mock
-    private RefreshTokenProperties refreshTokenProperties;
+  @Mock private RefreshTokenProperties refreshTokenProperties;
 
-    @Mock
-    private Clock clock;
+  @Mock private Clock clock;
 
-    @Mock
-    private AuthResultMapper authResultMapper;
+  @Mock private AuthResultMapper authResultMapper;
 
-    @InjectMocks
-    private LoginUserService loginUserService;
+  @InjectMocks private LoginUserService loginUserService;
 
-    @Test
-    @DisplayName("Should authenticate user and return login payload when credentials are valid")
-    void shouldAuthenticateUserAndReturnLoginPayloadWhenCredentialsAreValid() {
-        final LoginUserCommand command = LoginUserCommand.builder()
-                .email(" NICO@Example.com ")
-                .password("StrongPassword123!")
-                .build();
+  @Test
+  @DisplayName("Should authenticate user and return login payload when credentials are valid")
+  void shouldAuthenticateUserAndReturnLoginPayloadWhenCredentialsAreValid() {
+    final LoginUserCommand command =
+        LoginUserCommand.builder()
+            .email(" NICO@Example.com ")
+            .password("StrongPassword123!")
+            .build();
 
-        final User existingUser = User.rehydrate(
-                UUID.fromString("6676f2d8-0f65-40ae-b102-66145e24f3fd"),
-                "nico",
-                "nico@example.com",
-                "stored-hash",
-                "Nicolas Bon",
-                UserRole.USER);
+    final User existingUser =
+        User.rehydrate(
+            UUID.fromString("6676f2d8-0f65-40ae-b102-66145e24f3fd"),
+            "nico",
+            "nico@example.com",
+            "stored-hash",
+            "Nicolas Bon",
+            UserRole.USER);
 
-        when(userRepository.findByEmail("nico@example.com")).thenReturn(Optional.of(existingUser));
-        when(passwordEncoder.matches("StrongPassword123!", "stored-hash")).thenReturn(true);
-        when(refreshTokenProperties.expirationSeconds()).thenReturn(604800L);
-        when(clock.instant()).thenReturn(Instant.parse("2026-04-12T12:00:00Z"));
-        when(refreshTokenHasher.hash(anyString())).thenReturn("hashed-refresh-token");
-        when(tokenIssuer.issueFor(existingUser)).thenReturn(TokenIssuer.IssuedTokenPair.builder()
+    when(userRepository.findByEmail("nico@example.com")).thenReturn(Optional.of(existingUser));
+    when(passwordEncoder.matches("StrongPassword123!", "stored-hash")).thenReturn(true);
+    when(refreshTokenProperties.expirationSeconds()).thenReturn(604800L);
+    when(clock.instant()).thenReturn(Instant.parse("2026-04-12T12:00:00Z"));
+    when(refreshTokenHasher.hash(anyString())).thenReturn("hashed-refresh-token");
+    when(tokenIssuer.issueFor(existingUser))
+        .thenReturn(
+            TokenIssuer.IssuedTokenPair.builder()
                 .accessToken("jwt-access-token")
                 .expiresIn(3600)
                 .build());
-        when(authResultMapper.toLoginUserView(existingUser)).thenReturn(LoginUserResult.LoginUserView.builder()
+    when(authResultMapper.toLoginUserView(existingUser))
+        .thenReturn(
+            LoginUserResult.LoginUserView.builder()
                 .userId("6676f2d8-0f65-40ae-b102-66145e24f3fd")
                 .username("nico")
                 .displayName("Nicolas Bon")
                 .role("USER")
                 .build());
 
-        when(refreshTokenRepository.save(any(RefreshToken.class))).thenAnswer(invocation -> invocation.getArgument(0));
+    when(refreshTokenRepository.save(any(RefreshToken.class)))
+        .thenAnswer(invocation -> invocation.getArgument(0));
 
-        final LoginUserResult result = loginUserService.login(command);
+    final LoginUserResult result = loginUserService.login(command);
 
-        assertThat(result.accessToken()).isEqualTo("jwt-access-token");
-        assertThat(result.expiresIn()).isEqualTo(3600);
-        assertThat(result.refreshToken()).isNotBlank();
-        assertThat(result.refreshTokenExpiresIn()).isEqualTo(604800);
-        assertThat(result.user().userId()).isEqualTo("6676f2d8-0f65-40ae-b102-66145e24f3fd");
-        assertThat(result.user().username()).isEqualTo("nico");
-        assertThat(result.user().displayName()).isEqualTo("Nicolas Bon");
-        assertThat(result.user().role()).isEqualTo("USER");
-        verify(refreshTokenRepository).save(any(RefreshToken.class));
-    }
+    assertThat(result.accessToken()).isEqualTo("jwt-access-token");
+    assertThat(result.expiresIn()).isEqualTo(3600);
+    assertThat(result.refreshToken()).isNotBlank();
+    assertThat(result.refreshTokenExpiresIn()).isEqualTo(604800);
+    assertThat(result.user().userId()).isEqualTo("6676f2d8-0f65-40ae-b102-66145e24f3fd");
+    assertThat(result.user().username()).isEqualTo("nico");
+    assertThat(result.user().displayName()).isEqualTo("Nicolas Bon");
+    assertThat(result.user().role()).isEqualTo("USER");
+    verify(refreshTokenRepository).save(any(RefreshToken.class));
+  }
 
-    @Test
-    @DisplayName("Should reject authentication when email does not exist")
-    void shouldRejectAuthenticationWhenEmailDoesNotExist() {
-        final LoginUserCommand command = LoginUserCommand.builder()
-                .email("nico@example.com")
-                .password("StrongPassword123!")
-                .build();
+  @Test
+  @DisplayName("Should reject authentication when email does not exist")
+  void shouldRejectAuthenticationWhenEmailDoesNotExist() {
+    final LoginUserCommand command =
+        LoginUserCommand.builder().email("nico@example.com").password("StrongPassword123!").build();
 
-        when(userRepository.findByEmail("nico@example.com")).thenReturn(Optional.empty());
+    when(userRepository.findByEmail("nico@example.com")).thenReturn(Optional.empty());
 
-        assertThatThrownBy(() -> loginUserService.login(command))
-                .isInstanceOf(InvalidCredentialsException.class)
-                .hasMessage("Invalid email or password");
+    assertThatThrownBy(() -> loginUserService.login(command))
+        .isInstanceOf(InvalidCredentialsException.class)
+        .hasMessage("Invalid email or password");
 
-        verify(passwordEncoder, never()).matches(anyString(), anyString());
-        verify(tokenIssuer, never()).issueFor(any(User.class));
-        verify(refreshTokenRepository, never()).save(any(RefreshToken.class));
-    }
+    verify(passwordEncoder, never()).matches(anyString(), anyString());
+    verify(tokenIssuer, never()).issueFor(any(User.class));
+    verify(refreshTokenRepository, never()).save(any(RefreshToken.class));
+  }
 
-    @Test
-    @DisplayName("Should reject authentication when password does not match")
-    void shouldRejectAuthenticationWhenPasswordDoesNotMatch() {
-        final LoginUserCommand command = LoginUserCommand.builder()
-                .email("nico@example.com")
-                .password("WrongPassword123!")
-                .build();
+  @Test
+  @DisplayName("Should reject authentication when password does not match")
+  void shouldRejectAuthenticationWhenPasswordDoesNotMatch() {
+    final LoginUserCommand command =
+        LoginUserCommand.builder().email("nico@example.com").password("WrongPassword123!").build();
 
-        final User existingUser = User.rehydrate(
-                UUID.fromString("6676f2d8-0f65-40ae-b102-66145e24f3fd"),
-                "nico",
-                "nico@example.com",
-                "stored-hash",
-                "Nicolas Bon",
-                UserRole.USER);
+    final User existingUser =
+        User.rehydrate(
+            UUID.fromString("6676f2d8-0f65-40ae-b102-66145e24f3fd"),
+            "nico",
+            "nico@example.com",
+            "stored-hash",
+            "Nicolas Bon",
+            UserRole.USER);
 
-        when(userRepository.findByEmail("nico@example.com")).thenReturn(Optional.of(existingUser));
-        when(passwordEncoder.matches("WrongPassword123!", "stored-hash")).thenReturn(false);
+    when(userRepository.findByEmail("nico@example.com")).thenReturn(Optional.of(existingUser));
+    when(passwordEncoder.matches("WrongPassword123!", "stored-hash")).thenReturn(false);
 
-        assertThatThrownBy(() -> loginUserService.login(command))
-                .isInstanceOf(InvalidCredentialsException.class)
-                .hasMessage("Invalid email or password");
+    assertThatThrownBy(() -> loginUserService.login(command))
+        .isInstanceOf(InvalidCredentialsException.class)
+        .hasMessage("Invalid email or password");
 
-        verify(tokenIssuer, never()).issueFor(existingUser);
-        verify(refreshTokenRepository, never()).save(any(RefreshToken.class));
-    }
+    verify(tokenIssuer, never()).issueFor(existingUser);
+    verify(refreshTokenRepository, never()).save(any(RefreshToken.class));
+  }
 }

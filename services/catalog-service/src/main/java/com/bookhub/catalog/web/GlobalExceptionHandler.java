@@ -19,118 +19,106 @@ import org.springframework.web.servlet.resource.NoResourceFoundException;
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
-    @ExceptionHandler(ConstraintViolationException.class)
-    public ResponseEntity<ErrorResponse> handleConstraintViolation(
-            final ConstraintViolationException exception,
-            final HttpServletRequest request) {
-        final String message = exception.getConstraintViolations().stream()
-                .map(v -> v.getPropertyPath() + " " + v.getMessage())
-                .collect(Collectors.joining("; "));
-        return buildError(
-                HttpStatus.BAD_REQUEST,
-                "Validation Error",
-                "VALIDATION_ERROR",
-                message,
-                request.getRequestURI());
-    }
+  @ExceptionHandler(ConstraintViolationException.class)
+  public ResponseEntity<ErrorResponse> handleConstraintViolation(
+      final ConstraintViolationException exception, final HttpServletRequest request) {
+    final String message =
+        exception.getConstraintViolations().stream()
+            .map(v -> v.getPropertyPath() + " " + v.getMessage())
+            .collect(Collectors.joining("; "));
+    return buildError(
+        HttpStatus.BAD_REQUEST,
+        "Validation Error",
+        "VALIDATION_ERROR",
+        message,
+        request.getRequestURI());
+  }
 
-    @ExceptionHandler(InvalidBookIdException.class)
-    public ResponseEntity<ErrorResponse> handleInvalidBookId(
-            final InvalidBookIdException exception,
-            final HttpServletRequest request) {
-        return buildError(
-                HttpStatus.BAD_REQUEST,
-                "Bad Request",
-                "INVALID_BOOK_ID",
-                exception.getMessage(),
-                request.getRequestURI());
-    }
+  @ExceptionHandler(InvalidBookIdException.class)
+  public ResponseEntity<ErrorResponse> handleInvalidBookId(
+      final InvalidBookIdException exception, final HttpServletRequest request) {
+    return buildError(
+        HttpStatus.BAD_REQUEST,
+        "Bad Request",
+        "INVALID_BOOK_ID",
+        exception.getMessage(),
+        request.getRequestURI());
+  }
 
-    @ExceptionHandler(BookNotFoundException.class)
-    public ResponseEntity<ErrorResponse> handleBookNotFound(
-            final BookNotFoundException exception,
-            final HttpServletRequest request) {
-        return buildError(
-                HttpStatus.NOT_FOUND,
-                "Not Found",
-                "BOOK_NOT_FOUND",
-                exception.getMessage(),
-                request.getRequestURI());
-    }
+  @ExceptionHandler(BookNotFoundException.class)
+  public ResponseEntity<ErrorResponse> handleBookNotFound(
+      final BookNotFoundException exception, final HttpServletRequest request) {
+    return buildError(
+        HttpStatus.NOT_FOUND,
+        "Not Found",
+        "BOOK_NOT_FOUND",
+        exception.getMessage(),
+        request.getRequestURI());
+  }
 
-    @ExceptionHandler(ExternalProviderException.class)
-    public ResponseEntity<ErrorResponse> handleExternalProvider(
-            final ExternalProviderException exception,
-            final HttpServletRequest request) {
-        return buildError(
-                HttpStatus.BAD_GATEWAY,
-                "Bad Gateway",
-                "EXTERNAL_PROVIDER_ERROR",
-                exception.getMessage(),
-                request.getRequestURI());
-    }
+  @ExceptionHandler(ExternalProviderException.class)
+  public ResponseEntity<ErrorResponse> handleExternalProvider(
+      final ExternalProviderException exception, final HttpServletRequest request) {
+    return buildError(
+        HttpStatus.BAD_GATEWAY,
+        "Bad Gateway",
+        "EXTERNAL_PROVIDER_ERROR",
+        exception.getMessage(),
+        request.getRequestURI());
+  }
 
-    @ExceptionHandler(InvalidProviderPayloadException.class)
-    public ResponseEntity<ErrorResponse> handleInvalidProviderPayload(
-            final InvalidProviderPayloadException exception,
-            final HttpServletRequest request) {
-        return buildError(
-                HttpStatus.BAD_GATEWAY,
-                "Bad Gateway",
-                "INVALID_PROVIDER_PAYLOAD",
-                exception.getMessage(),
-                request.getRequestURI());
-    }
+  @ExceptionHandler(InvalidProviderPayloadException.class)
+  public ResponseEntity<ErrorResponse> handleInvalidProviderPayload(
+      final InvalidProviderPayloadException exception, final HttpServletRequest request) {
+    return buildError(
+        HttpStatus.BAD_GATEWAY,
+        "Bad Gateway",
+        "INVALID_PROVIDER_PAYLOAD",
+        exception.getMessage(),
+        request.getRequestURI());
+  }
 
-    @ExceptionHandler(NoResourceFoundException.class)
-    public ResponseEntity<ErrorResponse> handleNoResourceFound(
-            final NoResourceFoundException exception,
-            final HttpServletRequest request) {
-        return buildError(
-                HttpStatus.NOT_FOUND,
-                "Not Found",
-                "RESOURCE_NOT_FOUND",
-                "Resource not found",
-                request.getRequestURI());
-    }
+  @ExceptionHandler(NoResourceFoundException.class)
+  public ResponseEntity<ErrorResponse> handleNoResourceFound(
+      final NoResourceFoundException exception, final HttpServletRequest request) {
+    return buildError(
+        HttpStatus.NOT_FOUND,
+        "Not Found",
+        "RESOURCE_NOT_FOUND",
+        "Resource not found",
+        request.getRequestURI());
+  }
 
-    @ExceptionHandler(Exception.class)
-    public ResponseEntity<ErrorResponse> handleUnhandled(
-            final Exception exception,
-            final HttpServletRequest request) {
-        log.error(
-                "Unhandled server exception method={} path={} requestId={}",
-                request.getMethod(),
-                request.getRequestURI(),
-                requestId(request),
-                exception);
+  @ExceptionHandler(Exception.class)
+  public ResponseEntity<ErrorResponse> handleUnhandled(
+      final Exception exception, final HttpServletRequest request) {
+    log.error(
+        "Unhandled server exception method={} path={} requestId={}",
+        request.getMethod(),
+        request.getRequestURI(),
+        requestId(request),
+        exception);
 
-        return buildError(
-                HttpStatus.INTERNAL_SERVER_ERROR,
-                "Internal Server Error",
-                "INTERNAL_ERROR",
-                "Unexpected error",
-                request.getRequestURI());
-    }
+    return buildError(
+        HttpStatus.INTERNAL_SERVER_ERROR,
+        "Internal Server Error",
+        "INTERNAL_ERROR",
+        "Unexpected error",
+        request.getRequestURI());
+  }
 
-    private String requestId(final HttpServletRequest request) {
-        final Object requestId = request.getAttribute("requestId");
-        return requestId == null ? "n/a" : requestId.toString();
-    }
+  private String requestId(final HttpServletRequest request) {
+    final Object requestId = request.getAttribute("requestId");
+    return requestId == null ? "n/a" : requestId.toString();
+  }
 
-    private ResponseEntity<ErrorResponse> buildError(
-            final HttpStatus status,
-            final String error,
-            final String code,
-            final String message,
-            final String path) {
-        return ResponseEntity.status(status)
-                .body(new ErrorResponse(
-                        Instant.now(),
-                        status.value(),
-                        error,
-                        code,
-                        message,
-                        path));
-    }
+  private ResponseEntity<ErrorResponse> buildError(
+      final HttpStatus status,
+      final String error,
+      final String code,
+      final String message,
+      final String path) {
+    return ResponseEntity.status(status)
+        .body(new ErrorResponse(Instant.now(), status.value(), error, code, message, path));
+  }
 }

@@ -27,80 +27,78 @@ import org.mockito.junit.jupiter.MockitoExtension;
 @ExtendWith(MockitoExtension.class)
 class RefreshSessionServiceTest {
 
-    @Mock
-    private RefreshTokenRepository refreshTokenRepository;
+  @Mock private RefreshTokenRepository refreshTokenRepository;
 
-    @Mock
-    private TokenIssuer tokenIssuer;
+  @Mock private TokenIssuer tokenIssuer;
 
-    @Mock
-    private RefreshTokenHasher refreshTokenHasher;
+  @Mock private RefreshTokenHasher refreshTokenHasher;
 
-    @Mock
-    private RefreshTokenProperties refreshTokenProperties;
+  @Mock private RefreshTokenProperties refreshTokenProperties;
 
-    @Mock
-    private Clock clock;
+  @Mock private Clock clock;
 
-    @Mock
-    private AuthResultMapper authResultMapper;
+  @Mock private AuthResultMapper authResultMapper;
 
-    @InjectMocks
-    private RefreshSessionService refreshSessionService;
+  @InjectMocks private RefreshSessionService refreshSessionService;
 
-    @Test
-    @DisplayName("Should rotate refresh token and return a new access token")
-    void shouldRotateRefreshTokenAndReturnANewAccessToken() {
-        final User user = User.rehydrate(
-                UUID.fromString("6676f2d8-0f65-40ae-b102-66145e24f3fd"),
-                "nico",
-                "nico@example.com",
-                "hash",
-                "Nicolas Bon",
-                UserRole.USER);
+  @Test
+  @DisplayName("Should rotate refresh token and return a new access token")
+  void shouldRotateRefreshTokenAndReturnANewAccessToken() {
+    final User user =
+        User.rehydrate(
+            UUID.fromString("6676f2d8-0f65-40ae-b102-66145e24f3fd"),
+            "nico",
+            "nico@example.com",
+            "hash",
+            "Nicolas Bon",
+            UserRole.USER);
 
-        final UUID tokenValue = UUID.fromString("d7cc2a0f-ea1a-4f74-8e64-3f3f4a5ba723");
-        final String tokenHash = "old-token-hash";
-        final RefreshToken activeToken = RefreshToken.issue(
-                tokenHash,
-                user,
-                Instant.parse("2026-04-20T13:00:00Z"));
+    final UUID tokenValue = UUID.fromString("d7cc2a0f-ea1a-4f74-8e64-3f3f4a5ba723");
+    final String tokenHash = "old-token-hash";
+    final RefreshToken activeToken =
+        RefreshToken.issue(tokenHash, user, Instant.parse("2026-04-20T13:00:00Z"));
 
-        when(refreshTokenHasher.hash(any(String.class))).thenReturn("new-token-hash");
-        when(refreshTokenHasher.hash(tokenValue.toString())).thenReturn(tokenHash);
-        when(clock.instant()).thenReturn(Instant.parse("2026-04-12T13:00:00Z"));
-        when(refreshTokenProperties.expirationSeconds()).thenReturn(604800L);
-        when(refreshTokenRepository.findActiveByTokenHashForUpdate(tokenHash, Instant.parse("2026-04-12T13:00:00Z")))
-                .thenReturn(Optional.of(activeToken));
-        when(refreshTokenRepository.save(any(RefreshToken.class))).thenAnswer(invocation -> invocation.getArgument(0));
-        when(tokenIssuer.issueFor(user)).thenReturn(TokenIssuer.IssuedTokenPair.builder()
+    when(refreshTokenHasher.hash(any(String.class))).thenReturn("new-token-hash");
+    when(refreshTokenHasher.hash(tokenValue.toString())).thenReturn(tokenHash);
+    when(clock.instant()).thenReturn(Instant.parse("2026-04-12T13:00:00Z"));
+    when(refreshTokenProperties.expirationSeconds()).thenReturn(604800L);
+    when(refreshTokenRepository.findActiveByTokenHashForUpdate(
+            tokenHash, Instant.parse("2026-04-12T13:00:00Z")))
+        .thenReturn(Optional.of(activeToken));
+    when(refreshTokenRepository.save(any(RefreshToken.class)))
+        .thenAnswer(invocation -> invocation.getArgument(0));
+    when(tokenIssuer.issueFor(user))
+        .thenReturn(
+            TokenIssuer.IssuedTokenPair.builder()
                 .accessToken("new-access-token")
                 .expiresIn(3600)
                 .build());
-        when(authResultMapper.toLoginUserView(user)).thenReturn(LoginUserResult.LoginUserView.builder()
+    when(authResultMapper.toLoginUserView(user))
+        .thenReturn(
+            LoginUserResult.LoginUserView.builder()
                 .userId("6676f2d8-0f65-40ae-b102-66145e24f3fd")
                 .username("nico")
                 .displayName("Nicolas Bon")
                 .role("USER")
                 .build());
 
-        final RefreshSessionResult result = refreshSessionService.refresh(tokenValue.toString());
+    final RefreshSessionResult result = refreshSessionService.refresh(tokenValue.toString());
 
-        assertThat(result.accessToken()).isEqualTo("new-access-token");
-        assertThat(result.expiresIn()).isEqualTo(3600);
-        assertThat(result.refreshToken()).isNotBlank();
-        assertThat(result.refreshToken()).isNotEqualTo(tokenValue.toString());
-        verify(refreshTokenRepository, times(2)).save(any(RefreshToken.class));
-    }
+    assertThat(result.accessToken()).isEqualTo("new-access-token");
+    assertThat(result.expiresIn()).isEqualTo(3600);
+    assertThat(result.refreshToken()).isNotBlank();
+    assertThat(result.refreshToken()).isNotEqualTo(tokenValue.toString());
+    verify(refreshTokenRepository, times(2)).save(any(RefreshToken.class));
+  }
 
-    @Test
-    @DisplayName("Should reject refresh when token is invalid")
-    void shouldRejectRefreshWhenTokenIsInvalid() {
-        assertThatThrownBy(() -> refreshSessionService.refresh("not-a-uuid"))
-                .isInstanceOf(InvalidRefreshTokenException.class)
-                .hasMessage("Invalid refresh token");
+  @Test
+  @DisplayName("Should reject refresh when token is invalid")
+  void shouldRejectRefreshWhenTokenIsInvalid() {
+    assertThatThrownBy(() -> refreshSessionService.refresh("not-a-uuid"))
+        .isInstanceOf(InvalidRefreshTokenException.class)
+        .hasMessage("Invalid refresh token");
 
-        verify(refreshTokenRepository, never()).save(any(RefreshToken.class));
-        verify(tokenIssuer, never()).issueFor(any(User.class));
-    }
+    verify(refreshTokenRepository, never()).save(any(RefreshToken.class));
+    verify(tokenIssuer, never()).issueFor(any(User.class));
+  }
 }

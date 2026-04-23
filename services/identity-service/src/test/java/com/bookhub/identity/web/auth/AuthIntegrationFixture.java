@@ -9,28 +9,25 @@ import java.util.UUID;
 
 public final class AuthIntegrationFixture {
 
-    private static final HmacRefreshTokenHasher REFRESH_TOKEN_HASHER =
-            new HmacRefreshTokenHasher("test-refresh-token-secret");
+  private static final HmacRefreshTokenHasher REFRESH_TOKEN_HASHER =
+      new HmacRefreshTokenHasher("test-refresh-token-secret");
 
-    private AuthIntegrationFixture() {
-    }
+  private AuthIntegrationFixture() {}
 
-    public static User user(
-            final String username,
-            final String email,
-            final String encodedPassword,
-            final String displayName) {
-        return User.create(username, email, encodedPassword, displayName, UserRole.USER);
-    }
+  public static User user(
+      final String username,
+      final String email,
+      final String encodedPassword,
+      final String displayName) {
+    return User.create(username, email, encodedPassword, displayName, UserRole.USER);
+  }
 
-    public static RefreshToken refreshToken(
-            final UUID token,
-            final User user,
-            final Instant expiresAt) {
-        return RefreshToken.issue(REFRESH_TOKEN_HASHER.hash(token.toString()), user, expiresAt);
-    }
+  public static RefreshToken refreshToken(
+      final UUID token, final User user, final Instant expiresAt) {
+    return RefreshToken.issue(REFRESH_TOKEN_HASHER.hash(token.toString()), user, expiresAt);
+  }
 
-    public static String refreshTokenHash(final UUID token) {
-        return REFRESH_TOKEN_HASHER.hash(token.toString());
-    }
+  public static String refreshTokenHash(final UUID token) {
+    return REFRESH_TOKEN_HASHER.hash(token.toString());
+  }
 }

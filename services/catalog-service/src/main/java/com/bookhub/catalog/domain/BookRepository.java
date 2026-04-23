@@ -1,16 +1,16 @@
 package com.bookhub.catalog.domain;
 
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
-import java.util.List;
 
 public interface BookRepository {
 
-    Book save(Book book);
+  Book save(Book book);
 
-    Optional<Book> findBySourceReference(String sourceReference);
+  Optional<Book> findBySourceReference(String sourceReference);
 
-    Optional<Book> findById(UUID id);
+  Optional<Book> findById(UUID id);
 
-    List<Book> searchByQuery(String query, int candidateLimit);
+  List<Book> searchByQuery(String query, int candidateLimit);
 }

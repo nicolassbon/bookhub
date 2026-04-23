@@ -9,6 +9,7 @@ import org.springframework.data.jpa.repository.Lock;
 
 public interface RefreshTokenJpaRepository extends JpaRepository<RefreshToken, String> {
 
-    @Lock(LockModeType.PESSIMISTIC_WRITE)
-    Optional<RefreshToken> findByTokenHashAndRevokedFalseAndExpiresAtAfter(String tokenHash, Instant now);
+  @Lock(LockModeType.PESSIMISTIC_WRITE)
+  Optional<RefreshToken> findByTokenHashAndRevokedFalseAndExpiresAtAfter(
+      String tokenHash, Instant now);
 }

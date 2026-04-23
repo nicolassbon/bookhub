@@ -11,59 +11,61 @@ import org.springframework.boot.test.context.runner.ApplicationContextRunner;
 
 class JwtKeyConfigContextValidationTest {
 
-    private final ApplicationContextRunner contextRunner = new ApplicationContextRunner()
-            .withConfiguration(AutoConfigurations.of(
-                    ConfigurationPropertiesAutoConfiguration.class,
-                    ValidationAutoConfiguration.class))
-            .withUserConfiguration(JwtKeyConfig.class)
-            .withPropertyValues(
-                    "jwt.issuer=bookhub-identity",
-                    "jwt.audience=bookhub-api",
-                    "jwt.expiration=3600");
+  private final ApplicationContextRunner contextRunner =
+      new ApplicationContextRunner()
+          .withConfiguration(
+              AutoConfigurations.of(
+                  ConfigurationPropertiesAutoConfiguration.class,
+                  ValidationAutoConfiguration.class))
+          .withUserConfiguration(JwtKeyConfig.class)
+          .withPropertyValues(
+              "jwt.issuer=bookhub-identity", "jwt.audience=bookhub-api", "jwt.expiration=3600");
 
-    @Test
-    void shouldFailContextStartupWhenPublicKeyIsMalformed() {
-        contextRunner
-                .withPropertyValues(
-                        "jwt.rsa.private-key=" + toProperty(TestRsaKeys.PRIVATE_2048),
-                        "jwt.rsa.public-key=not-a-valid-public-key")
-                .run(context -> {
-                    assertThat(context).hasFailed();
-                    assertThat(context.getStartupFailure())
-                            .isInstanceOf(org.springframework.beans.factory.BeanCreationException.class)
-                            .hasMessageContaining("Invalid RSA public key configuration");
-                });
-    }
+  @Test
+  void shouldFailContextStartupWhenPublicKeyIsMalformed() {
+    contextRunner
+        .withPropertyValues(
+            "jwt.rsa.private-key=" + toProperty(TestRsaKeys.PRIVATE_2048),
+            "jwt.rsa.public-key=not-a-valid-public-key")
+        .run(
+            context -> {
+              assertThat(context).hasFailed();
+              assertThat(context.getStartupFailure())
+                  .isInstanceOf(org.springframework.beans.factory.BeanCreationException.class)
+                  .hasMessageContaining("Invalid RSA public key configuration");
+            });
+  }
 
-    @Test
-    void shouldFailContextStartupWhenRsaKeyPairDoesNotMatch() {
-        contextRunner
-                .withPropertyValues(
-                        "jwt.rsa.private-key=" + toProperty(TestRsaKeys.PRIVATE_2048),
-                        "jwt.rsa.public-key=" + toProperty(TestRsaKeys.PUBLIC_OTHER_2048))
-                .run(context -> {
-                    assertThat(context).hasFailed();
-                    assertThat(context.getStartupFailure())
-                            .isInstanceOf(org.springframework.beans.factory.BeanCreationException.class)
-                            .hasMessageContaining("RSA private/public keys do not match");
-                });
-    }
+  @Test
+  void shouldFailContextStartupWhenRsaKeyPairDoesNotMatch() {
+    contextRunner
+        .withPropertyValues(
+            "jwt.rsa.private-key=" + toProperty(TestRsaKeys.PRIVATE_2048),
+            "jwt.rsa.public-key=" + toProperty(TestRsaKeys.PUBLIC_OTHER_2048))
+        .run(
+            context -> {
+              assertThat(context).hasFailed();
+              assertThat(context.getStartupFailure())
+                  .isInstanceOf(org.springframework.beans.factory.BeanCreationException.class)
+                  .hasMessageContaining("RSA private/public keys do not match");
+            });
+  }
 
-    @Test
-    void shouldLoadContextWhenRsaKeyPairIsValid() {
-        contextRunner
-                .withPropertyValues(
-                        "jwt.rsa.private-key=" + toProperty(TestRsaKeys.PRIVATE_2048),
-                        "jwt.rsa.public-key=" + toProperty(TestRsaKeys.PUBLIC_2048))
-                .run(context -> {
-                    assertThat(context).hasNotFailed();
-                    assertThat(context).hasSingleBean(org.springframework.security.oauth2.jwt.JwtEncoder.class);
-                });
-    }
+  @Test
+  void shouldLoadContextWhenRsaKeyPairIsValid() {
+    contextRunner
+        .withPropertyValues(
+            "jwt.rsa.private-key=" + toProperty(TestRsaKeys.PRIVATE_2048),
+            "jwt.rsa.public-key=" + toProperty(TestRsaKeys.PUBLIC_2048))
+        .run(
+            context -> {
+              assertThat(context).hasNotFailed();
+              assertThat(context)
+                  .hasSingleBean(org.springframework.security.oauth2.jwt.JwtEncoder.class);
+            });
+  }
 
-    private String toProperty(final String pem) {
-        return pem
-                .replace("\r", "")
-                .replace("\n", "");
-    }
+  private String toProperty(final String pem) {
+    return pem.replace("\r", "").replace("\n", "");
+  }
 }

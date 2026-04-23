@@ -1,15 +1,15 @@
 package com.bookhub.identity.infrastructure.persistence;
 
 import com.bookhub.identity.domain.user.User;
-import java.util.UUID;
 import java.util.Optional;
+import java.util.UUID;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 public interface UserJpaRepository extends JpaRepository<User, UUID> {
 
-    boolean existsByEmail(String email);
+  boolean existsByEmail(String email);
 
-    boolean existsByUsername(String username);
+  boolean existsByUsername(String username);
 
-    Optional<User> findByEmail(String email);
+  Optional<User> findByEmail(String email);
 }

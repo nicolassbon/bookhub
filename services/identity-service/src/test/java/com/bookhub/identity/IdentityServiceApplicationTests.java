@@ -5,7 +5,6 @@ import org.junit.jupiter.api.Test;
 
 class IdentityServiceApplicationTests extends PostgreSqlIntegrationTest {
 
-    @Test
-    void contextLoads() {
-    }
+  @Test
+  void contextLoads() {}
 }

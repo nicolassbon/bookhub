@@ -4,7 +4,6 @@ import org.junit.jupiter.api.Test;
 
 class CatalogServiceApplicationTests {
 
-    @Test
-    void contextLoads() {
-    }
+  @Test
+  void contextLoads() {}
 }

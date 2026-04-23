@@ -22,43 +22,43 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("/api/v1/books")
 public class BookController {
 
-    private static final int MAX_LIMIT = 100;
+  private static final int MAX_LIMIT = 100;
 
-    private final SearchBooksService searchBooksService;
-    private final GetBookDetailService getBookDetailService;
-    private final BookWebMapper bookWebMapper;
+  private final SearchBooksService searchBooksService;
+  private final GetBookDetailService getBookDetailService;
+  private final BookWebMapper bookWebMapper;
 
-    public BookController(
-            final SearchBooksService searchBooksService,
-            final GetBookDetailService getBookDetailService,
-            final BookWebMapper bookWebMapper) {
-        this.searchBooksService = searchBooksService;
-        this.getBookDetailService = getBookDetailService;
-        this.bookWebMapper = bookWebMapper;
+  public BookController(
+      final SearchBooksService searchBooksService,
+      final GetBookDetailService getBookDetailService,
+      final BookWebMapper bookWebMapper) {
+    this.searchBooksService = searchBooksService;
+    this.getBookDetailService = getBookDetailService;
+    this.bookWebMapper = bookWebMapper;
+  }
+
+  @GetMapping
+  public List<BookSearchResponse> search(
+      @RequestParam("q") @NotBlank @Size(min = 2, max = 200) final String query,
+      @RequestParam(value = "limit", defaultValue = "20") @Min(1) @Max(MAX_LIMIT) final int limit,
+      @RequestParam(value = "offset", defaultValue = "0") @Min(0) final int offset) {
+    return searchBooksService.search(query, limit, offset).stream()
+        .map(bookWebMapper::toSearchResponse)
+        .toList();
+  }
+
+  @GetMapping("/{id}")
+  public ResponseEntity<?> getDetail(@PathVariable("id") final String id) {
+    final GetBookDetailService.BookDetailResult result = getBookDetailService.getById(id);
+    if (result.isDegraded()) {
+      final Integer retryAfterSeconds = result.degraded().retryAfterSeconds();
+      final ResponseEntity.BodyBuilder responseBuilder =
+          ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE);
+      if (retryAfterSeconds != null) {
+        responseBuilder.header(HttpHeaders.RETRY_AFTER, String.valueOf(retryAfterSeconds));
+      }
+      return responseBuilder.body(bookWebMapper.toDegradedDetailResponse(result.degraded()));
     }
-
-    @GetMapping
-    public List<BookSearchResponse> search(
-            @RequestParam("q") @NotBlank @Size(min = 2, max = 200) final String query,
-            @RequestParam(value = "limit", defaultValue = "20") @Min(1) @Max(MAX_LIMIT) final int limit,
-            @RequestParam(value = "offset", defaultValue = "0") @Min(0) final int offset) {
-        return searchBooksService.search(query, limit, offset)
-                .stream()
-                .map(bookWebMapper::toSearchResponse)
-                .toList();
-    }
-
-    @GetMapping("/{id}")
-    public ResponseEntity<?> getDetail(@PathVariable("id") final String id) {
-        final GetBookDetailService.BookDetailResult result = getBookDetailService.getById(id);
-        if (result.isDegraded()) {
-            final Integer retryAfterSeconds = result.degraded().retryAfterSeconds();
-            final ResponseEntity.BodyBuilder responseBuilder = ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE);
-            if (retryAfterSeconds != null) {
-                responseBuilder.header(HttpHeaders.RETRY_AFTER, String.valueOf(retryAfterSeconds));
-            }
-            return responseBuilder.body(bookWebMapper.toDegradedDetailResponse(result.degraded()));
-        }
-        return ResponseEntity.ok(bookWebMapper.toDetailResponse(result.book()));
-    }
+    return ResponseEntity.ok(bookWebMapper.toDetailResponse(result.book()));
+  }
 }

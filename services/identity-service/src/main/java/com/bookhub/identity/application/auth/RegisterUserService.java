@@ -13,45 +13,46 @@ import org.springframework.transaction.annotation.Transactional;
 @Transactional(readOnly = true)
 public class RegisterUserService {
 
-    private final UserRepository userRepository;
-    private final PasswordEncoder passwordEncoder;
-    private final AuthResultMapper authResultMapper;
+  private final UserRepository userRepository;
+  private final PasswordEncoder passwordEncoder;
+  private final AuthResultMapper authResultMapper;
 
-    public RegisterUserService(
-            final UserRepository userRepository,
-            final PasswordEncoder passwordEncoder,
-            final AuthResultMapper authResultMapper) {
-        this.userRepository = userRepository;
-        this.passwordEncoder = passwordEncoder;
-        this.authResultMapper = authResultMapper;
+  public RegisterUserService(
+      final UserRepository userRepository,
+      final PasswordEncoder passwordEncoder,
+      final AuthResultMapper authResultMapper) {
+    this.userRepository = userRepository;
+    this.passwordEncoder = passwordEncoder;
+    this.authResultMapper = authResultMapper;
+  }
+
+  @Transactional
+  public RegisterUserResult register(final RegisterUserCommand command) {
+    final String normalizedEmail = normalize(command.email());
+    final String normalizedUsername = normalize(command.username());
+
+    if (userRepository.existsByEmail(normalizedEmail)) {
+      throw new DuplicateResourceException("email", "Email already in use");
     }
 
-    @Transactional
-    public RegisterUserResult register(final RegisterUserCommand command) {
-        final String normalizedEmail = normalize(command.email());
-        final String normalizedUsername = normalize(command.username());
-
-        if (userRepository.existsByEmail(normalizedEmail)) {
-            throw new DuplicateResourceException("email", "Email already in use");
-        }
-
-        if (userRepository.existsByUsername(normalizedUsername)) {
-            throw new DuplicateResourceException("username", "Username already in use");
-        }
-
-        final String hashedPassword = passwordEncoder.encode(command.password());
-        final User user = User.create(
-                normalizedUsername,
-                normalizedEmail,
-                hashedPassword,
-                command.displayName().trim(),
-                UserRole.USER);
-
-        final User persistedUser = userRepository.save(user);
-        return authResultMapper.toRegisterUserResult(persistedUser);
+    if (userRepository.existsByUsername(normalizedUsername)) {
+      throw new DuplicateResourceException("username", "Username already in use");
     }
 
-    private String normalize(final String value) {
-        return value == null ? null : value.trim().toLowerCase(Locale.ROOT);
-    }
+    final String hashedPassword = passwordEncoder.encode(command.password());
+    final User user =
+        User.create(
+            normalizedUsername,
+            normalizedEmail,
+            hashedPassword,
+            command.displayName().trim(),
+            UserRole.USER);
+
+    final User persistedUser = userRepository.save(user);
+    return authResultMapper.toRegisterUserResult(persistedUser);
+  }
+
+  private String normalize(final String value) {
+    return value == null ? null : value.trim().toLowerCase(Locale.ROOT);
+  }
 }

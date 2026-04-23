@@ -1,7 +1,7 @@
 package com.bookhub.identity.web.auth;
 
-import static org.hamcrest.Matchers.containsString;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.hamcrest.Matchers.containsString;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -22,41 +22,42 @@ import org.springframework.test.web.servlet.MockMvc;
 @AutoConfigureMockMvc
 class LogoutIntegrationTest extends PostgreSqlIntegrationTest {
 
-    @Autowired
-    private MockMvc mockMvc;
+  @Autowired private MockMvc mockMvc;
 
-    @Autowired
-    private UserJpaRepository userJpaRepository;
+  @Autowired private UserJpaRepository userJpaRepository;
 
-    @Autowired
-    private RefreshTokenJpaRepository refreshTokenJpaRepository;
+  @Autowired private RefreshTokenJpaRepository refreshTokenJpaRepository;
 
-    @Autowired
-    private PasswordEncoder passwordEncoder;
+  @Autowired private PasswordEncoder passwordEncoder;
 
-    @Autowired
-    private RefreshTokenHasher refreshTokenHasher;
+  @Autowired private RefreshTokenHasher refreshTokenHasher;
 
-    @Test
-    @DisplayName("Should revoke refresh token and clear cookie on logout")
-    void shouldRevokeRefreshTokenAndClearCookieOnLogout() throws Exception {
-        final var user = userJpaRepository.save(AuthIntegrationFixture.user(
+  @Test
+  @DisplayName("Should revoke refresh token and clear cookie on logout")
+  void shouldRevokeRefreshTokenAndClearCookieOnLogout() throws Exception {
+    final var user =
+        userJpaRepository.save(
+            AuthIntegrationFixture.user(
                 "nico",
                 "nico@example.com",
                 passwordEncoder.encode("StrongPassword123!"),
                 "Nicolas Bon"));
 
-        final UUID tokenValue = UUID.fromString("e2b2f5d2-a101-4a3e-b1f2-250d58df1309");
-        refreshTokenJpaRepository.save(AuthIntegrationFixture.refreshToken(tokenValue, user, Instant.now().plusSeconds(3600)));
+    final UUID tokenValue = UUID.fromString("e2b2f5d2-a101-4a3e-b1f2-250d58df1309");
+    refreshTokenJpaRepository.save(
+        AuthIntegrationFixture.refreshToken(tokenValue, user, Instant.now().plusSeconds(3600)));
 
-        mockMvc.perform(post("/api/v1/auth/logout")
-                        .cookie(new jakarta.servlet.http.Cookie("refresh_token", tokenValue.toString())))
-                .andExpect(status().isNoContent())
-                .andExpect(header().string("Set-Cookie", containsString("Max-Age=0")));
+    mockMvc
+        .perform(
+            post("/api/v1/auth/logout")
+                .cookie(new jakarta.servlet.http.Cookie("refresh_token", tokenValue.toString())))
+        .andExpect(status().isNoContent())
+        .andExpect(header().string("Set-Cookie", containsString("Max-Age=0")));
 
-        assertThat(refreshTokenJpaRepository.findById(refreshTokenHasher.hash(tokenValue.toString())))
-                .isPresent()
-                .get()
-                .matches(refreshToken -> refreshToken.isRevoked(), "logout should revoke persisted token row");
-    }
+    assertThat(refreshTokenJpaRepository.findById(refreshTokenHasher.hash(tokenValue.toString())))
+        .isPresent()
+        .get()
+        .matches(
+            refreshToken -> refreshToken.isRevoked(), "logout should revoke persisted token row");
+  }
 }

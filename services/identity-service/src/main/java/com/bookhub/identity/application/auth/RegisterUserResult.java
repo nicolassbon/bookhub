@@ -4,9 +4,4 @@ import lombok.Builder;
 
 @Builder
 public record RegisterUserResult(
-        String userId,
-        String username,
-        String email,
-        String displayName,
-        String role) {
-}
+    String userId, String username, String email, String displayName, String role) {}

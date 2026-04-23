@@ -10,20 +10,20 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("/api/v1/users")
 public class UserController {
 
-    @GetMapping("/me")
-    public UserProfileResponse me(final JwtAuthenticationToken authentication) {
-        final Jwt jwt = authentication.getToken();
+  @GetMapping("/me")
+  public UserProfileResponse me(final JwtAuthenticationToken authentication) {
+    final Jwt jwt = authentication.getToken();
 
-        return UserProfileResponse.builder()
-                .userId(jwt.getSubject())
-                .username(claim(jwt, "username"))
-                .displayName(claim(jwt, "displayName"))
-                .email(claim(jwt, "email"))
-                .role(claim(jwt, "role"))
-                .build();
-    }
+    return UserProfileResponse.builder()
+        .userId(jwt.getSubject())
+        .username(claim(jwt, "username"))
+        .displayName(claim(jwt, "displayName"))
+        .email(claim(jwt, "email"))
+        .role(claim(jwt, "role"))
+        .build();
+  }
 
-    private String claim(final Jwt jwt, final String key) {
-        return jwt.getClaimAsString(key);
-    }
+  private String claim(final Jwt jwt, final String key) {
+    return jwt.getClaimAsString(key);
+  }
 }

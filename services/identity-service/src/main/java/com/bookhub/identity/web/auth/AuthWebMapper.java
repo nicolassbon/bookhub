@@ -11,15 +11,15 @@ import org.mapstruct.MappingConstants;
 @Mapper(componentModel = MappingConstants.ComponentModel.SPRING)
 public interface AuthWebMapper {
 
-    RegisterUserCommand toRegisterUserCommand(RegisterRequest request);
+  RegisterUserCommand toRegisterUserCommand(RegisterRequest request);
 
-    RegisterResponse toRegisterResponse(RegisterUserResult result);
+  RegisterResponse toRegisterResponse(RegisterUserResult result);
 
-    LoginUserCommand toLoginUserCommand(LoginRequest request);
+  LoginUserCommand toLoginUserCommand(LoginRequest request);
 
-    LoginResponse toLoginResponse(LoginUserResult result);
+  LoginResponse toLoginResponse(LoginUserResult result);
 
-    LoginResponse toLoginResponse(RefreshSessionResult result);
+  LoginResponse toLoginResponse(RefreshSessionResult result);
 
-    LoginResponse.LoginUserResponse toLoginUserResponse(LoginUserResult.LoginUserView user);
+  LoginResponse.LoginUserResponse toLoginUserResponse(LoginUserResult.LoginUserView user);
 }

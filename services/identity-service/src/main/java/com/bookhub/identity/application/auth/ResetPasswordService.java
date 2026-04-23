@@ -14,36 +14,38 @@ import org.springframework.transaction.annotation.Transactional;
 @Transactional
 public class ResetPasswordService {
 
-    private final PasswordResetTokenRepository passwordResetTokenRepository;
-    private final UserRepository userRepository;
-    private final PasswordEncoder passwordEncoder;
-    private final PasswordResetTokenHasher passwordResetTokenHasher;
-    private final Clock clock;
+  private final PasswordResetTokenRepository passwordResetTokenRepository;
+  private final UserRepository userRepository;
+  private final PasswordEncoder passwordEncoder;
+  private final PasswordResetTokenHasher passwordResetTokenHasher;
+  private final Clock clock;
 
-    public ResetPasswordService(
-            final PasswordResetTokenRepository passwordResetTokenRepository,
-            final UserRepository userRepository,
-            final PasswordEncoder passwordEncoder,
-            final PasswordResetTokenHasher passwordResetTokenHasher,
-            final Clock clock) {
-        this.passwordResetTokenRepository = passwordResetTokenRepository;
-        this.userRepository = userRepository;
-        this.passwordEncoder = passwordEncoder;
-        this.passwordResetTokenHasher = passwordResetTokenHasher;
-        this.clock = clock;
-    }
+  public ResetPasswordService(
+      final PasswordResetTokenRepository passwordResetTokenRepository,
+      final UserRepository userRepository,
+      final PasswordEncoder passwordEncoder,
+      final PasswordResetTokenHasher passwordResetTokenHasher,
+      final Clock clock) {
+    this.passwordResetTokenRepository = passwordResetTokenRepository;
+    this.userRepository = userRepository;
+    this.passwordEncoder = passwordEncoder;
+    this.passwordResetTokenHasher = passwordResetTokenHasher;
+    this.clock = clock;
+  }
 
-    public void reset(final String token, final String newPassword) {
-        final Instant now = Instant.now(clock);
-        final String tokenHash = passwordResetTokenHasher.hash(token);
-        final UUID userId = passwordResetTokenRepository.consumeUserIdByTokenHash(tokenHash, now)
-                .orElseThrow(InvalidPasswordResetTokenException::new);
+  public void reset(final String token, final String newPassword) {
+    final Instant now = Instant.now(clock);
+    final String tokenHash = passwordResetTokenHasher.hash(token);
+    final UUID userId =
+        passwordResetTokenRepository
+            .consumeUserIdByTokenHash(tokenHash, now)
+            .orElseThrow(InvalidPasswordResetTokenException::new);
 
-        final User user = userRepository.findById(userId)
-                .orElseThrow(InvalidPasswordResetTokenException::new);
+    final User user =
+        userRepository.findById(userId).orElseThrow(InvalidPasswordResetTokenException::new);
 
-        final String encodedPassword = passwordEncoder.encode(newPassword);
-        user.updatePassword(encodedPassword);
-        userRepository.save(user);
-    }
+    final String encodedPassword = passwordEncoder.encode(newPassword);
+    user.updatePassword(encodedPassword);
+    userRepository.save(user);
+  }
 }

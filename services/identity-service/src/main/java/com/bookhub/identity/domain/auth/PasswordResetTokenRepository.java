@@ -6,15 +6,15 @@ import java.util.UUID;
 
 public interface PasswordResetTokenRepository {
 
-    PasswordResetToken save(PasswordResetToken passwordResetToken);
+  PasswordResetToken save(PasswordResetToken passwordResetToken);
 
-    Optional<PasswordResetToken> findByTokenHash(String tokenHash);
+  Optional<PasswordResetToken> findByTokenHash(String tokenHash);
 
-    void replaceForUser(UUID userId, String tokenHash, Instant expiresAt);
+  void replaceForUser(UUID userId, String tokenHash, Instant expiresAt);
 
-    Optional<UUID> consumeUserIdByTokenHash(String tokenHash, Instant now);
+  Optional<UUID> consumeUserIdByTokenHash(String tokenHash, Instant now);
 
-    void delete(PasswordResetToken passwordResetToken);
+  void delete(PasswordResetToken passwordResetToken);
 
-    void deleteByUserId(UUID userId);
+  void deleteByUserId(UUID userId);
 }

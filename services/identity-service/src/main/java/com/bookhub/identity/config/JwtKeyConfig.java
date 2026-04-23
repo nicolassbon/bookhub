@@ -20,76 +20,73 @@ import org.springframework.security.oauth2.jwt.NimbusJwtEncoder;
 @EnableConfigurationProperties(JwtProperties.class)
 public class JwtKeyConfig {
 
-    private static final int MIN_RSA_BITS = 2048;
+  private static final int MIN_RSA_BITS = 2048;
 
-    @Bean
-    public RSAPrivateKey jwtSigningPrivateKey(final JwtProperties jwtProperties) {
-        final String privateKeyPem = jwtProperties.rsa().privateKey();
-        requireValue(privateKeyPem, "RSA private key must be provided");
-        final RSAPrivateKey privateKey = parsePrivateKey(privateKeyPem);
-        validateMinimumBitLength(privateKey.getModulus().bitLength(), "private");
-        return privateKey;
+  @Bean
+  public RSAPrivateKey jwtSigningPrivateKey(final JwtProperties jwtProperties) {
+    final String privateKeyPem = jwtProperties.rsa().privateKey();
+    requireValue(privateKeyPem, "RSA private key must be provided");
+    final RSAPrivateKey privateKey = parsePrivateKey(privateKeyPem);
+    validateMinimumBitLength(privateKey.getModulus().bitLength(), "private");
+    return privateKey;
+  }
+
+  @Bean
+  public RSAPublicKey jwtVerificationPublicKey(final JwtProperties jwtProperties) {
+    final String publicKeyPem = jwtProperties.rsa().publicKey();
+    requireValue(publicKeyPem, "RSA public key must be provided");
+    final RSAPublicKey publicKey = parsePublicKey(publicKeyPem);
+    validateMinimumBitLength(publicKey.getModulus().bitLength(), "public");
+    return publicKey;
+  }
+
+  @Bean
+  public JwtEncoder jwtEncoder(final RSAPrivateKey privateKey, final RSAPublicKey publicKey) {
+    if (!privateKey.getModulus().equals(publicKey.getModulus())) {
+      throw new IllegalStateException("RSA private/public keys do not match");
     }
 
-    @Bean
-    public RSAPublicKey jwtVerificationPublicKey(final JwtProperties jwtProperties) {
-        final String publicKeyPem = jwtProperties.rsa().publicKey();
-        requireValue(publicKeyPem, "RSA public key must be provided");
-        final RSAPublicKey publicKey = parsePublicKey(publicKeyPem);
-        validateMinimumBitLength(publicKey.getModulus().bitLength(), "public");
-        return publicKey;
+    final RSAKey rsaKey = new RSAKey.Builder(publicKey).privateKey(privateKey).build();
+
+    return new NimbusJwtEncoder(new ImmutableJWKSet<SecurityContext>(new JWKSet(rsaKey)));
+  }
+
+  private RSAPrivateKey parsePrivateKey(final String pemValue) {
+    try {
+      final byte[] keyBytes =
+          decodePem(pemValue, "-----BEGIN PRIVATE KEY-----", "-----END PRIVATE KEY-----");
+      final PKCS8EncodedKeySpec keySpec = new PKCS8EncodedKeySpec(keyBytes);
+      return (RSAPrivateKey) KeyFactory.getInstance("RSA").generatePrivate(keySpec);
+    } catch (Exception exception) {
+      throw new IllegalStateException("Invalid RSA private key configuration", exception);
     }
+  }
 
-    @Bean
-    public JwtEncoder jwtEncoder(final RSAPrivateKey privateKey, final RSAPublicKey publicKey) {
-        if (!privateKey.getModulus().equals(publicKey.getModulus())) {
-            throw new IllegalStateException("RSA private/public keys do not match");
-        }
-
-        final RSAKey rsaKey = new RSAKey.Builder(publicKey)
-                .privateKey(privateKey)
-                .build();
-
-        return new NimbusJwtEncoder(new ImmutableJWKSet<SecurityContext>(new JWKSet(rsaKey)));
+  private RSAPublicKey parsePublicKey(final String pemValue) {
+    try {
+      final byte[] keyBytes =
+          decodePem(pemValue, "-----BEGIN PUBLIC KEY-----", "-----END PUBLIC KEY-----");
+      final X509EncodedKeySpec keySpec = new X509EncodedKeySpec(keyBytes);
+      return (RSAPublicKey) KeyFactory.getInstance("RSA").generatePublic(keySpec);
+    } catch (Exception exception) {
+      throw new IllegalStateException("Invalid RSA public key configuration", exception);
     }
+  }
 
-    private RSAPrivateKey parsePrivateKey(final String pemValue) {
-        try {
-            final byte[] keyBytes = decodePem(pemValue, "-----BEGIN PRIVATE KEY-----", "-----END PRIVATE KEY-----");
-            final PKCS8EncodedKeySpec keySpec = new PKCS8EncodedKeySpec(keyBytes);
-            return (RSAPrivateKey) KeyFactory.getInstance("RSA").generatePrivate(keySpec);
-        } catch (Exception exception) {
-            throw new IllegalStateException("Invalid RSA private key configuration", exception);
-        }
-    }
+  private byte[] decodePem(final String pemValue, final String begin, final String end) {
+    final String normalized = pemValue.replace(begin, "").replace(end, "").replaceAll("\\s", "");
+    return Base64.getDecoder().decode(normalized);
+  }
 
-    private RSAPublicKey parsePublicKey(final String pemValue) {
-        try {
-            final byte[] keyBytes = decodePem(pemValue, "-----BEGIN PUBLIC KEY-----", "-----END PUBLIC KEY-----");
-            final X509EncodedKeySpec keySpec = new X509EncodedKeySpec(keyBytes);
-            return (RSAPublicKey) KeyFactory.getInstance("RSA").generatePublic(keySpec);
-        } catch (Exception exception) {
-            throw new IllegalStateException("Invalid RSA public key configuration", exception);
-        }
+  private void requireValue(final String value, final String message) {
+    if (value == null || value.isBlank()) {
+      throw new IllegalStateException(message);
     }
+  }
 
-    private byte[] decodePem(final String pemValue, final String begin, final String end) {
-        final String normalized = pemValue
-                .replace(begin, "")
-                .replace(end, "")
-                .replaceAll("\\s", "");
-        return Base64.getDecoder().decode(normalized);
+  private void validateMinimumBitLength(final int bitLength, final String keyType) {
+    if (bitLength < MIN_RSA_BITS) {
+      throw new IllegalStateException("RSA " + keyType + " key must be at least 2048 bits");
     }
-
-    private void requireValue(final String value, final String message) {
-        if (value == null || value.isBlank()) {
-            throw new IllegalStateException(message);
-        }
-    }
-
-    private void validateMinimumBitLength(final int bitLength, final String keyType) {
-        if (bitLength < MIN_RSA_BITS) {
-            throw new IllegalStateException("RSA " + keyType + " key must be at least 2048 bits");
-        }
-    }
+  }
 }

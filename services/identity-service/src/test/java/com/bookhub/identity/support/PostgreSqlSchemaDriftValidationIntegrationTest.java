@@ -14,26 +14,31 @@ import org.testcontainers.postgresql.PostgreSQLContainer;
 @Testcontainers
 class PostgreSqlSchemaDriftValidationIntegrationTest {
 
-    @Container
-    @SuppressWarnings("resource")
-    private static final PostgreSQLContainer DRIFT_POSTGRESQL_CONTAINER =
-            new PostgreSQLContainer("postgres:16-alpine").withDatabaseName("identity_drift_test");
+  @Container
+  @SuppressWarnings("resource")
+  private static final PostgreSQLContainer DRIFT_POSTGRESQL_CONTAINER =
+      new PostgreSQLContainer("postgres:16-alpine").withDatabaseName("identity_drift_test");
 
-    @Test
-    @DisplayName("Should fail fast on schema drift when ddl-auto validate is enabled")
-    void shouldFailFastOnSchemaDriftWhenDdlAutoValidateIsEnabled() {
-        assertThatThrownBy(() -> new SpringApplicationBuilder(IdentityServiceApplication.class)
-                .web(WebApplicationType.NONE).profiles("test")
-                .run("--spring.datasource.url=" + DRIFT_POSTGRESQL_CONTAINER.getJdbcUrl(),
+  @Test
+  @DisplayName("Should fail fast on schema drift when ddl-auto validate is enabled")
+  void shouldFailFastOnSchemaDriftWhenDdlAutoValidateIsEnabled() {
+    assertThatThrownBy(
+            () ->
+                new SpringApplicationBuilder(IdentityServiceApplication.class)
+                    .web(WebApplicationType.NONE)
+                    .profiles("test")
+                    .run(
+                        "--spring.datasource.url=" + DRIFT_POSTGRESQL_CONTAINER.getJdbcUrl(),
                         "--spring.datasource.username=" + DRIFT_POSTGRESQL_CONTAINER.getUsername(),
                         "--spring.datasource.password=" + DRIFT_POSTGRESQL_CONTAINER.getPassword(),
                         "--spring.datasource.driver-class-name="
-                                + DRIFT_POSTGRESQL_CONTAINER.getDriverClassName(),
+                            + DRIFT_POSTGRESQL_CONTAINER.getDriverClassName(),
                         "--spring.flyway.url=" + DRIFT_POSTGRESQL_CONTAINER.getJdbcUrl(),
                         "--spring.flyway.user=" + DRIFT_POSTGRESQL_CONTAINER.getUsername(),
                         "--spring.flyway.password=" + DRIFT_POSTGRESQL_CONTAINER.getPassword(),
                         "--spring.flyway.locations=classpath:db/drift",
                         "--spring.jpa.hibernate.ddl-auto=validate")
-                .close()).hasStackTraceContaining("Schema-validation: missing table");
-    }
+                    .close())
+        .hasStackTraceContaining("Schema-validation: missing table");
+  }
 }

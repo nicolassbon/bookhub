@@ -10,13 +10,13 @@ import org.springframework.stereotype.Component;
 @RequiredArgsConstructor
 public class IdentityDatabaseCleaner {
 
-    private final RefreshTokenJpaRepository refreshTokenJpaRepository;
-    private final PasswordResetTokenJpaRepository passwordResetTokenJpaRepository;
-    private final UserJpaRepository userJpaRepository;
+  private final RefreshTokenJpaRepository refreshTokenJpaRepository;
+  private final PasswordResetTokenJpaRepository passwordResetTokenJpaRepository;
+  private final UserJpaRepository userJpaRepository;
 
-    public void clean() {
-        refreshTokenJpaRepository.deleteAll();
-        passwordResetTokenJpaRepository.deleteAll();
-        userJpaRepository.deleteAll();
-    }
+  public void clean() {
+    refreshTokenJpaRepository.deleteAll();
+    passwordResetTokenJpaRepository.deleteAll();
+    userJpaRepository.deleteAll();
+  }
 }

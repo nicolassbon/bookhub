@@ -15,43 +15,40 @@ import org.springframework.stereotype.Component;
 @Component
 public class NimbusJwtTokenIssuer implements TokenIssuer {
 
-    private final JwtEncoder jwtEncoder;
-    private final long expirationSeconds;
-    private final String issuer;
-    private final String audience;
+  private final JwtEncoder jwtEncoder;
+  private final long expirationSeconds;
+  private final String issuer;
+  private final String audience;
 
-    public NimbusJwtTokenIssuer(
-            final JwtEncoder jwtEncoder,
-            final JwtProperties jwtProperties) {
-        this.jwtEncoder = jwtEncoder;
-        this.expirationSeconds = jwtProperties.expiration();
-        this.issuer = jwtProperties.issuer();
-        this.audience = jwtProperties.audience();
-    }
+  public NimbusJwtTokenIssuer(final JwtEncoder jwtEncoder, final JwtProperties jwtProperties) {
+    this.jwtEncoder = jwtEncoder;
+    this.expirationSeconds = jwtProperties.expiration();
+    this.issuer = jwtProperties.issuer();
+    this.audience = jwtProperties.audience();
+  }
 
-    @Override
-    public IssuedTokenPair issueFor(final User user) {
-        final Instant issuedAt = Instant.now();
-        final Instant expiresAt = issuedAt.plusSeconds(expirationSeconds);
+  @Override
+  public IssuedTokenPair issueFor(final User user) {
+    final Instant issuedAt = Instant.now();
+    final Instant expiresAt = issuedAt.plusSeconds(expirationSeconds);
 
-        final JwtClaimsSet claims = JwtClaimsSet.builder()
-                .subject(user.getId().toString())
-                .issuedAt(issuedAt)
-                .expiresAt(expiresAt)
-                .issuer(issuer)
-                .audience(List.of(audience))
-                .claim("username", user.getUsername())
-                .claim("displayName", user.getDisplayName())
-                .claim("role", user.getRole().name())
-                .claim("email", user.getEmail())
-                .build();
+    final JwtClaimsSet claims =
+        JwtClaimsSet.builder()
+            .subject(user.getId().toString())
+            .issuedAt(issuedAt)
+            .expiresAt(expiresAt)
+            .issuer(issuer)
+            .audience(List.of(audience))
+            .claim("username", user.getUsername())
+            .claim("displayName", user.getDisplayName())
+            .claim("role", user.getRole().name())
+            .claim("email", user.getEmail())
+            .build();
 
-        final JwsHeader jwsHeader = JwsHeader.with(SignatureAlgorithm.RS256).build();
-        final String accessToken = jwtEncoder.encode(JwtEncoderParameters.from(jwsHeader, claims)).getTokenValue();
+    final JwsHeader jwsHeader = JwsHeader.with(SignatureAlgorithm.RS256).build();
+    final String accessToken =
+        jwtEncoder.encode(JwtEncoderParameters.from(jwsHeader, claims)).getTokenValue();
 
-        return IssuedTokenPair.builder()
-                .accessToken(accessToken)
-                .expiresIn(expirationSeconds)
-                .build();
-    }
+    return IssuedTokenPair.builder().accessToken(accessToken).expiresIn(expirationSeconds).build();
+  }
 }

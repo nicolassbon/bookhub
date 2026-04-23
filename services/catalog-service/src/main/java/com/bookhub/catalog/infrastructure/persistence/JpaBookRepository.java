@@ -7,9 +7,11 @@ import org.springframework.data.jpa.repository.Query;
 
 public interface JpaBookRepository extends JpaRepository<BookEntity, UUID> {
 
-    Optional<BookEntity> findBySourceReference(String sourceReference);
+  Optional<BookEntity> findBySourceReference(String sourceReference);
 
-    @Query(value = """
+  @Query(
+      value =
+          """
             SELECT b.*
             FROM books b
             WHERE b.title ILIKE CONCAT('%', :query, '%')
@@ -17,6 +19,7 @@ public interface JpaBookRepository extends JpaRepository<BookEntity, UUID> {
                OR COALESCE(b.isbn13, '') ILIKE CONCAT('%', :query, '%')
             ORDER BY b.title ASC
             LIMIT :candidateLimit
-            """, nativeQuery = true)
-    java.util.List<BookEntity> searchByQuery(String query, int candidateLimit);
+            """,
+      nativeQuery = true)
+  java.util.List<BookEntity> searchByQuery(String query, int candidateLimit);
 }

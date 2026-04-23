@@ -22,79 +22,90 @@ import org.springframework.web.client.RestClient;
 
 class OpenLibraryClientCircuitBreakerTest {
 
-    private MockRestServiceServer mockServer;
-    private OpenLibraryClient openLibraryClient;
-    private CircuitBreaker circuitBreaker;
+  private MockRestServiceServer mockServer;
+  private OpenLibraryClient openLibraryClient;
+  private CircuitBreaker circuitBreaker;
 
-    @BeforeEach
-    void setUp() {
-        final RestClient.Builder restClientBuilder = RestClient.builder().baseUrl("https://openlibrary.org");
-        mockServer = MockRestServiceServer.bindTo(restClientBuilder).build();
+  @BeforeEach
+  void setUp() {
+    final RestClient.Builder restClientBuilder =
+        RestClient.builder().baseUrl("https://openlibrary.org");
+    mockServer = MockRestServiceServer.bindTo(restClientBuilder).build();
 
-        circuitBreaker = CircuitBreaker.of(
-                "openLibrary",
-                CircuitBreakerConfig.custom()
-                        .slidingWindowSize(2)
-                        .minimumNumberOfCalls(2)
-                        .failureRateThreshold(50)
-                        .waitDurationInOpenState(Duration.ofMillis(300))
-                        .permittedNumberOfCallsInHalfOpenState(1)
-                        .build());
+    circuitBreaker =
+        CircuitBreaker.of(
+            "openLibrary",
+            CircuitBreakerConfig.custom()
+                .slidingWindowSize(2)
+                .minimumNumberOfCalls(2)
+                .failureRateThreshold(50)
+                .waitDurationInOpenState(Duration.ofMillis(300))
+                .permittedNumberOfCallsInHalfOpenState(1)
+                .build());
 
-        openLibraryClient = new OpenLibraryClient(
-                restClientBuilder.build(),
-                new OpenLibraryProperties(true, "https://openlibrary.org", 2000, null),
-                new SimpleMeterRegistry(),
-                circuitBreaker);
-    }
+    openLibraryClient =
+        new OpenLibraryClient(
+            restClientBuilder.build(),
+            new OpenLibraryProperties(true, "https://openlibrary.org", 2000, null),
+            new SimpleMeterRegistry(),
+            circuitBreaker);
+  }
 
-    @Test
-    void shouldShortCircuitWhenCircuitBreakerIsOpen() {
-        mockServer.expect(requestTo("https://openlibrary.org/works/OL404W.json"))
-                .andExpect(method(HttpMethod.GET))
-                .andRespond(withServerError());
-        mockServer.expect(requestTo("https://openlibrary.org/works/OL404W.json"))
-                .andExpect(method(HttpMethod.GET))
-                .andRespond(withServerError());
+  @Test
+  void shouldShortCircuitWhenCircuitBreakerIsOpen() {
+    mockServer
+        .expect(requestTo("https://openlibrary.org/works/OL404W.json"))
+        .andExpect(method(HttpMethod.GET))
+        .andRespond(withServerError());
+    mockServer
+        .expect(requestTo("https://openlibrary.org/works/OL404W.json"))
+        .andExpect(method(HttpMethod.GET))
+        .andRespond(withServerError());
 
-        assertThatThrownBy(() -> openLibraryClient.fetchDetail("OL404W"))
-                .isInstanceOf(ExternalServiceUnavailableException.class);
-        assertThatThrownBy(() -> openLibraryClient.fetchDetail("OL404W"))
-                .isInstanceOf(ExternalServiceUnavailableException.class);
+    assertThatThrownBy(() -> openLibraryClient.fetchDetail("OL404W"))
+        .isInstanceOf(ExternalServiceUnavailableException.class);
+    assertThatThrownBy(() -> openLibraryClient.fetchDetail("OL404W"))
+        .isInstanceOf(ExternalServiceUnavailableException.class);
 
-        assertThat(circuitBreaker.getState()).isEqualTo(CircuitBreaker.State.OPEN);
+    assertThat(circuitBreaker.getState()).isEqualTo(CircuitBreaker.State.OPEN);
 
-        assertThatThrownBy(() -> openLibraryClient.fetchDetail("OL404W"))
-                .isInstanceOf(ExternalServiceUnavailableException.class);
-    }
+    assertThatThrownBy(() -> openLibraryClient.fetchDetail("OL404W"))
+        .isInstanceOf(ExternalServiceUnavailableException.class);
+  }
 
-    @Test
-    void shouldRecoverAfterHalfOpenProbeSucceeds() throws InterruptedException {
-        mockServer.expect(requestTo("https://openlibrary.org/works/OL777W.json"))
-                .andExpect(method(HttpMethod.GET))
-                .andRespond(withServerError());
-        mockServer.expect(requestTo("https://openlibrary.org/works/OL777W.json"))
-                .andExpect(method(HttpMethod.GET))
-                .andRespond(withServerError());
-        mockServer.expect(requestTo("https://openlibrary.org/works/OL777W.json"))
-                .andExpect(method(HttpMethod.GET))
-                .andRespond(withSuccess("""
+  @Test
+  void shouldRecoverAfterHalfOpenProbeSucceeds() throws InterruptedException {
+    mockServer
+        .expect(requestTo("https://openlibrary.org/works/OL777W.json"))
+        .andExpect(method(HttpMethod.GET))
+        .andRespond(withServerError());
+    mockServer
+        .expect(requestTo("https://openlibrary.org/works/OL777W.json"))
+        .andExpect(method(HttpMethod.GET))
+        .andRespond(withServerError());
+    mockServer
+        .expect(requestTo("https://openlibrary.org/works/OL777W.json"))
+        .andExpect(method(HttpMethod.GET))
+        .andRespond(
+            withSuccess(
+                """
                         {
                           "key": "/works/OL777W",
                           "title": "Recovery Book"
                         }
-                        """, MediaType.APPLICATION_JSON));
+                        """,
+                MediaType.APPLICATION_JSON));
 
-        assertThatThrownBy(() -> openLibraryClient.fetchDetail("OL777W"))
-                .isInstanceOf(ExternalServiceUnavailableException.class);
-        assertThatThrownBy(() -> openLibraryClient.fetchDetail("OL777W"))
-                .isInstanceOf(ExternalServiceUnavailableException.class);
-        assertThat(circuitBreaker.getState()).isEqualTo(CircuitBreaker.State.OPEN);
+    assertThatThrownBy(() -> openLibraryClient.fetchDetail("OL777W"))
+        .isInstanceOf(ExternalServiceUnavailableException.class);
+    assertThatThrownBy(() -> openLibraryClient.fetchDetail("OL777W"))
+        .isInstanceOf(ExternalServiceUnavailableException.class);
+    assertThat(circuitBreaker.getState()).isEqualTo(CircuitBreaker.State.OPEN);
 
-        Thread.sleep(350);
+    Thread.sleep(350);
 
-        openLibraryClient.fetchDetail("OL777W");
+    openLibraryClient.fetchDetail("OL777W");
 
-        assertThat(circuitBreaker.getState()).isEqualTo(CircuitBreaker.State.CLOSED);
-    }
+    assertThat(circuitBreaker.getState()).isEqualTo(CircuitBreaker.State.CLOSED);
+  }
 }
