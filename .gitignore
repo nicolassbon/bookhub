@@ -2,6 +2,7 @@
 bin/
 target/
 out/
+.settings/
 
 .idea/
 *.iml
