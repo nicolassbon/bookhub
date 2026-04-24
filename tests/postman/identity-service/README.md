@@ -1,6 +1,6 @@
 # Identity Service Postman/Newman (Phase 1)
 
-This folder contains the **Phase 1 mixed API testing setup** for BookHub `identity-service` auth flows.
+This folder contains the **Phase 1 mixed API testing setup** for BookHub identity auth flows routed through the local `api-gateway`.
 
 ## Files
 
@@ -35,7 +35,7 @@ The **default Newman runner** executes only the automated subset:
 
 ## Prerequisites
 
-1. `identity-service` is running locally (default expected URL: `http://localhost:8081`).
+1. The local Docker stack is running and the public gateway entrypoint is available at `http://localhost:8080`.
 2. `newman` is installed for CLI runs:
    - `npm install -g newman`
 3. For HTTP local runs, ensure refresh cookie can be sent over HTTP:
@@ -67,6 +67,7 @@ Pass extra Newman args after the env file (example: verbose output):
 ## Practical Notes
 
 - `register` auto-generates email/username values if they are empty.
+- Requests must target the gateway base URL (`http://localhost:8080`), not the internal service port.
 - Set `autoGenerateIdentityData=false` to keep manually provided `testEmail` / `testUsername`.
 - `login` stores:
   - `accessToken`

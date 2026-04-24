@@ -11,7 +11,7 @@
       "script": {
         "type": "text/javascript",
         "exec": [
-          "const baseUrl = pm.environment.get('baseUrl') || 'http://localhost:8081';",
+          "const baseUrl = pm.environment.get('baseUrl') || 'http://localhost:8080';",
           "const authBasePath = pm.environment.get('authBasePath') || '/api/v1/auth';",
           "const autoGenerateIdentityData = (pm.environment.get('autoGenerateIdentityData') || 'true') === 'true';",
           "const runId = pm.collectionVariables.get('runId') || Date.now().toString();",
@@ -833,7 +833,7 @@
   "variable": [
     {
       "key": "baseUrl",
-      "value": "http://localhost:8081"
+      "value": "http://localhost:8080"
     },
     {
       "key": "authBasePath",

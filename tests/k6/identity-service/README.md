@@ -29,7 +29,7 @@ Recommended suite usage:
 
 ## Prerequisites
 
-1. `identity-service` is running (default: `http://localhost:8081`).
+1. The local Docker stack is running and the public gateway entrypoint is available at `http://localhost:8080`.
 2. `k6` is installed and available on `PATH`.
 3. Local auth dependencies are configured so login/register/refresh endpoints work.
 
@@ -149,14 +149,14 @@ REFRESH_REPLAY_BOOTSTRAP_PASSWORD='BookHub!2345' \
 Examples:
 
 ```bash
-BASE_URL=http://localhost:8081 \
+BASE_URL=http://localhost:8080 \
 LOGIN_RATE_PER_SECOND=25 \
 LOGIN_DURATION=45s \
 ./scripts/run-identity-k6-phase2.sh login-rate-limit
 ```
 
 ```bash
-BASE_URL=http://localhost:8081 \
+BASE_URL=http://localhost:8080 \
 REFRESH_REPLAY_SEMANTICS_CONCURRENCY=2 \
 REFRESH_REPLAY_BOOTSTRAP_EMAIL=test-user@example.com \
 REFRESH_REPLAY_BOOTSTRAP_PASSWORD='BookHub!2345' \
@@ -164,7 +164,7 @@ REFRESH_REPLAY_BOOTSTRAP_PASSWORD='BookHub!2345' \
 ```
 
 ```bash
-BASE_URL=http://localhost:8081 \
+BASE_URL=http://localhost:8080 \
 REFRESH_REPLAY_PRESSURE_CONCURRENCY=16 \
 REFRESH_REPLAY_BOOTSTRAP_EMAIL=test-user@example.com \
 REFRESH_REPLAY_BOOTSTRAP_PASSWORD='BookHub!2345' \
@@ -175,7 +175,7 @@ REFRESH_REPLAY_BOOTSTRAP_PASSWORD='BookHub!2345' \
 
 ### Shared
 
-- `BASE_URL` (default: `http://localhost:8081`)
+- `BASE_URL` (default: `http://localhost:8080`)
 - `HTTP_TIMEOUT` (default: `10s`)
 - `REFRESH_COOKIE_NAME` (default: `refresh_token`)
 

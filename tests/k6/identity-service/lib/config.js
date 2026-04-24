@@ -1,4 +1,4 @@
-const DEFAULT_BASE_URL = 'http://localhost:8081';
+const DEFAULT_BASE_URL = 'http://localhost:8080';
 const DEFAULT_TIMEOUT = '10s';
 
 export function envString(name, defaultValue) {
