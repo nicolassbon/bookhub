@@ -3,7 +3,7 @@ FROM maven:3.9.9-eclipse-temurin-21 AS build
 WORKDIR /workspace
 
 COPY pom.xml pom.xml
-COPY checkstyle.xml checkstyle.xml
+COPY checkstyle.xml services/catalog-service/checkstyle.xml
 COPY services/catalog-service/pom.xml services/catalog-service/pom.xml
 COPY services/catalog-service/src services/catalog-service/src
 
