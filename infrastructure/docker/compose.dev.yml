@@ -1,11 +1,7 @@
 services:
-  identity-service:
+  api-gateway:
     ports:
-      - '8081:8081'
-
-  catalog-service:
-    ports:
-      - '8082:8082'
+      - '8080:8080'
 
   identity-db:
     ports:

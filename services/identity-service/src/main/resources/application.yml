@@ -76,7 +76,7 @@ auth:
     refresh:
       max-attempts: ${AUTH_RATE_LIMIT_REFRESH_MAX_ATTEMPTS:15}
       window-seconds: ${AUTH_RATE_LIMIT_REFRESH_WINDOW_SECONDS:60}
-    trust-forwarded-headers: ${AUTH_RATE_LIMIT_TRUST_FORWARDED_HEADERS:false}
-    trusted-proxy-cidrs: ${AUTH_RATE_LIMIT_TRUSTED_PROXY_CIDRS:}
+    trust-forwarded-headers: ${AUTH_RATE_LIMIT_TRUST_FORWARDED_HEADERS:true}
+    trusted-proxy-cidrs: ${AUTH_RATE_LIMIT_TRUSTED_PROXY_CIDRS:172.16.0.0/12,127.0.0.1/32,::1/128}
     max-tracked-keys: ${AUTH_RATE_LIMIT_MAX_TRACKED_KEYS:10000}
     stale-entry-ttl-seconds: ${AUTH_RATE_LIMIT_STALE_ENTRY_TTL_SECONDS:600}

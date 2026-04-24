@@ -1,7 +1,8 @@
-# Local Docker setup (identity + catalog)
+# Local Docker setup (gateway + identity + catalog)
 
 This setup runs the following services for local development:
 
+- `api-gateway`
 - `identity-service` + `identity-db`
 - `catalog-service` + `catalog-db`
 
@@ -49,7 +50,7 @@ docker compose -f compose.yml -f compose.dev.yml ps
 Follow logs:
 
 ```bash
-docker compose -f compose.yml -f compose.dev.yml logs -f identity-service catalog-service
+docker compose -f compose.yml -f compose.dev.yml logs -f api-gateway identity-service catalog-service
 ```
 
 Stop and remove containers:
@@ -74,10 +75,17 @@ docker compose -f compose.yml up --build -d
 
 ## Host endpoints
 
-- Identity API: `http://localhost:8081`
-- Catalog API: `http://localhost:8082`
+- Gateway API (public entrypoint): `http://localhost:8080`
 - Identity DB: `localhost:5432`
 - Catalog DB: `localhost:5433`
+
+## Public paths through the gateway
+
+- `POST /api/v1/auth/**` -> `identity-service`
+- `GET|POST /api/v1/users/**` -> `identity-service`
+- `GET /api/v1/books/**` -> `catalog-service`
+
+Downstream service ports are intentionally not published in `compose.dev.yml` so all API traffic enters through `api-gateway`.
 
 ## Notes
 
