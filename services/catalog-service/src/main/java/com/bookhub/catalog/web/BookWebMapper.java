@@ -3,19 +3,40 @@ package com.bookhub.catalog.web;
 import com.bookhub.catalog.application.GetBookDetailService;
 import com.bookhub.catalog.application.model.BookSearchItem;
 import com.bookhub.catalog.domain.Book;
-import org.mapstruct.Mapper;
-import org.mapstruct.Mapping;
-import org.mapstruct.MappingConstants;
+import org.springframework.stereotype.Component;
 
-@Mapper(componentModel = MappingConstants.ComponentModel.SPRING)
-public interface BookWebMapper {
+@Component
+public class BookWebMapper {
 
-  BookSearchResponse toSearchResponse(BookSearchItem item);
+  public BookSearchResponse toSearchResponse(final BookSearchItem item) {
+    return BookSearchResponse.builder()
+        .id(item.id())
+        .title(item.title())
+        .authorName(item.authorName())
+        .coverUrl(item.coverUrl())
+        .build();
+  }
 
-  @Mapping(target = "id", expression = "java(book.getId().toString())")
-  BookDetailResponse toDetailResponse(Book book);
+  public BookDetailResponse toDetailResponse(final Book book) {
+    return BookDetailResponse.builder()
+        .id(book.getId().toString())
+        .title(book.getTitle())
+        .authorName(book.getAuthorName())
+        .isbn13(book.getIsbn13())
+        .sourceReference(book.getSourceReference())
+        .coverUrl(book.getCoverUrl())
+        .publishedYear(book.getPublishedYear())
+        .build();
+  }
 
-  @Mapping(target = "degraded", constant = "true")
-  DegradedBookDetailResponse toDegradedDetailResponse(
-      GetBookDetailService.DegradedDetail degradedDetail);
+  public DegradedBookDetailResponse toDegradedDetailResponse(
+      final GetBookDetailService.DegradedDetail degradedDetail) {
+    return DegradedBookDetailResponse.builder()
+        .id(degradedDetail.id())
+        .code(degradedDetail.code())
+        .message(degradedDetail.message())
+        .degraded(true)
+        .retryAfterSeconds(degradedDetail.retryAfterSeconds())
+        .build();
+  }
 }

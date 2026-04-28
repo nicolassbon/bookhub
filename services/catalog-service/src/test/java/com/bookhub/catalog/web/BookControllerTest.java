@@ -23,7 +23,7 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
 @WebMvcTest(BookController.class)
-@Import({GlobalExceptionHandler.class, BookWebMapperImpl.class})
+@Import({GlobalExceptionHandler.class, BookWebMapper.class})
 class BookControllerTest {
 
   @Autowired private MockMvc mockMvc;

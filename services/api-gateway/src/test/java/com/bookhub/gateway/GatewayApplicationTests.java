@@ -27,51 +27,12 @@ import reactor.netty.http.server.HttpServer;
 @ActiveProfiles("test")
 class GatewayApplicationTests {
 
-  private static final DisposableServer downstreamStubServer =
-      HttpServer.create()
-          .port(0)
-          .route(
-              routes ->
-                  routes.route(
-                      request ->
-                          request.uri().startsWith("/api/v1/books")
-                              || request.uri().startsWith("/api/v1/auth")
-                              || request.uri().startsWith("/api/v1/users"),
-                      (request, response) -> {
-                        response.header("X-Downstream-Path", request.uri());
-
-                        final String forwardedProto =
-                            request.requestHeaders().get("X-Forwarded-Proto");
-                        if (forwardedProto != null) {
-                          response.header("X-Downstream-Forwarded-Proto", forwardedProto);
-                        }
-
-                        final String forwardedHost =
-                            request.requestHeaders().get("X-Forwarded-Host");
-                        if (forwardedHost != null) {
-                          response.header("X-Downstream-Forwarded-Host", forwardedHost);
-                        }
-
-                        final String forwardedHeader = request.requestHeaders().get("Forwarded");
-                        if (forwardedHeader != null) {
-                          response.header("X-Downstream-Forwarded", forwardedHeader);
-                        }
-
-                        if (request.uri().contains("cors-probe")) {
-                          return response
-                              .status(200)
-                              .header(ACCESS_CONTROL_ALLOW_ORIGIN, "https://downstream.local")
-                              .header(ACCESS_CONTROL_ALLOW_CREDENTIALS, "true")
-                              .sendString(Mono.just("cors-probe"));
-                        }
-
-                        return response.status(200).sendString(Mono.just("ok"));
-                      }))
-          .bindNow();
+  private static int downstreamPort;
+  private static DisposableServer downstreamStubServer = startDownstreamStubServer(0);
 
   @DynamicPropertySource
   static void registerGatewayRoutes(final DynamicPropertyRegistry registry) {
-    final String downstreamBaseUrl = "http://localhost:" + downstreamStubServer.port();
+    final String downstreamBaseUrl = "http://localhost:" + downstreamPort;
     registry.add("IDENTITY_SERVICE_URL", () -> downstreamBaseUrl);
     registry.add("CATALOG_SERVICE_URL", () -> downstreamBaseUrl);
     registry.add("spring.cloud.gateway.server.webflux.trusted-proxies", () -> ".*");
@@ -79,7 +40,7 @@ class GatewayApplicationTests {
 
   @AfterAll
   static void stopStubServer() {
-    downstreamStubServer.disposeNow();
+    stopDownstreamStubServer();
   }
 
   @Autowired private RouteDefinitionLocator routeDefinitionLocator;
@@ -201,6 +162,46 @@ class GatewayApplicationTests {
   }
 
   @Test
+  void shouldPropagateUnauthorizedFromIdentityUpstream() {
+    webTestClient
+        .get()
+        .uri("http://localhost:" + serverPort + "/api/v1/users/profile?probe=unauthorized")
+        .exchange()
+        .expectStatus()
+        .isUnauthorized();
+  }
+
+  @Test
+  void shouldPropagateForbiddenFromIdentityUpstream() {
+    webTestClient
+        .get()
+        .uri("http://localhost:" + serverPort + "/api/v1/users/profile?probe=forbidden")
+        .exchange()
+        .expectStatus()
+        .isForbidden();
+  }
+
+  @Test
+  void shouldReturn5xxWhenCatalogUpstreamReturns500() {
+    webTestClient
+        .get()
+        .uri("http://localhost:" + serverPort + "/api/v1/books/42?probe=upstream-500")
+        .exchange()
+        .expectStatus()
+        .is5xxServerError();
+  }
+
+  @Test
+  void shouldReturn5xxWhenCatalogUpstreamIsUnavailable() {
+    webTestClient
+        .get()
+        .uri("http://localhost:" + serverPort + "/api/v1/books/42?probe=unreachable")
+        .exchange()
+        .expectStatus()
+        .is5xxServerError();
+  }
+
+  @Test
   void shouldForwardProtoAndHostHeadersToDownstreamService() {
     webTestClient
         .get()
@@ -233,5 +234,82 @@ class GatewayApplicationTests {
         .isOk()
         .expectHeader()
         .valueEquals("X-Downstream-Path", expectedPath);
+  }
+
+  private static DisposableServer startDownstreamStubServer(final int port) {
+    downstreamStubServer =
+        HttpServer.create()
+            .port(port)
+            .route(
+                routes ->
+                    routes.route(
+                        request ->
+                            request.uri().startsWith("/api/v1/books")
+                                || request.uri().startsWith("/api/v1/auth")
+                                || request.uri().startsWith("/api/v1/users"),
+                        GatewayApplicationTests::handleDownstreamRequest))
+            .bindNow();
+    downstreamPort = downstreamStubServer.port();
+    return downstreamStubServer;
+  }
+
+  private static void stopDownstreamStubServer() {
+    if (downstreamStubServer != null && !downstreamStubServer.isDisposed()) {
+      downstreamStubServer.disposeNow();
+    }
+  }
+
+  private static reactor.core.publisher.Mono<Void> handleDownstreamRequest(
+      final reactor.netty.http.server.HttpServerRequest request,
+      final reactor.netty.http.server.HttpServerResponse response) {
+    response.header("X-Downstream-Path", request.uri());
+
+    final String forwardedProto = request.requestHeaders().get("X-Forwarded-Proto");
+    if (forwardedProto != null) {
+      response.header("X-Downstream-Forwarded-Proto", forwardedProto);
+    }
+
+    final String forwardedHost = request.requestHeaders().get("X-Forwarded-Host");
+    if (forwardedHost != null) {
+      response.header("X-Downstream-Forwarded-Host", forwardedHost);
+    }
+
+    final String forwardedHeader = request.requestHeaders().get("Forwarded");
+    if (forwardedHeader != null) {
+      response.header("X-Downstream-Forwarded", forwardedHeader);
+    }
+
+    final String uri = request.uri();
+    if (uri.contains("probe=unauthorized")) {
+      response.status(401).send();
+      return response.then();
+    }
+
+    if (uri.contains("probe=forbidden")) {
+      response.status(403).send();
+      return response.then();
+    }
+
+    if (uri.contains("probe=upstream-500")) {
+      response.status(500).send();
+      return response.then();
+    }
+
+    if (uri.contains("probe=unreachable")) {
+      response.status(503).send();
+      return response.then();
+    }
+
+    if (uri.contains("cors-probe")) {
+      response
+          .status(200)
+          .header(ACCESS_CONTROL_ALLOW_ORIGIN, "https://downstream.local")
+          .header(ACCESS_CONTROL_ALLOW_CREDENTIALS, "true")
+          .sendString(Mono.just("cors-probe"));
+      return response.then();
+    }
+
+    response.status(200).sendString(Mono.just("ok"));
+    return response.then();
   }
 }

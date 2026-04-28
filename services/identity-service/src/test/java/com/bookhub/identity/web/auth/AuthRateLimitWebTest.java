@@ -24,6 +24,7 @@ import com.bookhub.identity.web.error.GlobalExceptionHandler;
 import java.time.Clock;
 import java.time.Instant;
 import java.time.ZoneOffset;
+import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -34,6 +35,7 @@ import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.request.RequestPostProcessor;
 
 @WebMvcTest(controllers = AuthController.class)
 @Import({GlobalExceptionHandler.class, SecurityConfig.class, JwtKeyConfig.class})
@@ -47,7 +49,9 @@ import org.springframework.test.web.servlet.MockMvc;
       "auth.rate-limit.forgot-password.max-attempts=1",
       "auth.rate-limit.forgot-password.window-seconds=60",
       "auth.rate-limit.refresh.max-attempts=1",
-      "auth.rate-limit.refresh.window-seconds=60"
+      "auth.rate-limit.refresh.window-seconds=60",
+      "auth.rate-limit.trust-forwarded-headers=true",
+      "auth.rate-limit.trusted-proxy-cidrs=127.0.0.1/32"
     })
 class AuthRateLimitWebTest {
 
@@ -101,9 +105,14 @@ class AuthRateLimitWebTest {
                 }
                 """;
 
+    final String clientIp = uniqueIp();
+
     mockMvc
         .perform(
-            post("/api/v1/auth/login").contentType(MediaType.APPLICATION_JSON).content(requestBody))
+            post("/api/v1/auth/login")
+                .with(remoteAddress(clientIp))
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(requestBody))
         .andExpect(status().isUnauthorized())
         .andExpect(jsonPath("$.status").value(401))
         .andExpect(jsonPath("$.code").value("INVALID_CREDENTIALS"))
@@ -111,7 +120,10 @@ class AuthRateLimitWebTest {
 
     mockMvc
         .perform(
-            post("/api/v1/auth/login").contentType(MediaType.APPLICATION_JSON).content(requestBody))
+            post("/api/v1/auth/login")
+                .with(remoteAddress(clientIp))
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(requestBody))
         .andExpect(status().isTooManyRequests())
         .andExpect(jsonPath("$.status").value(429))
         .andExpect(jsonPath("$.code").value("RATE_LIMIT_EXCEEDED"))
@@ -159,9 +171,12 @@ class AuthRateLimitWebTest {
                 }
                 """;
 
+    final String clientIp = uniqueIp();
+
     mockMvc
         .perform(
             post("/api/v1/auth/register")
+                .with(remoteAddress(clientIp))
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(requestBody))
         .andExpect(status().isCreated());
@@ -169,6 +184,7 @@ class AuthRateLimitWebTest {
     mockMvc
         .perform(
             post("/api/v1/auth/register")
+                .with(remoteAddress(clientIp))
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(requestBody))
         .andExpect(status().isTooManyRequests())
@@ -186,9 +202,12 @@ class AuthRateLimitWebTest {
                 }
                 """;
 
+    final String clientIp = uniqueIp();
+
     mockMvc
         .perform(
             post("/api/v1/auth/forgot-password")
+                .with(remoteAddress(clientIp))
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(requestBody))
         .andExpect(status().isOk());
@@ -196,6 +215,7 @@ class AuthRateLimitWebTest {
     mockMvc
         .perform(
             post("/api/v1/auth/forgot-password")
+                .with(remoteAddress(clientIp))
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(requestBody))
         .andExpect(status().isTooManyRequests())
@@ -209,9 +229,12 @@ class AuthRateLimitWebTest {
     when(refreshSessionService.refresh("old-refresh-token"))
         .thenThrow(new InvalidRefreshTokenException());
 
+    final String clientIp = uniqueIp();
+
     mockMvc
         .perform(
             post("/api/v1/auth/refresh")
+                .with(remoteAddress(clientIp))
                 .cookie(new jakarta.servlet.http.Cookie("refresh_token", "old-refresh-token")))
         .andExpect(status().isUnauthorized())
         .andExpect(jsonPath("$.status").value(401))
@@ -221,10 +244,114 @@ class AuthRateLimitWebTest {
     mockMvc
         .perform(
             post("/api/v1/auth/refresh")
+                .with(remoteAddress(clientIp))
                 .cookie(new jakarta.servlet.http.Cookie("refresh_token", "old-refresh-token")))
         .andExpect(status().isTooManyRequests())
         .andExpect(jsonPath("$.status").value(429))
         .andExpect(jsonPath("$.code").value("RATE_LIMIT_EXCEEDED"))
         .andExpect(jsonPath("$.path").value("/api/v1/auth/refresh"));
+  }
+
+  @Test
+  void shouldRateLimitWhenForwardedIpIsSame() throws Exception {
+    when(authWebMapper.toLoginUserCommand(any(LoginRequest.class)))
+        .thenReturn(
+            LoginUserCommand.builder()
+                .email("nico@example.com")
+                .password("StrongPassword123!")
+                .build());
+    when(loginUserService.login(any(LoginUserCommand.class)))
+        .thenThrow(new InvalidCredentialsException());
+
+    final String requestBody =
+        """
+                {
+                  "email": "nico@example.com",
+                  "password": "StrongPassword123!"
+                }
+                """;
+
+    mockMvc
+        .perform(
+            post("/api/v1/auth/login")
+                .with(forwardedFor("203.0.113.10"))
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(requestBody))
+        .andExpect(status().isUnauthorized())
+        .andExpect(jsonPath("$.code").value("INVALID_CREDENTIALS"));
+
+    mockMvc
+        .perform(
+            post("/api/v1/auth/login")
+                .with(forwardedFor("203.0.113.10"))
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(requestBody))
+        .andExpect(status().isTooManyRequests())
+        .andExpect(jsonPath("$.status").value(429))
+        .andExpect(jsonPath("$.code").value("RATE_LIMIT_EXCEEDED"))
+        .andExpect(jsonPath("$.path").value("/api/v1/auth/login"));
+  }
+
+  @Test
+  void shouldAllowDifferentForwardedIpsWithinWindow() throws Exception {
+    final String firstClientIp = uniqueIp();
+    final String secondClientIp = uniqueIp();
+    when(authWebMapper.toLoginUserCommand(any(LoginRequest.class)))
+        .thenReturn(
+            LoginUserCommand.builder()
+                .email("nico@example.com")
+                .password("StrongPassword123!")
+                .build());
+    when(loginUserService.login(any(LoginUserCommand.class)))
+        .thenThrow(new InvalidCredentialsException());
+
+    final String requestBody =
+        """
+                {
+                  "email": "nico@example.com",
+                  "password": "StrongPassword123!"
+                }
+                """;
+
+    mockMvc
+        .perform(
+            post("/api/v1/auth/login")
+                .with(forwardedFor(firstClientIp))
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(requestBody))
+        .andExpect(status().isUnauthorized())
+        .andExpect(jsonPath("$.code").value("INVALID_CREDENTIALS"));
+
+    mockMvc
+        .perform(
+            post("/api/v1/auth/login")
+                .with(forwardedFor(secondClientIp))
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(requestBody))
+        .andExpect(status().isUnauthorized())
+        .andExpect(jsonPath("$.code").value("INVALID_CREDENTIALS"));
+  }
+
+  private static RequestPostProcessor uniqueRemoteAddress() {
+    return remoteAddress(uniqueIp());
+  }
+
+  private static String uniqueIp() {
+    return "10.0.0." + Math.abs(UUID.randomUUID().hashCode() % 250 + 1);
+  }
+
+  private static RequestPostProcessor remoteAddress(final String address) {
+    return request -> {
+      request.setRemoteAddr(address);
+      return request;
+    };
+  }
+
+  private static RequestPostProcessor forwardedFor(final String clientIp) {
+    return request -> {
+      request.setRemoteAddr("127.0.0.1");
+      request.addHeader("X-Forwarded-For", clientIp);
+      return request;
+    };
   }
 }

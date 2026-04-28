@@ -103,6 +103,17 @@ class RefreshIntegrationTest extends PostgreSqlIntegrationTest {
   }
 
   @Test
+  @DisplayName("Should return 401 when refresh token is missing")
+  void shouldReturn401WhenRefreshTokenIsMissing() throws Exception {
+    mockMvc
+        .perform(post("/api/v1/auth/refresh"))
+        .andExpect(status().isBadRequest())
+        .andExpect(jsonPath("$.status").value(400))
+        .andExpect(jsonPath("$.code").value("MISSING_REQUEST_COOKIE"))
+        .andExpect(jsonPath("$.path").value("/api/v1/auth/refresh"));
+  }
+
+  @Test
   @DisplayName("Should return 401 when refresh token is expired")
   void shouldReturn401WhenRefreshTokenIsExpired() throws Exception {
     final var user =
