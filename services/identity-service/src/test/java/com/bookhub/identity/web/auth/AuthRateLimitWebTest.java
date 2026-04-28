@@ -332,10 +332,6 @@ class AuthRateLimitWebTest {
         .andExpect(jsonPath("$.code").value("INVALID_CREDENTIALS"));
   }
 
-  private static RequestPostProcessor uniqueRemoteAddress() {
-    return remoteAddress(uniqueIp());
-  }
-
   private static String uniqueIp() {
     return "10.0.0." + Math.abs(UUID.randomUUID().hashCode() % 250 + 1);
   }
