@@ -10,25 +10,6 @@ This document tracks security issues identified during repository reviews that r
 
 ## Open Issues
 
-### 1. Refresh token replay during concurrent rotation
-
-- **Severity**: High
-- **Service**: `identity-service`
-- **Status**: Open
-- **Where**:
-  - `services/identity-service/src/main/java/com/bookhub/identity/application/auth/RefreshSessionService.java`
-  - refresh token persistence lookup/update flow
-- **Risk**:
-  Two concurrent refresh requests can consume the same active refresh token before revocation is durably enforced, resulting in multiple valid successor sessions.
-- **Why it matters**:
-  This weakens refresh-token rotation guarantees and increases the impact of stolen refresh tokens.
-- **Recommended direction**:
-  Make refresh-token consumption atomic at the persistence boundary.
-  Options:
-  - `SELECT ... FOR UPDATE`
-  - optimistic locking with a version field
-  - conditional update (`UPDATE ... WHERE revoked = false`) that must affect exactly one row before issuing the next token
-
 ### 2. Refresh tokens stored in plaintext in the database
 
 - **Severity**: Medium
@@ -63,6 +44,16 @@ This document tracks security issues identified during repository reviews that r
   - Keep semantics consistent across instances if the service is scaled out
 
 ## Recently Mitigated Issues
+
+### 1. Refresh token replay during concurrent rotation
+
+- **Severity**: Previously High
+- **Service**: `identity-service`
+- **Status**: Mitigated
+- **Resolution summary**:
+  The JPA query `findByTokenHashAndRevokedFalseAndExpiresAtAfter` now uses `@Lock(LockModeType.PESSIMISTIC_WRITE)`, which issues a `SELECT ... FOR UPDATE` at the database level. This serializes concurrent refresh attempts on the same token row, ensuring only one request succeeds.
+  Mitigated in commit `13163e0 fix(identity): harden refresh token storage and auth throttling`.
+  Verified by `RefreshConcurrentReplayIntegrationTest`, which submits two simultaneous refresh requests with the same token against a real PostgreSQL database and asserts exactly one succeeds.
 
 ### 4. Unsanitized `X-Request-Id` in HTTP logging
 

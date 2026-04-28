@@ -17,6 +17,7 @@ public class BookEntityMapper {
         BookNormalization.normalizeSourceReference(book.getSourceReference()));
     entity.setCoverUrl(book.getCoverUrl());
     entity.setPublishedYear(book.getPublishedYear());
+    entity.setPageCount(book.getPageCount());
     return entity;
   }
 
@@ -29,6 +30,7 @@ public class BookEntityMapper {
         .sourceReference(entity.getSourceReference())
         .coverUrl(entity.getCoverUrl())
         .publishedYear(entity.getPublishedYear())
+        .pageCount(entity.getPageCount())
         .build();
   }
 }

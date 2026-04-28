@@ -13,6 +13,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 import org.springframework.web.servlet.resource.NoResourceFoundException;
 
 @Slf4j
@@ -86,6 +87,21 @@ public class GlobalExceptionHandler {
         "Not Found",
         "RESOURCE_NOT_FOUND",
         "Resource not found",
+        request.getRequestURI());
+  }
+
+  @ExceptionHandler(MethodArgumentTypeMismatchException.class)
+  public ResponseEntity<ErrorResponse> handleMethodArgumentTypeMismatch(
+      final MethodArgumentTypeMismatchException exception, final HttpServletRequest request) {
+    final String message =
+        String.format(
+            "Invalid value '%s' for parameter '%s'",
+            exception.getValue(), exception.getName());
+    return buildError(
+        HttpStatus.BAD_REQUEST,
+        "Bad Request",
+        "INVALID_PARAMETER",
+        message,
         request.getRequestURI());
   }
 

@@ -37,6 +37,9 @@ public class BookEntity {
   @Column(name = "published_year")
   private Integer publishedYear;
 
+  @Column(name = "page_count")
+  private Integer pageCount;
+
   @Column(name = "created_at", nullable = false, updatable = false)
   private Instant createdAt;
 
@@ -130,6 +133,14 @@ public class BookEntity {
 
   public void setUpdatedAt(final Instant updatedAt) {
     this.updatedAt = updatedAt;
+  }
+
+  public Integer getPageCount() {
+    return pageCount;
+  }
+
+  public void setPageCount(final Integer pageCount) {
+    this.pageCount = pageCount;
   }
 
   @Override

@@ -11,6 +11,7 @@ public class Book {
   private final String sourceReference;
   private final String coverUrl;
   private final Integer publishedYear;
+  private final Integer pageCount;
 
   private Book(
       final UUID id,
@@ -19,7 +20,8 @@ public class Book {
       final String isbn13,
       final String sourceReference,
       final String coverUrl,
-      final Integer publishedYear) {
+      final Integer publishedYear,
+      final Integer pageCount) {
     this.id = id;
     this.title = title;
     this.authorName = authorName;
@@ -27,6 +29,7 @@ public class Book {
     this.sourceReference = sourceReference;
     this.coverUrl = coverUrl;
     this.publishedYear = publishedYear;
+    this.pageCount = pageCount;
   }
 
   public static BookBuilder builder() {
@@ -61,6 +64,10 @@ public class Book {
     return publishedYear;
   }
 
+  public Integer getPageCount() {
+    return pageCount;
+  }
+
   public static final class BookBuilder {
     private UUID id;
     private String title;
@@ -69,6 +76,7 @@ public class Book {
     private String sourceReference;
     private String coverUrl;
     private Integer publishedYear;
+    private Integer pageCount;
 
     private BookBuilder() {}
 
@@ -107,8 +115,13 @@ public class Book {
       return this;
     }
 
+    public BookBuilder pageCount(final Integer pageCount) {
+      this.pageCount = pageCount;
+      return this;
+    }
+
     public Book build() {
-      return new Book(id, title, authorName, isbn13, sourceReference, coverUrl, publishedYear);
+      return new Book(id, title, authorName, isbn13, sourceReference, coverUrl, publishedYear, pageCount);
     }
   }
 }
