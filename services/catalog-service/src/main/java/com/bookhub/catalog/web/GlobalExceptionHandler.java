@@ -95,8 +95,7 @@ public class GlobalExceptionHandler {
       final MethodArgumentTypeMismatchException exception, final HttpServletRequest request) {
     final String message =
         String.format(
-            "Invalid value '%s' for parameter '%s'",
-            exception.getValue(), exception.getName());
+            "Invalid value '%s' for parameter '%s'", exception.getValue(), exception.getName());
     return buildError(
         HttpStatus.BAD_REQUEST,
         "Bad Request",

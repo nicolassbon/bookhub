@@ -32,7 +32,8 @@ class RefreshConcurrentReplayIntegrationTest extends PostgreSqlIntegrationTest {
   @Autowired private PasswordEncoder passwordEncoder;
 
   @Test
-  @DisplayName("Concurrent refresh with same token should yield exactly one success and one failure")
+  @DisplayName(
+      "Concurrent refresh with same token should yield exactly one success and one failure")
   void concurrentRefreshWithSameTokenShouldYieldExactlyOneSuccessAndOneFailure() throws Exception {
     final var user =
         userJpaRepository.save(
@@ -101,8 +102,7 @@ class RefreshConcurrentReplayIntegrationTest extends PostgreSqlIntegrationTest {
           .perform(
               MockMvcRequestBuilders.post("/api/v1/auth/refresh")
                   .contentType(MediaType.APPLICATION_JSON)
-                  .cookie(
-                      new jakarta.servlet.http.Cookie("refresh_token", tokenValue.toString())))
+                  .cookie(new jakarta.servlet.http.Cookie("refresh_token", tokenValue.toString())))
           .andReturn();
     } catch (Exception exception) {
       throw new RuntimeException("Refresh request failed unexpectedly", exception);

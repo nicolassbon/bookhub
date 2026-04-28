@@ -18,7 +18,6 @@ public class GetBookForInternalService {
   public Book getByIdOrThrow(final UUID bookId) {
     return bookRepository
         .findById(bookId)
-        .orElseThrow(
-            () -> new BookNotFoundException("Book not found: " + bookId));
+        .orElseThrow(() -> new BookNotFoundException("Book not found: " + bookId));
   }
 }
