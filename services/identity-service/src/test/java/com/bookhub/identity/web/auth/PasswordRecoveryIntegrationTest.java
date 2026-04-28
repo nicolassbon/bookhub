@@ -2,6 +2,7 @@ package com.bookhub.identity.web.auth;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -132,5 +133,26 @@ class PasswordRecoveryIntegrationTest extends PostgreSqlIntegrationTest {
                 .content(resetBody))
         .andExpect(status().isBadRequest())
         .andExpect(jsonPath("$.code").value("INVALID_PASSWORD_RESET_TOKEN"));
+  }
+
+  @Test
+  @DisplayName("Should return 200 for forgot password when user does not exist")
+  void shouldReturn200ForForgotPasswordWhenUserDoesNotExist() throws Exception {
+    final String forgotPasswordBody =
+        """
+                {
+                  "email": "unknown@example.com"
+                }
+                """;
+
+    mockMvc
+        .perform(
+            post("/api/v1/auth/forgot-password")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(forgotPasswordBody))
+        .andExpect(status().isOk());
+
+    assertThat(passwordResetTokenJpaRepository.findAll()).isEmpty();
+    verifyNoInteractions(mailSenderPort);
   }
 }

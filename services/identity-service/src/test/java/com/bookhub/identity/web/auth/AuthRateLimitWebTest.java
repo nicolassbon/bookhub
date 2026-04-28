@@ -7,11 +7,11 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import com.bookhub.identity.application.auth.ForgotPasswordService;
+import com.bookhub.identity.application.auth.InvalidCredentialsException;
+import com.bookhub.identity.application.auth.InvalidRefreshTokenException;
 import com.bookhub.identity.application.auth.LoginUserCommand;
-import com.bookhub.identity.application.auth.LoginUserResult;
 import com.bookhub.identity.application.auth.LoginUserService;
 import com.bookhub.identity.application.auth.LogoutUserService;
-import com.bookhub.identity.application.auth.RefreshSessionResult;
 import com.bookhub.identity.application.auth.RefreshSessionService;
 import com.bookhub.identity.application.auth.RegisterUserCommand;
 import com.bookhub.identity.application.auth.RegisterUserResult;
@@ -91,34 +91,7 @@ class AuthRateLimitWebTest {
                 .build());
 
     when(loginUserService.login(any(LoginUserCommand.class)))
-        .thenReturn(
-            LoginUserResult.builder()
-                .accessToken("jwt-access-token")
-                .expiresIn(3600)
-                .refreshToken("opaque-refresh-token")
-                .refreshTokenExpiresIn(604800)
-                .user(
-                    LoginUserResult.LoginUserView.builder()
-                        .userId("usr_123")
-                        .username("nico")
-                        .displayName("Nicolas Bon")
-                        .role("USER")
-                        .build())
-                .build());
-
-    when(authWebMapper.toLoginResponse(any(LoginUserResult.class)))
-        .thenReturn(
-            LoginResponse.builder()
-                .accessToken("jwt-access-token")
-                .expiresIn(3600)
-                .user(
-                    LoginResponse.LoginUserResponse.builder()
-                        .userId("usr_123")
-                        .username("nico")
-                        .displayName("Nicolas Bon")
-                        .role("USER")
-                        .build())
-                .build());
+        .thenThrow(new InvalidCredentialsException());
 
     final String requestBody =
         """
@@ -131,7 +104,10 @@ class AuthRateLimitWebTest {
     mockMvc
         .perform(
             post("/api/v1/auth/login").contentType(MediaType.APPLICATION_JSON).content(requestBody))
-        .andExpect(status().isOk());
+        .andExpect(status().isUnauthorized())
+        .andExpect(jsonPath("$.status").value(401))
+        .andExpect(jsonPath("$.code").value("INVALID_CREDENTIALS"))
+        .andExpect(jsonPath("$.path").value("/api/v1/auth/login"));
 
     mockMvc
         .perform(
@@ -231,40 +207,16 @@ class AuthRateLimitWebTest {
   @Test
   void shouldReturn429WhenRefreshRateLimitIsExceeded() throws Exception {
     when(refreshSessionService.refresh("old-refresh-token"))
-        .thenReturn(
-            RefreshSessionResult.builder()
-                .accessToken("jwt-access-token")
-                .expiresIn(3600)
-                .refreshToken("new-refresh-token")
-                .refreshTokenExpiresIn(604800)
-                .user(
-                    LoginUserResult.LoginUserView.builder()
-                        .userId("usr_123")
-                        .username("nico")
-                        .displayName("Nicolas Bon")
-                        .role("USER")
-                        .build())
-                .build());
-
-    when(authWebMapper.toLoginResponse(any(RefreshSessionResult.class)))
-        .thenReturn(
-            LoginResponse.builder()
-                .accessToken("jwt-access-token")
-                .expiresIn(3600)
-                .user(
-                    LoginResponse.LoginUserResponse.builder()
-                        .userId("usr_123")
-                        .username("nico")
-                        .displayName("Nicolas Bon")
-                        .role("USER")
-                        .build())
-                .build());
+        .thenThrow(new InvalidRefreshTokenException());
 
     mockMvc
         .perform(
             post("/api/v1/auth/refresh")
                 .cookie(new jakarta.servlet.http.Cookie("refresh_token", "old-refresh-token")))
-        .andExpect(status().isOk());
+        .andExpect(status().isUnauthorized())
+        .andExpect(jsonPath("$.status").value(401))
+        .andExpect(jsonPath("$.code").value("INVALID_REFRESH_TOKEN"))
+        .andExpect(jsonPath("$.path").value("/api/v1/auth/refresh"));
 
     mockMvc
         .perform(

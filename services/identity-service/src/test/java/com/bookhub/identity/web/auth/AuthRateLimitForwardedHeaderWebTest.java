@@ -3,6 +3,7 @@ package com.bookhub.identity.web.auth;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import com.bookhub.identity.application.auth.ForgotPasswordService;
@@ -30,6 +31,7 @@ import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.request.RequestPostProcessor;
 
 @WebMvcTest(controllers = AuthController.class)
 @Import({GlobalExceptionHandler.class, SecurityConfig.class, JwtKeyConfig.class})
@@ -46,6 +48,16 @@ import org.springframework.test.web.servlet.MockMvc;
       "auth.rate-limit.refresh.window-seconds=60"
     })
 class AuthRateLimitForwardedHeaderWebTest {
+
+  private static final String PROXY_REMOTE_ADDRESS = "172.20.0.10";
+
+  private static final String LOGIN_REQUEST_BODY =
+      """
+              {
+                "email": "nico@example.com",
+                "password": "StrongPassword123!"
+              }
+              """;
 
   @Autowired private MockMvc mockMvc;
 
@@ -116,38 +128,36 @@ class AuthRateLimitForwardedHeaderWebTest {
 
   @Test
   void shouldUseForwardedClientIpWhenRequestComesFromTrustedProxy() throws Exception {
-    final String requestBody =
-        """
-                {
-                  "email": "nico@example.com",
-                  "password": "StrongPassword123!"
-                }
-                """;
+    performLoginFromTrustedProxy("198.51.100.10").andExpect(status().isOk());
 
-    mockMvc
-        .perform(
-            post("/api/v1/auth/login")
-                .with(
-                    request -> {
-                      request.setRemoteAddr("172.20.0.10");
-                      return request;
-                    })
-                .header("X-Forwarded-For", "198.51.100.10")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(requestBody))
-        .andExpect(status().isOk());
+    performLoginFromTrustedProxy("198.51.100.20").andExpect(status().isOk());
+  }
 
-    mockMvc
-        .perform(
-            post("/api/v1/auth/login")
-                .with(
-                    request -> {
-                      request.setRemoteAddr("172.20.0.10");
-                      return request;
-                    })
-                .header("X-Forwarded-For", "198.51.100.20")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(requestBody))
-        .andExpect(status().isOk());
+  @Test
+  void shouldRateLimitRequestsWhenTrustedProxyForwardsTheSameClientIp() throws Exception {
+    performLoginFromTrustedProxy("198.51.100.30").andExpect(status().isOk());
+
+    performLoginFromTrustedProxy("198.51.100.30")
+        .andExpect(status().isTooManyRequests())
+        .andExpect(jsonPath("$.status").value(429))
+        .andExpect(jsonPath("$.code").value("RATE_LIMIT_EXCEEDED"))
+        .andExpect(jsonPath("$.path").value("/api/v1/auth/login"));
+  }
+
+  private org.springframework.test.web.servlet.ResultActions performLoginFromTrustedProxy(
+      final String forwardedClientIp) throws Exception {
+    return mockMvc.perform(
+        post("/api/v1/auth/login")
+            .with(trustedProxyRemoteAddress())
+            .header("X-Forwarded-For", forwardedClientIp)
+            .contentType(MediaType.APPLICATION_JSON)
+            .content(LOGIN_REQUEST_BODY));
+  }
+
+  private RequestPostProcessor trustedProxyRemoteAddress() {
+    return request -> {
+      request.setRemoteAddr(PROXY_REMOTE_ADDRESS);
+      return request;
+    };
   }
 }

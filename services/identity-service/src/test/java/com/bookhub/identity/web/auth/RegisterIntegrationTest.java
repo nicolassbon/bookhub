@@ -5,7 +5,6 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-import com.bookhub.identity.domain.user.User;
 import com.bookhub.identity.domain.user.UserRole;
 import com.bookhub.identity.infrastructure.persistence.RefreshTokenJpaRepository;
 import com.bookhub.identity.infrastructure.persistence.UserJpaRepository;
@@ -60,7 +59,7 @@ class RegisterIntegrationTest extends PostgreSqlIntegrationTest {
         .andExpect(jsonPath("$.displayName").value("Nicolas Bon"))
         .andExpect(jsonPath("$.role").value("USER"));
 
-    final User persistedUser = userJpaRepository.findAll().getFirst();
+    final var persistedUser = userJpaRepository.findAll().getFirst();
     assertThat(persistedUser.getUsername()).isEqualTo("nico");
     assertThat(persistedUser.getEmail()).isEqualTo("nico@example.com");
     assertThat(persistedUser.getDisplayName()).isEqualTo("Nicolas Bon");
@@ -73,13 +72,12 @@ class RegisterIntegrationTest extends PostgreSqlIntegrationTest {
   @Test
   @DisplayName("Should reject duplicate email with conflict response")
   void shouldRejectDuplicateEmailWithConflictResponse() throws Exception {
-    final User existingUser =
-        User.create(
+    final var existingUser =
+        AuthIntegrationFixture.user(
             "nico",
             "nico@example.com",
             passwordEncoder.encode("StrongPassword123!"),
-            "Nicolas Bon",
-            UserRole.USER);
+            "Nicolas Bon");
     userJpaRepository.save(existingUser);
 
     final String duplicateRequestBody =
@@ -100,5 +98,36 @@ class RegisterIntegrationTest extends PostgreSqlIntegrationTest {
         .andExpect(status().isConflict())
         .andExpect(jsonPath("$.code").value("DUPLICATE_RESOURCE"))
         .andExpect(jsonPath("$.message").value("Email already in use"));
+  }
+
+  @Test
+  @DisplayName("Should reject duplicate username with conflict response")
+  void shouldRejectDuplicateUsernameWithConflictResponse() throws Exception {
+    final var existingUser =
+        AuthIntegrationFixture.user(
+            "nico",
+            "first@example.com",
+            passwordEncoder.encode("StrongPassword123!"),
+            "Nicolas Bon");
+    userJpaRepository.save(existingUser);
+
+    final String duplicateRequestBody =
+        """
+                {
+                  "username": "nico",
+                  "email": "second@example.com",
+                  "password": "StrongPassword123!",
+                  "displayName": "Nicolas Bon 2"
+                }
+                """;
+
+    mockMvc
+        .perform(
+            post("/api/v1/auth/register")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(duplicateRequestBody))
+        .andExpect(status().isConflict())
+        .andExpect(jsonPath("$.code").value("DUPLICATE_RESOURCE"))
+        .andExpect(jsonPath("$.message").value("Username already in use"));
   }
 }

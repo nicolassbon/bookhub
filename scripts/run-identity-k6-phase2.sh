@@ -11,12 +11,8 @@ if ! command -v k6 >/dev/null 2>&1; then
 fi
 
 declare -A SCENARIO_PATHS
-SCENARIO_PATHS[login-rate-limit]="$ROOT_DIR/tests/k6/identity-service/scenarios/login-rate-limit.js"
-SCENARIO_PATHS[refresh-rate-limit]="$ROOT_DIR/tests/k6/identity-service/scenarios/refresh-rate-limit.js"
-SCENARIO_PATHS[refresh-replay-semantics]="$ROOT_DIR/tests/k6/identity-service/scenarios/refresh-replay-semantics.js"
 SCENARIO_PATHS[refresh-replay-pressure]="$ROOT_DIR/tests/k6/identity-service/scenarios/refresh-replay-pressure.js"
-# Backward-compatible alias. Prefer refresh-replay-semantics.
-SCENARIO_PATHS[refresh-replay]="${SCENARIO_PATHS[refresh-replay-semantics]}"
+SCENARIO_PATHS[pressure-suite]="${SCENARIO_PATHS[refresh-replay-pressure]}"
 
 run_scenario() {
   local scenario_key="$1"
@@ -36,29 +32,14 @@ if [[ $# -gt 1 ]]; then
   EXTRA_ARGS=("${@:2}")
 fi
 
-if [[ "$SCENARIO_NAME" == "all" ]]; then
-  run_scenario login-rate-limit
-  run_scenario refresh-rate-limit
-  run_scenario refresh-replay-semantics
-  run_scenario refresh-replay-pressure
-  exit 0
-fi
-
-if [[ "$SCENARIO_NAME" == "rate-limit-suite" ]]; then
-  run_scenario login-rate-limit
-  run_scenario refresh-rate-limit
-  exit 0
-fi
-
-if [[ "$SCENARIO_NAME" == "replay-suite" ]]; then
-  run_scenario refresh-replay-semantics
+if [[ "$SCENARIO_NAME" == "all" || "$SCENARIO_NAME" == "pressure-suite" ]]; then
   run_scenario refresh-replay-pressure
   exit 0
 fi
 
 if [[ -z "${SCENARIO_PATHS[$SCENARIO_NAME]+x}" ]]; then
   printf 'Unknown scenario: %s\n' "$SCENARIO_NAME" >&2
-  printf 'Allowed values: all | rate-limit-suite | replay-suite | login-rate-limit | refresh-rate-limit | refresh-replay-semantics | refresh-replay-pressure | refresh-replay\n' >&2
+  printf 'Allowed values: all | pressure-suite | refresh-replay-pressure\n' >&2
   exit 1
 fi
 

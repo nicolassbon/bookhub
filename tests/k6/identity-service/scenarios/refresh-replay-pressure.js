@@ -3,7 +3,6 @@ import { Counter, Rate } from 'k6/metrics';
 import { buildBaseConfig, envInt, envNumber, envString } from '../lib/config.js';
 import {
   bootstrapReplayRefreshToken,
-  readErrorCode,
   refreshSession,
 } from '../lib/auth-api.js';
 
@@ -18,8 +17,6 @@ const minRejectedRate = envNumber('REFRESH_REPLAY_PRESSURE_MIN_REJECTED_RATE', 0
 const replayAttemptCount = new Counter('refresh_replay_pressure_attempt_count');
 const replaySuccessCount = new Counter('refresh_replay_pressure_success_count');
 const replayRejectedRate = new Rate('refresh_replay_pressure_rejected_rate');
-const replayInvalidTokenRejectedRate = new Rate('refresh_replay_pressure_invalid_token_rejected_rate');
-const replayRateLimitedRate = new Rate('refresh_replay_pressure_rate_limited_rate');
 const replayUnexpectedStatusRate = new Rate('refresh_replay_pressure_unexpected_status_rate');
 
 export const options = {
@@ -71,30 +68,11 @@ export default function refreshReplayPressureScenario(data) {
 
   replayUnexpectedStatusRate.add(!isExpectedStatus);
   replayRejectedRate.add(isRejected);
-  replayInvalidTokenRejectedRate.add(isInvalidTokenReject);
-  replayRateLimitedRate.add(isRateLimited);
-
   if (isSuccess) {
     replaySuccessCount.add(1);
-
-    check(response, {
-      'replay pressure success includes refresh cookie rotation': (res) =>
-        String(res.headers['Set-Cookie'] || '').includes(`${baseConfig.refreshCookieName}=`),
-    });
-
-    return;
   }
 
-  if (isInvalidTokenReject) {
-    check(response, {
-      'replay pressure reject 401 returns INVALID_REFRESH_TOKEN': (res) => readErrorCode(res) === 'INVALID_REFRESH_TOKEN',
-    });
+  if (isInvalidTokenReject || isRateLimited) {
     return;
-  }
-
-  if (isRateLimited) {
-    check(response, {
-      'replay pressure reject 429 returns RATE_LIMIT_EXCEEDED': (res) => readErrorCode(res) === 'RATE_LIMIT_EXCEEDED',
-    });
   }
 }

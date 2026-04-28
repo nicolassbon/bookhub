@@ -67,6 +67,16 @@ class RefreshIntegrationTest extends PostgreSqlIntegrationTest {
     final String setCookie = response.getResponse().getHeader("Set-Cookie");
     final UUID rotatedToken = extractRefreshToken(setCookie);
 
+    mockMvc
+        .perform(
+            post("/api/v1/auth/refresh")
+                .contentType(MediaType.APPLICATION_JSON)
+                .cookie(new jakarta.servlet.http.Cookie("refresh_token", oldToken.toString())))
+        .andExpect(status().isUnauthorized())
+        .andExpect(jsonPath("$.status").value(401))
+        .andExpect(jsonPath("$.code").value("INVALID_REFRESH_TOKEN"))
+        .andExpect(jsonPath("$.path").value("/api/v1/auth/refresh"));
+
     assertThat(
             refreshTokenJpaRepository.findById(AuthIntegrationFixture.refreshTokenHash(oldToken)))
         .isPresent()
@@ -78,6 +88,7 @@ class RefreshIntegrationTest extends PostgreSqlIntegrationTest {
         .isPresent()
         .get()
         .matches(refreshToken -> !refreshToken.isRevoked(), "new token should be active");
+    assertThat(rotatedToken).isNotEqualTo(oldToken);
   }
 
   @Test

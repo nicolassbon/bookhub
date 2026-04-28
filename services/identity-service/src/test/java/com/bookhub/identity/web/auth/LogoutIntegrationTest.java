@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.containsString;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import com.bookhub.identity.application.auth.RefreshTokenHasher;
@@ -59,5 +60,35 @@ class LogoutIntegrationTest extends PostgreSqlIntegrationTest {
         .get()
         .matches(
             refreshToken -> refreshToken.isRevoked(), "logout should revoke persisted token row");
+  }
+
+  @Test
+  @DisplayName("Should reject refresh token reuse after logout revokes session")
+  void shouldRejectRefreshTokenReuseAfterLogoutRevokesSession() throws Exception {
+    final var user =
+        userJpaRepository.save(
+            AuthIntegrationFixture.user(
+                "nico",
+                "nico@example.com",
+                passwordEncoder.encode("StrongPassword123!"),
+                "Nicolas Bon"));
+
+    final UUID tokenValue = UUID.fromString("8f990978-5ca2-4fca-8ed3-65ec7e2da977");
+    refreshTokenJpaRepository.save(
+        AuthIntegrationFixture.refreshToken(tokenValue, user, Instant.now().plusSeconds(3600)));
+
+    mockMvc
+        .perform(
+            post("/api/v1/auth/logout")
+                .cookie(new jakarta.servlet.http.Cookie("refresh_token", tokenValue.toString())))
+        .andExpect(status().isNoContent())
+        .andExpect(header().string("Set-Cookie", containsString("Max-Age=0")));
+
+    mockMvc
+        .perform(
+            post("/api/v1/auth/refresh")
+                .cookie(new jakarta.servlet.http.Cookie("refresh_token", tokenValue.toString())))
+        .andExpect(status().isUnauthorized())
+        .andExpect(jsonPath("$.code").value("INVALID_REFRESH_TOKEN"));
   }
 }

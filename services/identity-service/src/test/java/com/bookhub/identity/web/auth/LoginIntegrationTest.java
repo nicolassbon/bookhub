@@ -103,4 +103,26 @@ class LoginIntegrationTest extends PostgreSqlIntegrationTest {
         .andExpect(jsonPath("$.message").value("Invalid email or password"))
         .andExpect(jsonPath("$.path").value("/api/v1/auth/login"));
   }
+
+  @Test
+  @DisplayName("Should return 401 with structured error when email does not exist")
+  void shouldReturn401WithStructuredErrorWhenEmailDoesNotExist() throws Exception {
+    final String requestBody =
+        """
+                {
+                  "email": "unknown@example.com",
+                  "password": "StrongPassword123!"
+                }
+                """;
+
+    mockMvc
+        .perform(
+            post("/api/v1/auth/login").contentType(MediaType.APPLICATION_JSON).content(requestBody))
+        .andExpect(status().isUnauthorized())
+        .andExpect(jsonPath("$.status").value(401))
+        .andExpect(jsonPath("$.error").value("Unauthorized"))
+        .andExpect(jsonPath("$.code").value("INVALID_CREDENTIALS"))
+        .andExpect(jsonPath("$.message").value("Invalid email or password"))
+        .andExpect(jsonPath("$.path").value("/api/v1/auth/login"));
+  }
 }

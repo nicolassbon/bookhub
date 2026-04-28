@@ -15,32 +15,6 @@ function requestParams(tags, timeout) {
   };
 }
 
-export function parseJsonBody(response) {
-  const contentType = response.headers['Content-Type'] || '';
-  if (!contentType.includes('application/json')) {
-    return null;
-  }
-
-  try {
-    return response.json();
-  } catch (error) {
-    return null;
-  }
-}
-
-export function readErrorCode(response) {
-  const body = parseJsonBody(response);
-  if (body === null || typeof body !== 'object') {
-    return '';
-  }
-
-  if (typeof body.code !== 'string') {
-    return '';
-  }
-
-  return body.code;
-}
-
 export function extractCookieValue(response, cookieName) {
   const setCookieHeader = response.headers['Set-Cookie'];
   if (!setCookieHeader) {
@@ -139,7 +113,7 @@ export function assertBootstrapLogin(response, refreshCookieName) {
   });
 
   if (!isValid) {
-    const body = parseJsonBody(response);
+    const body = response.body;
     throw new Error(`Unable to bootstrap refresh token. status=${response.status}, body=${JSON.stringify(body)}`);
   }
 
@@ -179,7 +153,7 @@ export function bootstrapReplayRefreshToken(baseConfig, options) {
   });
 
   if (registerResponse.status !== 201) {
-    const body = parseJsonBody(registerResponse);
+    const body = registerResponse.body;
     throw new Error(
       `${scenarioLabel} setup failed during register. status=${registerResponse.status}, body=${JSON.stringify(body)}`,
     );

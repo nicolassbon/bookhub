@@ -4,6 +4,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -300,6 +301,96 @@ class AuthControllerTest {
   }
 
   @Test
+  @DisplayName("Should return 400 with malformed request error when register body is missing")
+  void shouldReturn400WithMalformedRequestWhenRegisterBodyIsMissing() throws Exception {
+    mockMvc
+        .perform(post("/api/v1/auth/register").contentType(MediaType.APPLICATION_JSON))
+        .andExpect(status().isBadRequest())
+        .andExpect(jsonPath("$.status").value(400))
+        .andExpect(jsonPath("$.error").value("Bad Request"))
+        .andExpect(jsonPath("$.code").value("MALFORMED_REQUEST"))
+        .andExpect(jsonPath("$.message").value("Request body is required"))
+        .andExpect(jsonPath("$.path").value("/api/v1/auth/register"));
+  }
+
+  @Test
+  @DisplayName(
+      "Should return 400 with malformed request error when forgot password body is missing")
+  void shouldReturn400WithMalformedRequestWhenForgotPasswordBodyIsMissing() throws Exception {
+    mockMvc
+        .perform(post("/api/v1/auth/forgot-password").contentType(MediaType.APPLICATION_JSON))
+        .andExpect(status().isBadRequest())
+        .andExpect(jsonPath("$.status").value(400))
+        .andExpect(jsonPath("$.error").value("Bad Request"))
+        .andExpect(jsonPath("$.code").value("MALFORMED_REQUEST"))
+        .andExpect(jsonPath("$.message").value("Request body is required"))
+        .andExpect(jsonPath("$.path").value("/api/v1/auth/forgot-password"));
+  }
+
+  @Test
+  @DisplayName("Should return 400 with malformed request error when reset password body is missing")
+  void shouldReturn400WithMalformedRequestWhenResetPasswordBodyIsMissing() throws Exception {
+    mockMvc
+        .perform(post("/api/v1/auth/reset-password").contentType(MediaType.APPLICATION_JSON))
+        .andExpect(status().isBadRequest())
+        .andExpect(jsonPath("$.status").value(400))
+        .andExpect(jsonPath("$.error").value("Bad Request"))
+        .andExpect(jsonPath("$.code").value("MALFORMED_REQUEST"))
+        .andExpect(jsonPath("$.message").value("Request body is required"))
+        .andExpect(jsonPath("$.path").value("/api/v1/auth/reset-password"));
+  }
+
+  @Test
+  @DisplayName(
+      "Should return 400 with validation error when register length constraints are violated")
+  void shouldReturn400WithValidationErrorWhenRegisterLengthConstraintsAreViolated()
+      throws Exception {
+    final String invalidRequestBody =
+        """
+                {
+                  "username": "ab",
+                  "email": "nico@example.com",
+                  "password": "short1!",
+                  "displayName": "A"
+                }
+                """;
+
+    mockMvc
+        .perform(
+            post("/api/v1/auth/register")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(invalidRequestBody))
+        .andExpect(status().isBadRequest())
+        .andExpect(jsonPath("$.status").value(400))
+        .andExpect(jsonPath("$.error").value("Validation Error"))
+        .andExpect(jsonPath("$.code").value("VALIDATION_ERROR"))
+        .andExpect(jsonPath("$.path").value("/api/v1/auth/register"));
+  }
+
+  @Test
+  @DisplayName("Should return 400 with validation error when login length constraints are violated")
+  void shouldReturn400WithValidationErrorWhenLoginLengthConstraintsAreViolated() throws Exception {
+    final String invalidRequestBody =
+        """
+                {
+                  "email": "nico@example.com",
+                  "password": "short1!"
+                }
+                """;
+
+    mockMvc
+        .perform(
+            post("/api/v1/auth/login")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(invalidRequestBody))
+        .andExpect(status().isBadRequest())
+        .andExpect(jsonPath("$.status").value(400))
+        .andExpect(jsonPath("$.error").value("Validation Error"))
+        .andExpect(jsonPath("$.code").value("VALIDATION_ERROR"))
+        .andExpect(jsonPath("$.path").value("/api/v1/auth/login"));
+  }
+
+  @Test
   @DisplayName("Should return 401 with structured error when credentials are invalid")
   void shouldReturn401WithStructuredErrorWhenCredentialsAreInvalid() throws Exception {
     when(authWebMapper.toLoginUserCommand(any(LoginRequest.class)))
@@ -525,5 +616,11 @@ class AuthControllerTest {
         .andExpect(jsonPath("$.code").value("INVALID_PASSWORD_RESET_TOKEN"))
         .andExpect(jsonPath("$.message").value("Invalid or expired password reset token"))
         .andExpect(jsonPath("$.path").value("/api/v1/auth/reset-password"));
+  }
+
+  @Test
+  @DisplayName("Should return 401 when unknown url is requested without authentication")
+  void shouldReturn401WhenUnknownUrlIsRequestedWithoutAuthentication() throws Exception {
+    mockMvc.perform(get("/api/v1/non-existent-endpoint")).andExpect(status().isUnauthorized());
   }
 }

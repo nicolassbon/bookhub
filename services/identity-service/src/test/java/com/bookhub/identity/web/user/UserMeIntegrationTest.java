@@ -89,4 +89,42 @@ class UserMeIntegrationTest extends PostgreSqlIntegrationTest {
         .perform(get("/api/v1/users/me").header("Authorization", "Bearer " + expiredToken))
         .andExpect(status().isUnauthorized());
   }
+
+  @Test
+  @DisplayName("Should return 401 when access token is malformed")
+  void shouldReturn401WhenAccessTokenIsMalformed() throws Exception {
+    mockMvc
+        .perform(get("/api/v1/users/me").header("Authorization", "Bearer invalid.jwt.token"))
+        .andExpect(status().isUnauthorized());
+  }
+
+  @Test
+  @DisplayName(
+      "Should return 404 with structured error when unknown url is requested with authentication")
+  void shouldReturn404WithStructuredErrorWhenUnknownUrlIsRequestedWithAuthentication()
+      throws Exception {
+    final User savedUser =
+        userJpaRepository.save(
+            User.create("nico", "nico@example.com", "ignored", "Nicolas Bon", UserRole.USER));
+
+    final String token =
+        JwtTestTokenFactory.createAccessToken(
+            jwtEncoder,
+            savedUser.getId().toString(),
+            savedUser.getUsername(),
+            savedUser.getDisplayName(),
+            savedUser.getRole().name(),
+            savedUser.getEmail(),
+            Instant.now(),
+            Instant.now().plus(1, ChronoUnit.HOURS));
+
+    mockMvc
+        .perform(get("/api/v1/non-existent-endpoint").header("Authorization", "Bearer " + token))
+        .andExpect(status().isNotFound())
+        .andExpect(jsonPath("$.status").value(404))
+        .andExpect(jsonPath("$.error").value("Not Found"))
+        .andExpect(jsonPath("$.code").value("RESOURCE_NOT_FOUND"))
+        .andExpect(jsonPath("$.message").value("Resource not found"))
+        .andExpect(jsonPath("$.path").value("/api/v1/non-existent-endpoint"));
+  }
 }
