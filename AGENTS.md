@@ -178,6 +178,14 @@ The goal is to make the application layer read like the product behavior, not li
 - Keep tests deterministic and readable.
 - Test behavior, not implementation trivia.
 
+### 7.1 Functional vs non-functional test ownership
+
+- **Java tests are the functional source of truth.** Use Java tests to verify correctness, HTTP contracts, validation, error responses, business rules, persistence effects, and token lifecycle behavior.
+- **WebMvc tests own boundary behavior.** Use `@WebMvcTest` suites for request validation, malformed input, structured error responses, and functional rate-limit assertions.
+- **PostgreSQL-backed integration tests own stateful flows.** Use `PostgreSqlIntegrationTest`-based suites for register/login/refresh/logout/password-recovery flows, token rotation/revocation, and persistence-backed behavior.
+- **k6 is non-functional only.** Use k6 for load, pressure, stress, concurrency, latency, and throughput characterization.
+- **Do not use k6 as the functional source of truth.** Semantic assertions such as expected 400/401/429 responses, domain error codes, or business-flow correctness must live in Java tests.
+
 ---
 
 ## 8. Security Guidelines
