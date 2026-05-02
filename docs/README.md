@@ -1,20 +1,35 @@
 # BookHub Documentation Index
 
-This folder contains only active documentation that remains useful for ongoing development and maintenance.
+This folder contains active documentation used to guide implementation and operate the repository.
 
-## Source of Truth (active)
+## Normative / Source of Truth
+
+These documents define product intent, architecture, and contracts. They should not be rewritten just to match temporary implementation gaps.
 
 - `adr/` — Architecture Decision Records.
 - `git-workflow.md` — Git and branch workflow conventions.
 - `legacy-feature-inventory.md` — Legacy feature inventory reference.
 - `local-identity-rs256.md` — Local RS256 identity guidance.
-- `bounded-contexts-v1.md` — Domain boundaries (needs future refresh).
+- `bounded-contexts-v1.md` — Domain boundaries.
 - `domain-model-v1.md` — Core domain model (needs future refresh).
 - `prd-library-service-foundation.md` — Library-service foundation PRD.
-- `prd-bookhub-v1.md` — Product requirements baseline (needs future refresh).
-- `repository-structure-v1.md` — Monorepo/service structure reference (needs future refresh).
-- `service-contracts-v1.md` — API contract baseline (needs future refresh).
+- `prd-bookhub-v1.md` — Product requirements baseline.
+- `repository-structure-v1.md` — Monorepo/service structure reference.
+- `service-contracts-v1.md` — API contract baseline.
 
-## Operational / Tracking Docs (active)
+## Operational / Tracking Docs
+
+These documents must reflect the current executable state of the repository, local setup, and active remediation work.
 
 - `security-issues-backlog.md` — Security remediation backlog and tracking.
+
+## Service and Infrastructure READMEs
+
+The following files live outside `docs/`, but they are operational documentation and must stay aligned with the running code and configuration:
+
+- `README.md`
+- `infrastructure/docker/README.md`
+- `services/api-gateway/README.md`
+- `services/identity-service/README.md`
+- `services/catalog-service/README.md`
+- `services/library-service/README.md`

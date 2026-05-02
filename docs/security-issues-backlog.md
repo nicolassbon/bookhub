@@ -10,23 +10,22 @@ This document tracks security issues identified during repository reviews that r
 
 ## Open Issues
 
-### 2. Refresh tokens stored in plaintext in the database
+### 1. Catalog service lacks explicit HTTP security boundaries
 
-- **Severity**: Medium
-- **Service**: `identity-service`
+- **Severity**: High
+- **Service**: `catalog-service`
 - **Status**: Open
 - **Where**:
-  - `services/identity-service/src/main/java/com/bookhub/identity/domain/auth/RefreshToken.java`
-  - `services/identity-service/src/main/resources/db/migration/V2__create_refresh_tokens_table.sql`
+  - `services/catalog-service/pom.xml`
+  - `services/catalog-service/src/main/java/com/bookhub/catalog/web/internal/InternalBookController.java`
 - **Risk**:
-  A database read, dump, or backup exposure reveals active refresh tokens that can be reused directly as bearer credentials.
+  Public and internal catalog HTTP endpoints are exposed without an explicit Spring Security policy.
 - **Why it matters**:
-  This turns a data exposure event into active session hijacking until token expiry or revocation.
+  Internal routes are only internal by convention unless authentication and authorization rules enforce that boundary.
 - **Recommended direction**:
-  Store only a hashed or HMACed representation of refresh tokens.
-  A practical model is `token_id + secret`, where the database stores the identifier plus a non-reversible representation of the secret portion.
+  Add Spring Security to the service, define a deny-by-default `SecurityFilterChain`, and make public versus internal access rules explicit.
 
-### 3. Rate limiting trusts unverified forwarded headers and uses unbounded in-memory state
+### 2. Rate limiting still depends on trusted proxy configuration and local in-memory state
 
 - **Severity**: Medium
 - **Service**: `identity-service`
@@ -45,7 +44,7 @@ This document tracks security issues identified during repository reviews that r
 
 ## Recently Mitigated Issues
 
-### 1. Refresh token replay during concurrent rotation
+### 3. Refresh token replay during concurrent rotation
 
 - **Severity**: Previously High
 - **Service**: `identity-service`
@@ -55,7 +54,18 @@ This document tracks security issues identified during repository reviews that r
   Mitigated in commit `13163e0 fix(identity): harden refresh token storage and auth throttling`.
   Verified by `RefreshConcurrentReplayIntegrationTest`, which submits two simultaneous refresh requests with the same token against a real PostgreSQL database and asserts exactly one succeeds.
 
-### 4. Unsanitized `X-Request-Id` in HTTP logging
+### 4. Refresh tokens no longer stored in plaintext in the database
+
+- **Severity**: Previously Medium
+- **Service**: `identity-service`
+- **Status**: Mitigated
+- **Where**:
+  - `services/identity-service/src/main/java/com/bookhub/identity/domain/auth/RefreshToken.java`
+  - `services/identity-service/src/main/resources/db/migration/V5__hash_refresh_tokens.sql`
+- **Resolution summary**:
+  Refresh tokens are now stored as hashed values instead of raw bearer credentials. This reduces the blast radius of database reads, dumps, or backup exposure.
+
+### 5. Unsanitized `X-Request-Id` in HTTP logging
 
 - **Severity**: Previously Medium
 - **Services**: `identity-service`, `catalog-service`
@@ -65,7 +75,7 @@ This document tracks security issues identified during repository reviews that r
 
 ## Accepted for Local Development
 
-### 5. Host-exposed database ports in Docker dev override
+### 6. Host-exposed database ports in Docker dev override
 
 - **Severity**: Low
 - **Scope**: `infrastructure/docker/compose.dev.yml`
@@ -79,8 +89,8 @@ This document tracks security issues identified during repository reviews that r
 
 Recommended implementation order:
 
-1. Fix concurrent refresh-token replay
-2. Stop storing refresh tokens in plaintext
-3. Harden or redesign rate limiting
+1. Add explicit HTTP security boundaries to `catalog-service`
+2. Harden or redesign rate limiting for multi-instance and proxy-aware deployments
+3. Continue security review across gateway-to-service and service-to-service boundaries
 
-These three items provide the highest security value for the current repository state.
+These items provide the highest security value for the current repository state.

@@ -1,11 +1,43 @@
 # identity-service
 
-Initial scaffold for the BookHub identity service.
+Identity and authentication service for BookHub.
 
-## Status
+## Responsibilities
 
-This module currently contains only the baseline directory layout and placeholder configuration.
-No business logic is implemented yet.
+- user registration and login
+- JWT access-token issuance using RS256
+- refresh-token rotation and logout
+- forgot-password and reset-password flows
+- authenticated identity endpoint (`GET /api/v1/users/me`)
+- Flyway-managed PostgreSQL persistence
+- HTTP-layer abuse throttling for auth endpoints
+
+## HTTP API
+
+### Authentication
+
+- `POST /api/v1/auth/register`
+- `POST /api/v1/auth/login`
+- `POST /api/v1/auth/refresh`
+- `POST /api/v1/auth/logout`
+- `POST /api/v1/auth/forgot-password`
+- `POST /api/v1/auth/reset-password`
+
+### User
+
+- `GET /api/v1/users/me`
+
+## Configuration highlights
+
+- Runs on port `8081` by default.
+- Requires PostgreSQL connection settings via `DB_URL`, `DB_USERNAME`, and `DB_PASSWORD`.
+- Requires JWT settings via `JWT_ISSUER`, `JWT_AUDIENCE`, `JWT_RSA_PRIVATE_KEY`, and `JWT_RSA_PUBLIC_KEY`.
+- Requires password-reset hashing secret via `PASSWORD_RESET_HASH_SECRET`.
+- Uses refresh-token hashing and configurable cookie settings under `auth.refresh-token.*`.
+
+## Persistence
+
+Flyway migrations live in `src/main/resources/db/migration/` and currently cover users, refresh tokens, password-reset tokens, refresh-token hashing, and password-reset token constraints.
 
 ## Base package
 

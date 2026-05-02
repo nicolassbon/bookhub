@@ -1,10 +1,11 @@
-# Local Docker setup (gateway + identity + catalog)
+# Local Docker setup (gateway + identity + catalog + library)
 
 This setup runs the following services for local development:
 
 - `api-gateway`
 - `identity-service` + `identity-db`
 - `catalog-service` + `catalog-db`
+- `library-service` + `library-db`
 
 This setup follows an **Option B** split:
 
@@ -50,7 +51,7 @@ docker compose -f compose.yml -f compose.dev.yml ps
 Follow logs:
 
 ```bash
-docker compose -f compose.yml -f compose.dev.yml logs -f api-gateway identity-service catalog-service
+docker compose -f compose.yml -f compose.dev.yml logs -f api-gateway identity-service catalog-service library-service
 ```
 
 Stop and remove containers:
@@ -78,17 +79,24 @@ docker compose -f compose.yml up --build -d
 - Gateway API (public entrypoint): `http://localhost:8080`
 - Identity DB: `localhost:5432`
 - Catalog DB: `localhost:5433`
+- Library DB: `localhost:5434`
 
 ## Public paths through the gateway
 
 - `POST /api/v1/auth/**` -> `identity-service`
-- `GET|POST /api/v1/users/**` -> `identity-service`
+- `GET /api/v1/users/**` -> `identity-service`
 - `GET /api/v1/books/**` -> `catalog-service`
+- `/api/v1/library/**` -> `library-service`
+
+## Notes on route alignment
+
+- The base gateway configuration (`services/api-gateway/src/main/resources/application.yml`) also reserves `/api/v1/goals/**`, `/api/v1/reviews/**`, and `/api/v1/notifications/**` for `library-service` as part of the V1 contract surface.
+- Keep the local gateway profile aligned with the intended route map whenever routes are added or removed.
 
 Downstream service ports are intentionally not published in `compose.dev.yml` so all API traffic enters through `api-gateway`.
 
 ## Notes
 
-- Containers use Docker DNS hostnames (`identity-db`, `catalog-db`) for internal DB connectivity.
+- Containers use Docker DNS hostnames (`identity-db`, `catalog-db`, `library-db`) for internal DB connectivity.
 - Docker images are built from source inside Docker (no prebuilt local jars required).
 - Host-port publishing is intentionally isolated in `compose.dev.yml` to keep `compose.yml` reusable across local scenarios.
