@@ -29,3 +29,13 @@ management:
       probes:
         enabled: true
       show-details: never
+
+jwt:
+  issuer: ${JWT_ISSUER}
+  audience: ${JWT_AUDIENCE}
+  rsa:
+    public-key: ${JWT_RSA_PUBLIC_KEY}
+
+catalog:
+  service:
+    base-url: ${CATALOG_SERVICE_URL:http://localhost:8082}

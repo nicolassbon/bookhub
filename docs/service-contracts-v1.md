@@ -438,6 +438,11 @@ Adds a book to the authenticated user's library.
   "entryId": "ub_001",
   "userId": "usr_123",
   "bookId": "bk_001",
+  "book": {
+    "title": "Clean Code",
+    "coverUrl": "https://covers.openlibrary.org/b/id/111-L.jpg",
+    "pageCount": 464
+  },
   "state": "WANT_TO_READ",
   "progress": {
     "pagesRead": 0,
@@ -454,9 +459,22 @@ Returns the authenticated user's library summary.
 
 Returns library entries filtered by reading state.
 
+#### `GET /api/v1/library/books/{entryId}`
+
+Returns a single library entry owned by the authenticated user.
+
+The response MUST use the persisted book snapshot (`title`, `coverUrl`, `pageCount`) to keep reads stable even when catalog metadata changes later.
+
 #### `PATCH /api/v1/library/books/{entryId}/state`
 
 Updates the reading state.
+
+State transitions are intentionally flexible. The service reacts to transitions instead of hard-rejecting most of them.
+
+Examples of expected behavior:
+
+- manually setting `READ` auto-corrects progress to `100%`
+- re-reading (`READ -> READING`) is valid and reopens the lifecycle for the current entry while preserving the path for future historical cycle tracking
 
 **Request**
 
@@ -469,6 +487,13 @@ Updates the reading state.
 #### `PATCH /api/v1/library/books/{entryId}/progress`
 
 Updates reading progress.
+
+Progress and state are coupled.
+
+- moving progress from `0` to a positive value transitions the entry to `READING`
+- reaching `100%` transitions the entry to `READ`
+- reducing progress after `READ` transitions the entry back to `READING`
+- when canonical page count is unknown, progress is still allowed and `percentage` is returned as `null`
 
 **Request**
 
@@ -485,6 +510,17 @@ Updates reading progress.
   "entryId": "ub_001",
   "pagesRead": 120,
   "percentage": 28,
+  "state": "READING"
+}
+```
+
+Example when canonical `pageCount` is unknown:
+
+```json
+{
+  "entryId": "ub_001",
+  "pagesRead": 120,
+  "percentage": null,
   "state": "READING"
 }
 ```
@@ -565,6 +601,9 @@ V1 does not require library-service to act as a shared upstream service for core
 - A user cannot have duplicate active library entries for the same book.
 - Reading progress cannot be negative.
 - Reading progress cannot exceed the known page count when page count is available.
+- Reading progress is still allowed when page count is unknown, but percentage becomes `null`.
+- Progress and state must stay synchronized through business rules.
+- Re-reading is a valid lifecycle scenario for a user-book relationship.
 - A review must belong to exactly one user and one book.
 - A user can only edit their own review.
 - Notification status transitions must be valid.
@@ -605,6 +644,11 @@ Allowed use cases:
 - fetch canonical `pageCount`
 - fetch title/cover snapshots
 
+Error semantics expected by library-service:
+
+- `404` means the referenced book does not exist for the requested operation
+- `5xx`, timeouts, or transport failures must be treated as technical integration failures, not as business absence
+
 Not allowed:
 
 - writing library states inside catalog-service
@@ -616,6 +660,7 @@ library-service may:
 
 - verify that a book exists
 - enrich read models with book snapshots
+- persist a partial snapshot (`title`, `coverUrl`, `pageCount`) to optimize library reads while keeping catalog as the source of truth
 
 library-service must not:
 

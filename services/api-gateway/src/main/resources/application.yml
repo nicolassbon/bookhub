@@ -20,6 +20,22 @@ spring:
           uri: ${CATALOG_SERVICE_URL:http://catalog-service:8082}
           predicates:
             - Path=/api/v1/books/**
+        - id: library-route
+          uri: ${LIBRARY_SERVICE_URL:http://library-service:8083}
+          predicates:
+            - Path=/api/v1/library/**
+        - id: library-goals-route
+          uri: ${LIBRARY_SERVICE_URL:http://library-service:8083}
+          predicates:
+            - Path=/api/v1/goals/**
+        - id: library-reviews-route
+          uri: ${LIBRARY_SERVICE_URL:http://library-service:8083}
+          predicates:
+            - Path=/api/v1/reviews/**
+        - id: library-notifications-route
+          uri: ${LIBRARY_SERVICE_URL:http://library-service:8083}
+          predicates:
+            - Path=/api/v1/notifications/**
       globalcors:
         add-to-simple-url-handler-mapping: true
         cors-configurations:

@@ -35,6 +35,7 @@ class GatewayApplicationTests {
     final String downstreamBaseUrl = "http://localhost:" + downstreamPort;
     registry.add("IDENTITY_SERVICE_URL", () -> downstreamBaseUrl);
     registry.add("CATALOG_SERVICE_URL", () -> downstreamBaseUrl);
+    registry.add("LIBRARY_SERVICE_URL", () -> downstreamBaseUrl);
     registry.add("spring.cloud.gateway.server.webflux.trusted-proxies", () -> ".*");
   }
 
@@ -53,7 +54,7 @@ class GatewayApplicationTests {
   void contextLoads() {}
 
   @Test
-  void shouldConfigureRoutesForIdentityAndCatalogServices() {
+  void shouldConfigureRoutesForAllServices() {
     final List<RouteDefinition> routeDefinitions =
         routeDefinitionLocator.getRouteDefinitions().collectList().block();
 
@@ -61,7 +62,13 @@ class GatewayApplicationTests {
     assertThat(routeDefinitions)
         .extracting(RouteDefinition::getId)
         .containsExactlyInAnyOrder(
-            "identity-auth-route", "identity-users-route", "catalog-books-route");
+            "identity-auth-route",
+            "identity-users-route",
+            "catalog-books-route",
+            "library-route",
+            "library-goals-route",
+            "library-reviews-route",
+            "library-notifications-route");
 
     assertThat(routeDefinitions)
         .anyMatch(
@@ -246,7 +253,11 @@ class GatewayApplicationTests {
                         request ->
                             request.uri().startsWith("/api/v1/books")
                                 || request.uri().startsWith("/api/v1/auth")
-                                || request.uri().startsWith("/api/v1/users"),
+                                || request.uri().startsWith("/api/v1/users")
+                                || request.uri().startsWith("/api/v1/library")
+                                || request.uri().startsWith("/api/v1/goals")
+                                || request.uri().startsWith("/api/v1/reviews")
+                                || request.uri().startsWith("/api/v1/notifications"),
                         GatewayApplicationTests::handleDownstreamRequest))
             .bindNow();
     downstreamPort = downstreamStubServer.port();

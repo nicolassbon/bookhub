@@ -203,6 +203,7 @@ Represents the relationship between a user and a book in the personal library.
 - `entryId`
 - `userId`
 - `bookId`
+- `bookSnapshot` (`title`, `coverUrl`, `pageCount`)
 - `state`
 - `pagesRead`
 - `percentage`
@@ -218,13 +219,22 @@ Represents the relationship between a user and a book in the personal library.
 - update progress
 - mark as finished
 - recalculate percentage
+- react to re-reading transitions without losing completion meaning
+- prepare future reading-cycle history
 
 ### Invariants
 
 - one active entry per user-book pair
 - pages read cannot be negative
-- percentage must stay between 0 and 100
+- percentage must stay between 0 and 100 when known
+- percentage may be `null` when canonical page count is unknown
 - finished state implies 100% progress when page count is known
+- progress greater than zero implies `READING` or `READ`
+- reducing progress after completion reopens the entry as `READING`
+
+### Modeling note
+
+V1 starts with `UserBook` as the main aggregate, but the model must remain evolvable toward explicit reading-cycle history. Re-reading (`READ -> READING`) is a valid scenario and should be interpreted as a new cycle rather than as destructive overwriting of previous completion semantics.
 
 ## Supporting aggregate: YearlyGoal
 
