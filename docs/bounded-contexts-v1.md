@@ -47,8 +47,9 @@ Manage who the user is, how they authenticate, and what permissions they have.
 - User
 - Credential
 - Role
-- Session/Auth token
-- Password recovery token
+- Access Token
+- Refresh Token
+- Password Reset Token
 
 ### Owned data examples
 
@@ -82,7 +83,7 @@ Manage who the user is, how they authenticate, and what permissions they have.
 
 ### Notes
 
-Identity should be the source of truth for user identity and access control, but not for every user-related business concept. Other services may store `userId` references, but not duplicate authentication logic.
+Identity should be the source of truth for basic user identity and access control, but not for every user-related business concept. Other services may store `userId` references, but not duplicate authentication logic.
 
 ---
 
@@ -105,8 +106,8 @@ Manage book discovery and canonical book metadata used across the platform.
 
 - Book
 - Author
-- External book source
-- Import metadata
+- Provider
+- Normalization metadata
 - Catalog moderation status
 
 ### Owned data examples
@@ -135,11 +136,11 @@ Manage book discovery and canonical book metadata used across the platform.
 
 ### Outbound dependencies
 
-- External book provider API (recommended for V1 bootstrap)
+- Provider API (recommended for V1 bootstrap)
 
 ### Notes
 
-Catalog is the source of truth for book metadata. Other services may reference books by `bookId` and optionally keep small read models if needed, but ownership of canonical metadata remains here.
+Catalog is the source of truth for canonical book metadata. Other services may reference books by `bookId` and optionally keep small read models if needed, but ownership of canonical metadata remains here.
 
 ---
 
@@ -147,7 +148,7 @@ Catalog is the source of truth for book metadata. Other services may reference b
 
 ### Mission
 
-Manage the user's relationship with books: organization, progress, goals, reviews, and internal notifications.
+Manage the user's relationship with Catalog Books: organization, progress, goals, reviews, and user-visible notifications.
 
 ### Core responsibilities
 
@@ -155,17 +156,19 @@ Manage the user's relationship with books: organization, progress, goals, review
 - Shelf organization
 - Reading state transitions
 - Reading progress tracking
-- Yearly reading goals
+- Opt-in yearly reading goals
 - User reviews
-- Basic in-app notifications
+- Basic user-visible in-app notifications
 - User-facing library metrics
 
 ### Owned concepts
 
 - UserBook
-- Shelf entry
-- Reading progress
-- Reading goal
+- Reading Cycle (future-facing)
+- Reading State
+- Reading Progress
+- Book Snapshot
+- Yearly Goal
 - Review
 - Notification
 - Notification status
@@ -227,14 +230,14 @@ Library is the most product-centric context in V1. It owns the user's journey ar
 1. User authenticates through Identity.
 2. Library receives `userId` from the gateway/security layer.
 3. Library validates that `bookId` exists in Catalog.
-4. Library creates or updates the user-book relationship.
+4. Library creates or updates the UserBook.
 
 #### Create review
 
 1. User authenticates through Identity.
 2. Library validates the referenced `bookId` with Catalog.
 3. Library stores the review.
-4. Library may emit an internal notification event later in future phases.
+4. Library may create a user-visible notification later in future phases.
 
 #### Password recovery
 
@@ -263,12 +266,12 @@ Library is the most product-centric context in V1. It owns the user's journey ar
 
 ### Library owns
 
-- how a user organizes books
+- how a user organizes Catalog Books in a personal library
 - what a user is reading
 - how progress is measured
-- what review a user wrote
-- what in-app notifications the user has
-- what yearly goal the user is tracking
+- what review a user wrote about a Catalog Book
+- what user-visible in-app notifications the user has
+- what opt-in yearly goal the user is tracking
 
 ---
 
@@ -300,7 +303,7 @@ But the source of truth remains Identity.
 Library may store:
 
 - `bookId`
-- optional denormalized read fields such as `title` or `coverUrl` for performance/read models
+- optional book snapshot fields such as `title`, `coverUrl`, or `pageCount` for read stability and performance
 
 But Catalog remains the source of truth for canonical metadata.
 
@@ -316,7 +319,7 @@ Reviews could eventually become their own context, but keeping them inside Libra
 
 ### Reasons
 
-- Reviews are tightly connected to the user's reading journey.
+- Reviews are tightly connected to the user's reading journey, but they remain attached to Catalog Books rather than owned by UserBooks.
 - Splitting them now would introduce extra complexity with low architectural payoff.
 - V1 needs delivery speed without losing good boundaries.
 
@@ -332,11 +335,11 @@ Reviews should become a separate context/service later if:
 
 ## Why Notifications belong to Library in V1
 
-Notifications are kept inside Library only for the V1 scope of internal, user-facing notifications related to library/review/goal events.
+Notifications are kept inside Library only for the V1 scope of user-facing in-app notifications related to library/review/goal events.
 
 ### Reasons
 
-- V1 notifications are simple and in-app only.
+- V1 notifications are simple, in-app only, and scoped to one user.
 - A dedicated notification service would be premature.
 - The current scope does not justify multi-channel delivery yet.
 

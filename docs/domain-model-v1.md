@@ -20,7 +20,7 @@ This document defines the initial domain model for BookHub V1 by service. It foc
 
 ### Purpose
 
-Represents an authenticated platform user and the base account identity.
+Represents the basic authenticated account identity owned by Identity.
 
 ### Core attributes
 
@@ -53,7 +53,7 @@ Represents an authenticated platform user and the base account identity.
 
 ### Purpose
 
-Stores authentication material linked to a user.
+Stores the authentication secret and authentication-state record linked to a user.
 
 ### Core attributes
 
@@ -75,11 +75,11 @@ Stores authentication material linked to a user.
 - password is stored only as a hash
 - password changes invalidate recovery state when applicable
 
-## Supporting entity: RecoveryToken
+## Supporting entity: PasswordResetToken
 
 ### Purpose
 
-Represents a password recovery request.
+Represents the time-bound credential that authorizes a password reset for a user.
 
 ### Core attributes
 
@@ -93,6 +93,17 @@ Represents a password recovery request.
 
 - token must expire
 - used token cannot be reused
+
+## Supporting concept: AccessToken
+
+### Purpose
+
+Represents the short-lived token that authorizes access to protected BookHub resources.
+
+### Invariants
+
+- access token expiry must be enforced
+- access token represents authenticated access for one user identity until expiry
 
 ## Value objects
 
@@ -110,7 +121,7 @@ Represents a password recovery request.
 
 ### Purpose
 
-Represents the canonical definition of a book in the platform.
+Represents the canonical book owned by Catalog and exposed for discovery and downstream reference.
 
 ### Core attributes
 
@@ -130,7 +141,7 @@ Represents the canonical definition of a book in the platform.
 
 ### Behaviors
 
-- create from normalized import
+- create through normalization of provider metadata
 - update curated metadata
 - activate/deactivate catalog visibility
 - attach author references
@@ -140,12 +151,13 @@ Represents the canonical definition of a book in the platform.
 - canonical book identity must be stable
 - page count cannot be negative
 - a book must have at least a title
+- a book remains the source of truth for downstream references
 
 ## Supporting aggregate/entity: Author
 
 ### Purpose
 
-Represents canonical author metadata.
+Represents supporting author metadata attached to one or more books.
 
 ### Core attributes
 
@@ -163,7 +175,7 @@ Represents canonical author metadata.
 
 ### Purpose
 
-Tracks external metadata ingestion.
+Tracks metadata received from a provider and its normalization outcome.
 
 ### Core attributes
 
@@ -179,6 +191,11 @@ Tracks external metadata ingestion.
 - register import
 - mark import as normalized
 - mark import as rejected
+
+### Invariants
+
+- each import belongs to exactly one provider reference
+- normalization must resolve to canonical book data or an explicit rejection state
 
 ## Value objects
 
@@ -196,7 +213,7 @@ Tracks external metadata ingestion.
 
 ### Purpose
 
-Represents the relationship between a user and a book in the personal library.
+Represents the user's V1-level relationship with a Catalog Book in the personal library.
 
 ### Core attributes
 
@@ -204,9 +221,9 @@ Represents the relationship between a user and a book in the personal library.
 - `userId`
 - `bookId`
 - `bookSnapshot` (`title`, `coverUrl`, `pageCount`)
-- `state`
+- `readingState`
 - `pagesRead`
-- `percentage`
+- `completionPercentage`
 - `startedAt`
 - `finishedAt`
 - `addedAt`
@@ -218,19 +235,19 @@ Represents the relationship between a user and a book in the personal library.
 - change reading state
 - update progress
 - mark as finished
-- recalculate percentage
+- recalculate completion percentage
 - react to re-reading transitions without losing completion meaning
 - prepare future reading-cycle history
 
 ### Invariants
 
-- one active entry per user-book pair
+- one active user-book record per user-catalog-book pair
 - pages read cannot be negative
-- percentage must stay between 0 and 100 when known
-- percentage may be `null` when canonical page count is unknown
+- completion percentage must stay between 0 and 100 when known
+- completion percentage may be `null` when Catalog Book page count is unknown
 - finished state implies 100% progress when page count is known
 - progress greater than zero implies `READING` or `READ`
-- reducing progress after completion reopens the entry as `READING`
+- reducing progress after completion reopens the entry as `READING` for re-reading
 
 ### Modeling note
 
@@ -261,14 +278,18 @@ Represents the user's reading goal for a specific year.
 ### Invariants
 
 - one goal per user per year
+- yearly goals are opt-in for the user
 - target books must be greater than zero
 - completed books cannot be negative
+- progress is measured only by completed `UserBook` records in that calendar year
+- repeated completion of the same `Catalog Book` only counts again when it happens in a different calendar year
+- changing `targetBooks` adjusts the same yearly goal instead of creating a new one
 
 ## Supporting aggregate: Review
 
 ### Purpose
 
-Represents a user's opinion about a book.
+Represents a user's opinion about a Catalog Book.
 
 ### Core attributes
 
@@ -290,7 +311,8 @@ Represents a user's opinion about a book.
 ### Invariants
 
 - rating must be within the accepted range
-- review must belong to one user and one book
+- review must belong to exactly one user and exactly one Catalog Book
+- a user may have at most one review per Catalog Book in V1
 - only the owner can edit the review in normal user flows
 
 ## Supporting aggregate: Notification
@@ -319,7 +341,10 @@ Represents an in-app notification visible to a user.
 ### Invariants
 
 - notification must belong to one user
+- notification is a user-visible in-app message, not a raw internal event
+- notification may communicate a past event or prompt the user toward an action
 - read notification must have a `readAt` timestamp
+- notification status is limited to `UNREAD` and `READ` in V1
 
 ## Value objects
 
@@ -348,9 +373,9 @@ Represents an in-app notification visible to a user.
 ## library-service
 
 - `UserBook` should own reading state transitions and progress rules.
-- `YearlyGoal` should not be overloaded with library entry behavior.
-- `Review` moderation state should stay independent from user-book lifecycle.
-- `Notification` should remain lightweight and not become a workflow engine.
+- `YearlyGoal` should not be overloaded with generic goal-engine behavior.
+- `Review` moderation state should stay independent from library-entry lifecycle.
+- `Notification` should remain lightweight and not become a workflow engine or event bus.
 
 ---
 
@@ -372,9 +397,9 @@ Represents an in-app notification visible to a user.
 
 - A user manages their own reading lifecycle.
 - Progress updates are constrained by reading rules.
-- Reviews are user-owned content attached to books.
-- Yearly goals track reading outcome, not intent.
-- Notifications are informational and user-scoped.
+- Reviews are user-owned content attached to Catalog Books.
+- Yearly goals track reading outcome per calendar year through completed UserBooks.
+- Notifications are user-scoped visible messages, not raw internal events.
 
 ---
 
@@ -405,11 +430,11 @@ Represents an in-app notification visible to a user.
 
 ## Why `UserBook` is the main aggregate in Library
 
-Because the personal library is the core user-book relationship. If this concept is weak, everything else becomes scattered. Reading state and progress belong together.
+Because the personal library is the core user-to-Catalog-Book relationship. If this concept is weak, everything else becomes scattered. Reading state and progress belong together.
 
 ## Why `Review` is separate from `UserBook`
 
-Although related, review lifecycle and moderation are different concerns from reading progress. Keeping `Review` separate makes future extraction easier.
+Although related, review lifecycle and moderation are different concerns from reading progress. Keeping `Review` separate from `UserBook` makes future extraction easier.
 
 ## Why `Notification` stays simple
 

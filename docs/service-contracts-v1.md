@@ -25,7 +25,8 @@ Provide authentication, user identity, access control, and password recovery.
 
 - Register users
 - Authenticate users
-- Issue and validate tokens
+- Issue and validate Access Tokens
+- Rotate Refresh Tokens
 - Expose current user identity
 - Manage base profile data
 - Manage roles
@@ -64,7 +65,7 @@ Creates a new user account.
 
 #### `POST /api/v1/auth/login`
 
-Authenticates a user and returns access credentials.
+Authenticates a user and returns an Access Token plus Refresh Token cookie.
 
 **Request**
 
@@ -92,7 +93,7 @@ Authenticates a user and returns access credentials.
 
 #### `POST /api/v1/auth/refresh`
 
-Rotates the current refresh session and returns a new access token.
+Rotates the current Refresh Token and returns a new Access Token.
 
 **Request**
 
@@ -115,11 +116,11 @@ Rotates the current refresh session and returns a new access token.
 ```
 
 - Returns rotated `refresh_token` in `Set-Cookie` (`HttpOnly`, `SameSite=Strict`).
-- Returns `401 Unauthorized` when the refresh token is invalid, expired, or revoked.
+- Returns `401 Unauthorized` when the Refresh Token is invalid, expired, or revoked.
 
 #### `POST /api/v1/auth/logout`
 
-Revokes the current refresh token and clears the refresh cookie.
+Revokes the current Refresh Token and clears the refresh cookie.
 
 **Request**
 
@@ -132,7 +133,7 @@ Revokes the current refresh token and clears the refresh cookie.
 
 #### `POST /api/v1/auth/forgot-password`
 
-Starts the password recovery flow.
+Starts the password reset flow.
 This endpoint is anti-enumeration safe: it always returns the same response, even if the email does not exist.
 
 **Request**
@@ -150,13 +151,13 @@ This endpoint is anti-enumeration safe: it always returns the same response, eve
 
 #### `POST /api/v1/auth/reset-password`
 
-Completes the password reset flow.
+Completes the password reset flow using a Password Reset Token.
 
 **Request**
 
 ```json
 {
-  "token": "recovery-token",
+  "token": "password-reset-token",
   "newPassword": "NewStrongPassword123!"
 }
 ```
@@ -259,7 +260,7 @@ Provide canonical book metadata and discovery capabilities.
 - Search books
 - Return book details
 - Persist locally relevant catalog items
-- Normalize external book data
+- Normalize provider metadata into canonical books
 - Provide admin-level catalog curation endpoints
 
 ## API surface
@@ -268,13 +269,14 @@ Provide canonical book metadata and discovery capabilities.
 
 #### `GET /api/v1/books?q={term}`
 
-Searches books concurrently in local catalog storage and Open Library.
+Searches books concurrently in local catalog storage and the configured Provider.
 
 Notes:
 - `q` is required (`@NotBlank`).
 - Local books return canonical UUID IDs.
 - Non-persisted external books return ephemeral IDs with format `ext:ol:{sourceReference}`.
 - If local and external results match by `sourceReference`/ISBN-13, local result takes precedence.
+- Search results expose canonical Books when already normalized and transient provider-backed results when they are not yet persisted.
 
 **Response — 200 OK**
 
@@ -300,6 +302,8 @@ Notes:
 Returns canonical book detail by either:
 - local UUID (`123e4567-e89b-12d3-a456-426614174000`), or
 - ephemeral ID (`ext:ol:OL999W`) that triggers JIT import/persistence.
+
+Catalog remains responsible for the normalization step that turns provider metadata into canonical Book data.
 
 **Response — 200 OK**
 
@@ -402,13 +406,13 @@ catalog-service is allowed to expose lightweight book snapshots:
 
 ## Mission
 
-Manage the user-facing reading lifecycle: library, shelves, progress, goals, reviews, and in-app notifications.
+Manage the user-facing reading lifecycle: user-book records, progress, goals, reviews, and in-app notifications.
 
 ## Public responsibilities
 
-- Add books to a personal library
+- Add Catalog Books to a personal library as UserBooks
 - Update reading state
-- Track progress
+- Track reading progress
 - Manage yearly reading goals
 - Create and edit reviews
 - List and update notifications
@@ -420,7 +424,7 @@ Manage the user-facing reading lifecycle: library, shelves, progress, goals, rev
 
 #### `POST /api/v1/library/books`
 
-Adds a book to the authenticated user's library.
+Adds a Catalog Book to the authenticated user's library as a new UserBook.
 
 **Request**
 
@@ -438,15 +442,15 @@ Adds a book to the authenticated user's library.
   "entryId": "ub_001",
   "userId": "usr_123",
   "bookId": "bk_001",
-  "book": {
+  "bookSnapshot": {
     "title": "Clean Code",
     "coverUrl": "https://covers.openlibrary.org/b/id/111-L.jpg",
     "pageCount": 464
   },
-  "state": "WANT_TO_READ",
-  "progress": {
+  "readingState": "WANT_TO_READ",
+  "readingProgress": {
     "pagesRead": 0,
-    "percentage": 0
+    "completionPercentage": 0
   }
 }
 ```
@@ -461,13 +465,13 @@ Returns library entries filtered by reading state.
 
 #### `GET /api/v1/library/books/{entryId}`
 
-Returns a single library entry owned by the authenticated user.
+Returns a single UserBook owned by the authenticated user.
 
-The response MUST use the persisted book snapshot (`title`, `coverUrl`, `pageCount`) to keep reads stable even when catalog metadata changes later.
+The response MUST use the persisted book snapshot (`title`, `coverUrl`, `pageCount`) to keep reads stable even when Catalog metadata changes later.
 
 #### `PATCH /api/v1/library/books/{entryId}/state`
 
-Updates the reading state.
+Updates the Reading State.
 
 State transitions are intentionally flexible. The service reacts to transitions instead of hard-rejecting most of them.
 
@@ -486,14 +490,14 @@ Examples of expected behavior:
 
 #### `PATCH /api/v1/library/books/{entryId}/progress`
 
-Updates reading progress.
+Updates Reading Progress.
 
-Progress and state are coupled.
+Reading Progress and Reading State are coupled.
 
 - moving progress from `0` to a positive value transitions the entry to `READING`
 - reaching `100%` transitions the entry to `READ`
 - reducing progress after `READ` transitions the entry back to `READING`
-- when canonical page count is unknown, progress is still allowed and `percentage` is returned as `null`
+- when canonical page count is unknown, progress is still allowed and `completionPercentage` is returned as `null`
 
 **Request**
 
@@ -509,8 +513,8 @@ Progress and state are coupled.
 {
   "entryId": "ub_001",
   "pagesRead": 120,
-  "percentage": 28,
-  "state": "READING"
+  "completionPercentage": 28,
+  "readingState": "READING"
 }
 ```
 
@@ -520,8 +524,8 @@ Example when canonical `pageCount` is unknown:
 {
   "entryId": "ub_001",
   "pagesRead": 120,
-  "percentage": null,
-  "state": "READING"
+  "completionPercentage": null,
+  "readingState": "READING"
 }
 ```
 
@@ -529,7 +533,7 @@ Example when canonical `pageCount` is unknown:
 
 #### `PUT /api/v1/goals/yearly`
 
-Creates or updates the current user's yearly goal.
+Creates or updates the current user's opt-in Yearly Goal for a specific calendar year.
 
 **Request**
 
@@ -544,11 +548,13 @@ Creates or updates the current user's yearly goal.
 
 Returns the current user's yearly goal and progress.
 
+Goal progress is measured only by completed `UserBook` records within the requested calendar year. Repeated completion of the same `Catalog Book` only counts again when it happens in a different calendar year.
+
 ### Reviews
 
 #### `POST /api/v1/reviews`
 
-Creates a review for a book.
+Creates a Review for a Catalog Book.
 
 **Request**
 
@@ -566,17 +572,19 @@ Updates an existing review owned by the authenticated user.
 
 #### `GET /api/v1/books/{bookId}/reviews`
 
-Returns reviews for a given book.
+Returns visible reviews for a given Catalog Book.
 
 ### Notifications
 
 #### `GET /api/v1/notifications`
 
-Returns the authenticated user's in-app notifications.
+Returns the authenticated user's user-visible in-app notifications.
 
 #### `PATCH /api/v1/notifications/{notificationId}/read`
 
 Marks a notification as read.
+
+In V1, notifications only transition between `UNREAD` and `READ`.
 
 ### Admin
 
@@ -598,14 +606,19 @@ V1 does not require library-service to act as a shared upstream service for core
 
 ## Internal invariants
 
-- A user cannot have duplicate active library entries for the same book.
+- A user cannot have duplicate active Library Entries for the same Catalog Book.
 - Reading progress cannot be negative.
 - Reading progress cannot exceed the known page count when page count is available.
-- Reading progress is still allowed when page count is unknown, but percentage becomes `null`.
-- Progress and state must stay synchronized through business rules.
-- Re-reading is a valid lifecycle scenario for a user-book relationship.
-- A review must belong to exactly one user and one book.
+- Reading progress is still allowed when page count is unknown, but completion percentage becomes `null`.
+- Reading Progress and Reading State must stay synchronized through business rules.
+- Re-reading is a valid lifecycle scenario for a UserBook.
+- A review must belong to exactly one user and exactly one Catalog Book.
+- A user may have at most one review per Catalog Book in V1.
 - A user can only edit their own review.
+- A user may have at most one Yearly Goal per calendar year.
+- Yearly Goal progress is measured only by completed UserBooks in that calendar year.
+- Changing a yearly target updates the same goal instead of creating a new one.
+- A notification is always scoped to exactly one user.
 - Notification status transitions must be valid.
 
 ---
