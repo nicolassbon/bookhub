@@ -209,7 +209,7 @@ class LibraryIntegrationTest extends PostgreSqlIntegrationTest {
                     """))
         .andExpect(status().isOk())
         .andExpect(jsonPath("$.pagesRead").value(120))
-        .andExpect(jsonPath("$.percentage").value((Object) null));
+        .andExpect(jsonPath("$.completionPercentage").value((Object) null));
 
     final Optional<UserBookEntity> persisted = jpaUserBookRepository.findById(entryId);
     assertThat(persisted).isPresent();

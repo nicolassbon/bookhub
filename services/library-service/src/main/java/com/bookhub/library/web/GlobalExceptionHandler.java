@@ -1,10 +1,15 @@
 package com.bookhub.library.web;
 
 import com.bookhub.library.application.error.BookNotFoundInCatalogException;
+import com.bookhub.library.application.error.BookNotReadException;
 import com.bookhub.library.application.error.CatalogIntegrationException;
 import com.bookhub.library.application.error.DuplicateLibraryEntryException;
 import com.bookhub.library.application.error.LibraryEntryNotFoundException;
 import com.bookhub.library.application.error.LibraryEntryOwnershipException;
+import com.bookhub.library.application.error.NotificationNotFoundException;
+import com.bookhub.library.application.error.NotificationOwnershipException;
+import com.bookhub.library.application.error.ReviewAlreadyExistsException;
+import com.bookhub.library.application.error.YearlyGoalNotFoundException;
 import com.bookhub.library.domain.ReadingProgressException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.ConstraintViolationException;
@@ -50,6 +55,17 @@ public class GlobalExceptionHandler {
         "Validation Error",
         "VALIDATION_ERROR",
         message,
+        request.getRequestURI());
+  }
+
+  @ExceptionHandler(IllegalArgumentException.class)
+  public ResponseEntity<ErrorResponse> handleIllegalArgument(
+      final IllegalArgumentException exception, final HttpServletRequest request) {
+    return buildError(
+        HttpStatus.BAD_REQUEST,
+        "Validation Error",
+        "INVALID_ARGUMENT",
+        exception.getMessage(),
         request.getRequestURI());
   }
 
@@ -108,6 +124,17 @@ public class GlobalExceptionHandler {
         request.getRequestURI());
   }
 
+  @ExceptionHandler(YearlyGoalNotFoundException.class)
+  public ResponseEntity<ErrorResponse> handleYearlyGoalNotFound(
+      final YearlyGoalNotFoundException exception, final HttpServletRequest request) {
+    return buildError(
+        HttpStatus.NOT_FOUND,
+        "Not Found",
+        "YEARLY_GOAL_NOT_FOUND",
+        exception.getMessage(),
+        request.getRequestURI());
+  }
+
   @ExceptionHandler(ReadingProgressException.class)
   public ResponseEntity<ErrorResponse> handleReadingProgress(
       final ReadingProgressException exception, final HttpServletRequest request) {
@@ -115,6 +142,50 @@ public class GlobalExceptionHandler {
         HttpStatus.BAD_REQUEST,
         "Bad Request",
         "INVALID_READING_PROGRESS",
+        exception.getMessage(),
+        request.getRequestURI());
+  }
+
+  @ExceptionHandler(BookNotReadException.class)
+  public ResponseEntity<ErrorResponse> handleBookNotRead(
+      final BookNotReadException exception, final HttpServletRequest request) {
+    return buildError(
+        HttpStatus.BAD_REQUEST,
+        "Bad Request",
+        "BOOK_NOT_READ",
+        exception.getMessage(),
+        request.getRequestURI());
+  }
+
+  @ExceptionHandler(ReviewAlreadyExistsException.class)
+  public ResponseEntity<ErrorResponse> handleReviewAlreadyExists(
+      final ReviewAlreadyExistsException exception, final HttpServletRequest request) {
+    return buildError(
+        HttpStatus.CONFLICT,
+        "Conflict",
+        "REVIEW_ALREADY_EXISTS",
+        exception.getMessage(),
+        request.getRequestURI());
+  }
+
+  @ExceptionHandler(NotificationNotFoundException.class)
+  public ResponseEntity<ErrorResponse> handleNotificationNotFound(
+      final NotificationNotFoundException exception, final HttpServletRequest request) {
+    return buildError(
+        HttpStatus.NOT_FOUND,
+        "Not Found",
+        "NOTIFICATION_NOT_FOUND",
+        exception.getMessage(),
+        request.getRequestURI());
+  }
+
+  @ExceptionHandler(NotificationOwnershipException.class)
+  public ResponseEntity<ErrorResponse> handleNotificationOwnership(
+      final NotificationOwnershipException exception, final HttpServletRequest request) {
+    return buildError(
+        HttpStatus.FORBIDDEN,
+        "Forbidden",
+        "NOTIFICATION_OWNERSHIP_VIOLATION",
         exception.getMessage(),
         request.getRequestURI());
   }

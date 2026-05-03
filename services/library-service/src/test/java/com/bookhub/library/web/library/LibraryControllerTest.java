@@ -357,8 +357,8 @@ class LibraryControllerTest {
           .andExpect(status().isOk())
           .andExpect(jsonPath("$.entryId").value(ENTRY_ID.toString()))
           .andExpect(jsonPath("$.pagesRead").value(100))
-          .andExpect(jsonPath("$.percentage").value(25))
-          .andExpect(jsonPath("$.state").value("READING"));
+          .andExpect(jsonPath("$.completionPercentage").value(25))
+          .andExpect(jsonPath("$.readingState").value("READING"));
     }
 
     @Test
@@ -386,8 +386,8 @@ class LibraryControllerTest {
           .andExpect(status().isOk())
           .andExpect(jsonPath("$.entryId").value(ENTRY_ID.toString()))
           .andExpect(jsonPath("$.pagesRead").value(100))
-          .andExpect(jsonPath("$.percentage").value((Object) null))
-          .andExpect(jsonPath("$.state").value("READING"));
+          .andExpect(jsonPath("$.completionPercentage").value((Object) null))
+          .andExpect(jsonPath("$.readingState").value("READING"));
     }
 
     @Test
@@ -436,6 +436,25 @@ class LibraryControllerTest {
                       """))
           .andExpect(status().isBadRequest())
           .andExpect(jsonPath("$.code").value("INVALID_READING_PROGRESS"));
+    }
+
+    @Test
+    void shouldReturn400WhenDomainValidationThrowsIllegalArgument() throws Exception {
+      when(updateReadingProgressService.execute(eq(USER_ID), eq(ENTRY_ID), eq(100)))
+          .thenThrow(new IllegalArgumentException("rating must be between 1 and 5"));
+
+      mockMvc
+          .perform(
+              patch("/api/v1/library/books/{entryId}/progress", ENTRY_ID)
+                  .with(authenticatedJwt())
+                  .contentType(MediaType.APPLICATION_JSON)
+                  .content(
+                      """
+                      {"pagesRead": 100}
+                      """))
+          .andExpect(status().isBadRequest())
+          .andExpect(jsonPath("$.code").value("INVALID_ARGUMENT"))
+          .andExpect(jsonPath("$.message").value("rating must be between 1 and 5"));
     }
 
     @Test

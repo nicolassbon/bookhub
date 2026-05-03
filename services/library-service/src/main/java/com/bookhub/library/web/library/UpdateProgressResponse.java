@@ -5,7 +5,7 @@ import com.bookhub.library.domain.UserBook;
 import java.util.UUID;
 
 public record UpdateProgressResponse(
-    UUID entryId, int pagesRead, Integer percentage, ReadingState state) {
+    UUID entryId, int pagesRead, Integer completionPercentage, ReadingState readingState) {
 
   public static UpdateProgressResponse from(final UserBook userBook) {
     return new UpdateProgressResponse(
