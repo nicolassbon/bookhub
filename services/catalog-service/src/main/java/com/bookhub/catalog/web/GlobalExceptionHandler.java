@@ -11,6 +11,7 @@ import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.HttpRequestMethodNotSupportedException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
@@ -100,6 +101,19 @@ public class GlobalExceptionHandler {
         HttpStatus.BAD_REQUEST,
         "Bad Request",
         "INVALID_PARAMETER",
+        message,
+        request.getRequestURI());
+  }
+
+  @ExceptionHandler(HttpRequestMethodNotSupportedException.class)
+  public ResponseEntity<ErrorResponse> handleMethodNotSupported(
+      final HttpRequestMethodNotSupportedException exception, final HttpServletRequest request) {
+    final String message =
+        String.format("Method '%s' is not supported for this endpoint", exception.getMethod());
+    return buildError(
+        HttpStatus.METHOD_NOT_ALLOWED,
+        "Method Not Allowed",
+        "METHOD_NOT_ALLOWED",
         message,
         request.getRequestURI());
   }

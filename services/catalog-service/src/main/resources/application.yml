@@ -33,6 +33,12 @@ management:
         enabled: true
       show-details: never
 
+jwt:
+  issuer: ${JWT_ISSUER}
+  audience: ${JWT_AUDIENCE}
+  rsa:
+    public-key: ${JWT_RSA_PUBLIC_KEY}
+
 catalog:
   providers:
     openlibrary:

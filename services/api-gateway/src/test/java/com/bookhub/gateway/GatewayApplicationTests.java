@@ -64,11 +64,44 @@ class GatewayApplicationTests {
         .containsExactlyInAnyOrder(
             "identity-auth-route",
             "identity-users-route",
+            "identity-admin-route",
             "catalog-books-route",
+            "catalog-admin-route",
             "library-route",
             "library-goals-route",
             "library-reviews-route",
-            "library-notifications-route");
+            "library-notifications-route",
+            "library-admin-route");
+
+    assertThat(routeDefinitions)
+        .anyMatch(
+            routeDefinition ->
+                routeDefinition.getId().equals("identity-admin-route")
+                    && routeDefinition.getPredicates().stream()
+                        .anyMatch(
+                            predicateDefinition ->
+                                predicateDefinition.toString().contains("/api/v1/admin/users/**")));
+
+    assertThat(routeDefinitions)
+        .anyMatch(
+            routeDefinition ->
+                routeDefinition.getId().equals("catalog-admin-route")
+                    && routeDefinition.getPredicates().stream()
+                        .anyMatch(
+                            predicateDefinition ->
+                                predicateDefinition.toString().contains("/api/v1/admin/books/**")));
+
+    assertThat(routeDefinitions)
+        .anyMatch(
+            routeDefinition ->
+                routeDefinition.getId().equals("library-admin-route")
+                    && routeDefinition.getPredicates().stream()
+                        .anyMatch(
+                            predicateDefinition ->
+                                predicateDefinition.toString().contains("/api/v1/admin/reviews/**")
+                                    || predicateDefinition
+                                        .toString()
+                                        .contains("/api/v1/admin/metrics/**")));
 
     assertThat(routeDefinitions)
         .anyMatch(
@@ -257,7 +290,8 @@ class GatewayApplicationTests {
                                 || request.uri().startsWith("/api/v1/library")
                                 || request.uri().startsWith("/api/v1/goals")
                                 || request.uri().startsWith("/api/v1/reviews")
-                                || request.uri().startsWith("/api/v1/notifications"),
+                                || request.uri().startsWith("/api/v1/notifications")
+                                || request.uri().startsWith("/api/v1/admin"),
                         GatewayApplicationTests::handleDownstreamRequest))
             .bindNow();
     downstreamPort = downstreamStubServer.port();
