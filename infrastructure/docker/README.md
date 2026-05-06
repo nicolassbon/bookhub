@@ -32,6 +32,8 @@ At minimum, ensure these are set:
 - `JWT_RSA_PUBLIC_KEY`
 - `PASSWORD_RESET_HASH_SECRET`
 
+`docker compose` reads the repository-root `.env` through the service-level `env_file` entries, so you do not need to export these variables manually before running the stack.
+
 ## 2) Build and run with Docker Compose
 
 From `infrastructure/docker`:
