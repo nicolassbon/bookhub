@@ -81,14 +81,16 @@ docker compose -f compose.yml up --build -d
 - Gateway API (public entrypoint): `http://localhost:8080`
 - Identity DB: `localhost:5432`
 - Catalog DB: `localhost:5433`
-- Library DB: `localhost:5434`
 
-## Public paths through the gateway
+Library DB is **not** exposed on the host in `compose.dev.yml`.
+Use Docker-network access (`library-db:5432`) from containers, or add an explicit host port mapping in `compose.dev.yml` if local DB tooling access is needed.
 
-- `POST /api/v1/auth/**` -> `identity-service`
-- `GET /api/v1/users/**` -> `identity-service`
-- `GET /api/v1/books/**` -> `catalog-service`
-- `/api/v1/library/**` -> `library-service`
+## Gateway route surface and downstream access behavior
+
+- `/api/v1/auth/**` -> `identity-service` (**routed by gateway; identity-service currently permits only `/api/v1/auth/register`, `/login`, `/refresh`, `/logout`, `/forgot-password`, and `/reset-password` without authentication**)
+- `GET /api/v1/books/**` -> `catalog-service` (**public in catalog-service security config**)
+- `/api/v1/users/**` -> `identity-service` (**routed by gateway and requires authentication in identity-service security config**)
+- `/api/v1/library/**` -> `library-service` (**routed by gateway and requires authentication in library-service security config**)
 
 ## Notes on route alignment
 

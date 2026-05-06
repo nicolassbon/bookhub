@@ -49,7 +49,6 @@ The repository currently includes:
 ### Normative / source of truth
 
 - `docs/prd-bookhub-v1.md`
-- `docs/prd-library-service-foundation.md`
 - `docs/bounded-contexts-v1.md`
 - `docs/service-contracts-v1.md`
 - `docs/domain-model-v1.md`

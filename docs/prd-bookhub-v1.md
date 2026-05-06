@@ -29,7 +29,7 @@ The project will be considered successful if it:
 
 ### Technical objectives
 
-- Migrate from a monolithic Spring MVC application to a well-bounded 2-3 microservice architecture.
+- Migrate from a monolithic Spring MVC application to a well-bounded 4-service runtime behind an API gateway (`api-gateway`, `identity-service`, `catalog-service`, `library-service`).
 - Design consistent and well-documented APIs.
 - Work with TDD, strong unit tests, and integration tests for important flows.
 - Include Docker Compose, CI/CD, and observability demo support.
@@ -309,9 +309,9 @@ The system is designed backend-first. During implementation, validation will pri
 
 ### Risk 1 — over-architecture
 
-Trying to include too many microservices or too much infrastructure within 8 weeks.
+Trying to include too many additional services or too much infrastructure beyond the accepted V1 runtime shape.
 
-**Mitigation:** keep V1 limited to 3 microservices.
+**Mitigation:** keep V1 limited to the accepted runtime shape: `api-gateway` + `identity-service` + `catalog-service` + `library-service`.
 
 ### Risk 2 — poor understanding of the legacy behavior
 
@@ -357,7 +357,7 @@ Must not be cut:
 
 ## 15. Success metrics
 
-- 3 microservices running behind the gateway
+- Accepted runtime shape running end-to-end: `api-gateway` + `identity-service` + `catalog-service` + `library-service`
 - core business flows working end-to-end
 - clear technical documentation
 - reproducible local environment with Docker Compose

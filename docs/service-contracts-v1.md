@@ -181,7 +181,13 @@ Completes the password reset flow using a Password Reset Token.
 
 ### Users
 
+> Status key used in this document:
+> - **Implemented (current)**: endpoint exists in current controllers.
+> - **Planned (roadmap)**: endpoint is a contract target, not implemented yet.
+
 #### `GET /api/v1/users/me`
+
+**Implemented (current)**
 
 Returns the authenticated user's profile.
 
@@ -199,9 +205,13 @@ Returns the authenticated user's profile.
 
 #### `GET /api/v1/users/{userId}`
 
+**Planned (roadmap)**
+
 Returns public/basic user profile data.
 
 #### `PATCH /api/v1/users/{userId}`
+
+**Planned (roadmap)**
 
 Updates editable base profile fields.
 
@@ -216,6 +226,8 @@ Updates editable base profile fields.
 ```
 
 ### Admin
+
+**Planned (roadmap) — not implemented in current identity-service controllers**
 
 #### `GET /api/v1/admin/users`
 
@@ -262,6 +274,15 @@ Provide canonical book metadata and discovery capabilities.
 - Persist locally relevant catalog items
 - Normalize provider metadata into canonical books
 - Provide admin-level catalog curation endpoints
+
+### ID semantics (canonical vs ephemeral)
+
+Lead rule: **Catalog owns the canonical Book ID; ephemeral external IDs exist only at the catalog public edge for discovery/JIT import.**
+
+- **Canonical ID**: UUID generated/owned by catalog-service and persisted across services.
+- **Ephemeral external ID**: `ext:ol:{sourceReference}` style identifier used only for provider-backed results that are not yet normalized.
+- **Where ephemeral IDs are allowed**: `GET /api/v1/books` results and `GET /api/v1/books/{id}` input.
+- **Where canonical IDs are required**: internal catalog APIs and all cross-service persistence references (for example, library-service `bookId`).
 
 ## API surface
 
@@ -351,11 +372,13 @@ Catalog remains responsible for the normalization step that turns provider metad
 
 Returns minimal canonical book data for trusted internal consumers such as library-service.
 
+`{bookId}` must be a canonical catalog UUID (ephemeral IDs are invalid on internal routes).
+
 **Response — 200 OK**
 
 ```json
 {
-  "bookId": "bk_001",
+  "bookId": "123e4567-e89b-12d3-a456-426614174000",
   "title": "Clean Architecture",
   "coverUrl": "https://...",
   "pageCount": 432,
@@ -365,6 +388,8 @@ Returns minimal canonical book data for trusted internal consumers such as libra
 ```
 
 ### Admin
+
+**Planned (roadmap) — not implemented in current catalog-service controllers**
 
 #### `POST /api/v1/admin/books/import`
 
@@ -384,7 +409,7 @@ catalog-service is allowed to expose lightweight book snapshots:
 
 ```json
 {
-  "bookId": "bk_001",
+  "bookId": "123e4567-e89b-12d3-a456-426614174000",
   "title": "Clean Architecture",
   "coverUrl": "https://...",
   "pageCount": 432,
@@ -394,9 +419,9 @@ catalog-service is allowed to expose lightweight book snapshots:
 
 ## Internal invariants
 
-- Canonical `bookId` must be stable.
+- Canonical `bookId` (UUID) must be stable.
 - Duplicate books from external sources must be normalized.
-- Ephemeral IDs (`ext:ol:*`) are API-only identifiers and must resolve to canonical local UUIDs after JIT persistence.
+- Ephemeral IDs (`ext:ol:*`) are API-edge identifiers only and must resolve to canonical UUIDs after JIT persistence.
 - Imported metadata must be traceable to a source.
 - Admin edits must not break referential consistency.
 
@@ -430,7 +455,7 @@ Adds a Catalog Book to the authenticated user's library as a new UserBook.
 
 ```json
 {
-  "bookId": "bk_001",
+  "bookId": "123e4567-e89b-12d3-a456-426614174000",
   "initialState": "WANT_TO_READ"
 }
 ```
@@ -441,7 +466,7 @@ Adds a Catalog Book to the authenticated user's library as a new UserBook.
 {
   "entryId": "ub_001",
   "userId": "usr_123",
-  "bookId": "bk_001",
+  "bookId": "123e4567-e89b-12d3-a456-426614174000",
   "bookSnapshot": {
     "title": "Clean Code",
     "coverUrl": "https://covers.openlibrary.org/b/id/111-L.jpg",
@@ -560,7 +585,7 @@ Creates a Review for a Catalog Book.
 
 ```json
 {
-  "bookId": "bk_001",
+  "bookId": "123e4567-e89b-12d3-a456-426614174000",
   "rating": 5,
   "content": "Excellent book about software architecture."
 }
@@ -580,13 +605,17 @@ Returns visible reviews for a given Catalog Book.
 
 Returns the authenticated user's user-visible in-app notifications.
 
-#### `PATCH /api/v1/notifications/{notificationId}/read`
+#### `PATCH /api/v1/notifications/{id}/read`
+
+**Implemented (current)**
 
 Marks a notification as read.
 
 In V1, notifications only transition between `UNREAD` and `READ`.
 
 ### Admin
+
+**Planned (roadmap) — not implemented in current library-service controllers**
 
 #### `GET /api/v1/admin/reviews`
 
