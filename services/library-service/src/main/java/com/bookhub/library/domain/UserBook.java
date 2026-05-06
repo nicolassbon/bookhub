@@ -43,7 +43,6 @@ public class UserBook {
     this.lastProgressAt = lastProgressAt;
   }
 
-  /** Factory for creating a new library entry. */
   public static UserBook create(
       final UUID userId,
       final UUID bookId,
@@ -60,7 +59,6 @@ public class UserBook {
         null, userId, bookId, bookSnapshot, state, 0, percentage, startedAt, null, now, null);
   }
 
-  /** Rehydrates from persistence. */
   public static UserBook rehydrate(
       final UUID id,
       final UUID userId,
@@ -87,7 +85,6 @@ public class UserBook {
         lastProgressAt);
   }
 
-  /** Updates the reading state with valid transition rules. */
   public void updateState(final ReadingState newState) {
     Objects.requireNonNull(newState, "state must not be null");
     if (this.state == newState) {
@@ -111,10 +108,6 @@ public class UserBook {
     this.state = newState;
   }
 
-  /**
-   * Updates reading progress. Recalculates percentage based on total pages. Auto-transitions
-   * WANT_TO_READ → READING on first progress update.
-   */
   public void updateProgress(final int newPagesRead) {
     if (newPagesRead < 0) {
       throw new ReadingProgressException("pagesRead cannot be negative");
@@ -135,12 +128,10 @@ public class UserBook {
       this.percentage = Math.min(100, (int) ((long) newPagesRead * 100 / totalPages));
     }
 
-    // Auto-transition: first progress update moves WANT_TO_READ → READING
     if (this.state == ReadingState.WANT_TO_READ && newPagesRead > 0) {
       updateState(ReadingState.READING);
     }
 
-    // Auto-transition: 100% → READ
     if (Integer.valueOf(100).equals(this.percentage) && this.state != ReadingState.READ) {
       updateState(ReadingState.READ);
     }

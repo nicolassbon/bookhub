@@ -19,7 +19,7 @@ public class NotificationRepositoryAdapter implements NotificationRepository {
   public Notification save(final Notification notification) {
     final NotificationEntity entity = mapper.toEntity(notification);
     final NotificationEntity saved = jpaRepository.save(entity);
-    notification.setId(saved.getId()); // ensure domain gets generated ID
+    notification.setId(saved.getId());
     return mapper.toDomain(saved);
   }
 

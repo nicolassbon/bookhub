@@ -52,7 +52,6 @@ class ReviewIntegrationTest extends PostgreSqlIntegrationTest {
     when(catalogServiceClient.findBookById(BOOK_ID))
         .thenReturn(Optional.of(new CatalogBook(BOOK_ID, "Clean Architecture", null, 400)));
 
-    // 1. Add book to library as WANT_TO_READ
     final MvcResult addResult =
         mockMvc
             .perform(
@@ -70,7 +69,6 @@ class ReviewIntegrationTest extends PostgreSqlIntegrationTest {
         com.jayway.jsonpath.JsonPath.read(
             addResult.getResponse().getContentAsString(), "$.entryId");
 
-    // 2. Try to review -> SHOULD FAIL (400)
     mockMvc
         .perform(
             post("/api/v1/reviews")
@@ -83,7 +81,6 @@ class ReviewIntegrationTest extends PostgreSqlIntegrationTest {
         .andExpect(status().isBadRequest())
         .andExpect(jsonPath("$.code").value("BOOK_NOT_READ"));
 
-    // 3. Mark as READ
     mockMvc
         .perform(
             patch("/api/v1/library/books/{entryId}/state", entryId)
@@ -95,7 +92,6 @@ class ReviewIntegrationTest extends PostgreSqlIntegrationTest {
                     """))
         .andExpect(status().isOk());
 
-    // 4. Try to review again -> SHOULD SUCCEED (201)
     mockMvc
         .perform(
             post("/api/v1/reviews")
@@ -111,7 +107,6 @@ class ReviewIntegrationTest extends PostgreSqlIntegrationTest {
 
     final UUID reviewId = jpaReviewRepository.findByBookId(BOOK_ID).getFirst().getId();
 
-    // 5. Update the review -> SHOULD SUCCEED (200)
     mockMvc
         .perform(
             patch("/api/v1/reviews/{reviewId}", reviewId)
@@ -125,11 +120,9 @@ class ReviewIntegrationTest extends PostgreSqlIntegrationTest {
         .andExpect(jsonPath("$.rating").value(5))
         .andExpect(jsonPath("$.content").value("A true masterpiece"));
 
-    // 6. Verify directly in DB that there is only ONE review for this user+book
     assertThat(jpaReviewRepository.findByBookId(BOOK_ID)).hasSize(1);
     assertThat(jpaReviewRepository.findByBookId(BOOK_ID).getFirst().getRating()).isEqualTo(5);
 
-    // 7. List reviews for the book
     mockMvc
         .perform(get("/api/v1/books/{bookId}/reviews", BOOK_ID).with(authenticatedJwt()))
         .andExpect(status().isOk())

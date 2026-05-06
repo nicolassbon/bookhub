@@ -54,9 +54,6 @@ class SecurityIntegrationTest {
               assert responseStatus == 200 || responseStatus == 503;
               assert responseStatus != 401;
             });
-    // Use an existing book or a dummy UUID, if not found returns 404, which is expected for public
-    // endpoint.
-    // The requirement says "access", so 404 is also fine as long as it's not 401
     mockMvc
         .perform(get("/api/v1/books/123e4567-e89b-12d3-a456-426614174000"))
         .andExpect(

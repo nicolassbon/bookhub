@@ -60,7 +60,6 @@ class ManageYearlyGoalServiceTest {
       final YearlyGoal result = service.execute(USER_ID, 2026, 36);
 
       assertThat(result.getTargetBooks()).isEqualTo(36);
-      // Verify it updated the same object, not created a new one
       verify(yearlyGoalRepository).save(existing);
     }
 
@@ -73,7 +72,6 @@ class ManageYearlyGoalServiceTest {
 
       service.execute(USER_ID, 2026, 20);
 
-      // save called once (update), never with a new object
       verify(yearlyGoalRepository).save(existing);
     }
   }

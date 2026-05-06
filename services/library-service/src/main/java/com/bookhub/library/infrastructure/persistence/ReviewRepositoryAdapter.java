@@ -46,7 +46,7 @@ public class ReviewRepositoryAdapter implements ReviewRepository {
   public Review save(final Review review) {
     final ReviewEntity entity = mapper.toEntity(review);
     final ReviewEntity saved = jpaRepository.save(entity);
-    review.setId(saved.getId()); // ensure domain gets generated ID
+    review.setId(saved.getId());
     return mapper.toDomain(saved);
   }
 

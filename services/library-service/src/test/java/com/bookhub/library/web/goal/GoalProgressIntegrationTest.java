@@ -47,7 +47,6 @@ class GoalProgressIntegrationTest extends PostgreSqlIntegrationTest {
     when(catalogServiceClient.findBookById(BOOK_ID))
         .thenReturn(Optional.of(new CatalogBook(BOOK_ID, "Domain-Driven Design", null, 560)));
 
-    // 1. Create a yearly goal
     mockMvc
         .perform(
             put("/api/v1/goals/yearly")
@@ -61,7 +60,6 @@ class GoalProgressIntegrationTest extends PostgreSqlIntegrationTest {
         .andExpect(jsonPath("$.targetBooks").value(5))
         .andExpect(jsonPath("$.completedBooks").value(0));
 
-    // 2. Add book to library
     final MvcResult addResult =
         mockMvc
             .perform(
@@ -79,7 +77,6 @@ class GoalProgressIntegrationTest extends PostgreSqlIntegrationTest {
         com.jayway.jsonpath.JsonPath.read(
             addResult.getResponse().getContentAsString(), "$.entryId");
 
-    // 3. Update progress to 100% (triggers READ and goal increment)
     mockMvc
         .perform(
             patch("/api/v1/library/books/{entryId}/progress", entryId)
@@ -93,14 +90,12 @@ class GoalProgressIntegrationTest extends PostgreSqlIntegrationTest {
         .andExpect(jsonPath("$.readingState").value("READ"))
         .andExpect(jsonPath("$.completionPercentage").value(100));
 
-    // 4. Verify goal incremented to 1
     mockMvc
         .perform(get("/api/v1/goals/yearly").with(authenticatedJwt()).param("year", "2026"))
         .andExpect(status().isOk())
         .andExpect(jsonPath("$.completedBooks").value(1))
         .andExpect(jsonPath("$.status").value("IN_PROGRESS"));
 
-    // 5. Verify via JPA directly
     assertThat(jpaYearlyGoalRepository.findByUserIdAndYear(USER_ID, 2026))
         .isPresent()
         .hasValueSatisfying(g -> assertThat(g.getCompletedBooks()).isEqualTo(1));
@@ -109,7 +104,6 @@ class GoalProgressIntegrationTest extends PostgreSqlIntegrationTest {
   @Test
   @DisplayName("Upsert yearly goal: updating target adjusts same goal")
   void upsertGoalUpdatesExistingTarget() throws Exception {
-    // Create goal with target 10
     mockMvc
         .perform(
             put("/api/v1/goals/yearly")
@@ -122,7 +116,6 @@ class GoalProgressIntegrationTest extends PostgreSqlIntegrationTest {
         .andExpect(status().isOk())
         .andExpect(jsonPath("$.targetBooks").value(10));
 
-    // Update same goal to target 20
     mockMvc
         .perform(
             put("/api/v1/goals/yearly")
@@ -135,7 +128,6 @@ class GoalProgressIntegrationTest extends PostgreSqlIntegrationTest {
         .andExpect(status().isOk())
         .andExpect(jsonPath("$.targetBooks").value(20));
 
-    // Verify only one goal exists for that year
     final long count =
         jpaYearlyGoalRepository.findAll().stream()
             .filter(g -> g.getUserId().equals(USER_ID) && g.getYear() == 2025)

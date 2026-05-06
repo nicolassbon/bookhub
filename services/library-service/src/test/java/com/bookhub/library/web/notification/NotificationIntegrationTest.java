@@ -38,13 +38,11 @@ class NotificationIntegrationTest extends PostgreSqlIntegrationTest {
   @Test
   @DisplayName("Full Notification Lifecycle: List unread -> Mark read -> List read")
   void fullNotificationLifecycle() throws Exception {
-    // 1. Setup raw DB state directly using repository
     final Notification notif1 =
         Notification.create(USER_ID, NotificationType.SYSTEM, "Welcome", "Hello!", "{}");
     final NotificationEntity savedEntity = jpaNotificationRepository.save(mapper.toEntity(notif1));
     final UUID notifId = savedEntity.getId();
 
-    // 2. Fetch notifications
     mockMvc
         .perform(get("/api/v1/notifications").with(authenticatedJwt()))
         .andExpect(status().isOk())
@@ -52,12 +50,10 @@ class NotificationIntegrationTest extends PostgreSqlIntegrationTest {
         .andExpect(jsonPath("$[0].id").value(notifId.toString()))
         .andExpect(jsonPath("$[0].status").value("UNREAD"));
 
-    // 3. Mark as read
     mockMvc
         .perform(patch("/api/v1/notifications/{id}/read", notifId).with(authenticatedJwt()))
         .andExpect(status().isOk());
 
-    // 4. Fetch again, should be READ
     mockMvc
         .perform(get("/api/v1/notifications").with(authenticatedJwt()))
         .andExpect(status().isOk())
@@ -65,7 +61,6 @@ class NotificationIntegrationTest extends PostgreSqlIntegrationTest {
         .andExpect(jsonPath("$[0].id").value(notifId.toString()))
         .andExpect(jsonPath("$[0].status").value("READ"));
 
-    // 5. Verify DB state
     assertThat(jpaNotificationRepository.findById(notifId))
         .isPresent()
         .hasValueSatisfying(n -> assertThat(n.getStatus()).isEqualTo(NotificationStatus.READ));

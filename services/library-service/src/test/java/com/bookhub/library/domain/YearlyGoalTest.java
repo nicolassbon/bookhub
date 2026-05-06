@@ -127,7 +127,6 @@ class YearlyGoalTest {
       final YearlyGoal goal = YearlyGoal.create(USER_ID, 2026, 1);
       goal.incrementProgress();
 
-      // A second increment on an ACHIEVED goal should be idempotent
       goal.incrementProgress();
 
       assertThat(goal.getCompletedBooks()).isEqualTo(1);

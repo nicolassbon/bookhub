@@ -11,10 +11,6 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
-/**
- * Internal service. Increments the active yearly goal when a UserBook reaches READ state. Called
- * synchronously from UpdateReadingProgressService and UpdateReadingStateService.
- */
 @Slf4j
 @Service
 @RequiredArgsConstructor
@@ -67,10 +63,6 @@ public class YearlyGoalProgressService {
     return previousYear != completionYear;
   }
 
-  /**
-   * Returns the current year's goal for a user, if any. Used by notification triggers to determine
-   * notification type.
-   */
   public Optional<YearlyGoal> findCurrentGoal(final UUID userId) {
     return yearlyGoalRepository.findByUserIdAndYear(userId, Year.now().getValue());
   }

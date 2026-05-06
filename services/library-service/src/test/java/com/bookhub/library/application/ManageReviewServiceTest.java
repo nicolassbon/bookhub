@@ -42,7 +42,6 @@ class ManageReviewServiceTest {
 
     @Test
     void shouldCreateNewReviewWhenBookIsRead() {
-      // Arrange
       final UserBook userBook =
           UserBook.create(
               USER_ID, BOOK_ID, ReadingState.WANT_TO_READ, new BookSnapshot("Title", null, 100));
@@ -53,10 +52,8 @@ class ManageReviewServiceTest {
       when(reviewRepository.save(any(Review.class)))
           .thenAnswer(invocation -> invocation.getArgument(0));
 
-      // Act
       final Review review = manageReviewService.createReview(USER_ID, BOOK_ID, 5, "Amazing book!");
 
-      // Assert
       assertThat(review.getRating()).isEqualTo(5);
       assertThat(review.getContent()).isEqualTo("Amazing book!");
 
@@ -84,10 +81,8 @@ class ManageReviewServiceTest {
 
     @Test
     void shouldThrowBookNotReadExceptionWhenBookIsNotInLibrary() {
-      // Arrange
       when(userBookRepository.findByUserIdAndBookId(USER_ID, BOOK_ID)).thenReturn(Optional.empty());
 
-      // Act & Assert
       assertThatThrownBy(() -> manageReviewService.createReview(USER_ID, BOOK_ID, 5, "Nice!"))
           .isInstanceOf(BookNotReadException.class)
           .hasMessageContaining("must be read");
@@ -95,15 +90,13 @@ class ManageReviewServiceTest {
 
     @Test
     void shouldThrowBookNotReadExceptionWhenBookIsNotInReadState() {
-      // Arrange
       final UserBook userBook =
           UserBook.create(
               USER_ID, BOOK_ID, ReadingState.WANT_TO_READ, new BookSnapshot("Title", null, 100));
-      userBook.updateState(ReadingState.READING); // Not READ
+      userBook.updateState(ReadingState.READING);
       when(userBookRepository.findByUserIdAndBookId(USER_ID, BOOK_ID))
           .thenReturn(Optional.of(userBook));
 
-      // Act & Assert
       assertThatThrownBy(() -> manageReviewService.createReview(USER_ID, BOOK_ID, 5, "Nice!"))
           .isInstanceOf(BookNotReadException.class)
           .hasMessageContaining("must be read");

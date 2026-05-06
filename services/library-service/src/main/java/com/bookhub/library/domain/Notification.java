@@ -12,7 +12,7 @@ public class Notification {
   private final NotificationType type;
   private final String title;
   private final String message;
-  private final String payload; // JSON string representation
+  private final String payload;
   private NotificationStatus status;
   private final Instant createdAt;
   private Instant readAt;

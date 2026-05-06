@@ -31,16 +31,13 @@ class CreateNotificationServiceTest {
 
     @Test
     void shouldCreateAndSaveNotification() {
-      // Arrange
       when(notificationRepository.save(any(Notification.class)))
           .thenAnswer(invocation -> invocation.getArgument(0));
 
-      // Act
       final Notification notif =
           createNotificationService.execute(
               USER_ID, NotificationType.GOAL_ACHIEVED, "Goal Met", "Congrats!", "{\"year\":2026}");
 
-      // Assert
       assertThat(notif.getUserId()).isEqualTo(USER_ID);
       assertThat(notif.getType()).isEqualTo(NotificationType.GOAL_ACHIEVED);
       assertThat(notif.getTitle()).isEqualTo("Goal Met");

@@ -66,10 +66,6 @@ public class YearlyGoal {
     this.updatedAt = Instant.now();
   }
 
-  /**
-   * Increments the completed books counter. Idempotent once ACHIEVED — additional completions in
-   * the same year do not inflate the counter beyond target.
-   */
   public void incrementProgress() {
     if (this.status == GoalStatus.ACHIEVED) {
       return;
