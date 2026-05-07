@@ -179,6 +179,27 @@ Completes the password reset flow using a Password Reset Token.
 }
 ```
 
+#### `POST /api/v1/auth/service-token`
+
+Issues a service JWT for machine-to-machine access. Used by downstream services (e.g., library-service) to authenticate when calling internal endpoints on other services (e.g., catalog-service `/api/v1/internal/**`).
+
+**Authentication**: HTTP Basic with pre-shared service credentials (`SERVICE_CLIENT_ID` / `SERVICE_CLIENT_SECRET`).
+
+**Response — 200 OK**
+
+```json
+{
+  "accessToken": "service-jwt-token",
+  "expiresIn": 3600
+}
+```
+
+**Error — 401 Unauthorized**
+
+- Returned when the `Authorization` header is missing, is not valid HTTP Basic, or the credentials do not match the expected service identity.
+
+**Rate limiting**: This endpoint is rate-limited independently (default: 20 requests per 60-second window).
+
 ### Users
 
 > Status key used in this document:
@@ -370,9 +391,17 @@ Catalog remains responsible for the normalization step that turns provider metad
 
 #### `GET /api/v1/internal/books/{bookId}`
 
-Returns minimal canonical book data for trusted internal consumers such as library-service.
+Returns minimal canonical book data for authenticated internal consumers such as library-service.
 
 `{bookId}` must be a canonical catalog UUID (ephemeral IDs are invalid on internal routes).
+
+**Authentication**: Requires a service JWT with `role=SERVICE` in the `Authorization: Bearer` header. Service tokens are issued by identity-service at `POST /api/v1/auth/service-token`.
+
+**Error — 401 Unauthorized**: Returned when the request lacks a valid service token or the token cannot be authenticated.
+
+**Error — 403 Forbidden**: Returned when the request is authenticated but the caller does not have the required service authority.
+
+**Error — 404 Not Found**: Returned when the requested `bookId` is not a known canonical book UUID.
 
 **Response — 200 OK**
 
@@ -698,7 +727,17 @@ Not allowed:
 
 ## library-service → catalog-service
 
-library-service may:
+Interaction style:
+
+- direct authenticated HTTP call with a service JWT
+
+Authentication:
+
+- library-service acquires a service token from identity-service (`POST /api/v1/auth/service-token`) using its pre-shared credentials.
+- library-service uses that token to authenticate calls to catalog internal APIs.
+- Token lifecycle management is an implementation concern; the contract requirement is that internal calls must present a valid service token and must not fall back to user tokens.
+
+Allowed use cases:
 
 - verify that a book exists
 - enrich read models with book snapshots
@@ -745,6 +784,9 @@ All services should converge on a consistent error structure:
 - Public endpoints must be explicitly marked public.
 - User endpoints require `USER` or `ADMIN`.
 - Admin endpoints require `ADMIN`.
+- Internal endpoints (e.g., `/api/v1/internal/**`) require a service JWT with `role=SERVICE`, not a user token.
+- Service tokens are issued by identity-service via `POST /api/v1/auth/service-token` using HTTP Basic with pre-shared credentials.
+- Services that call internal endpoints on other services must present a valid service token and must not reuse end-user tokens for machine-to-machine calls.
 - Services must trust gateway/security context, not user-supplied IDs in request bodies.
 
 ---

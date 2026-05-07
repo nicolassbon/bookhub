@@ -10,25 +10,7 @@ This document tracks security issues identified during repository reviews that r
 
 ## Open Issues
 
-### 1. Catalog service HTTP boundary is explicit, but internal route trust is still network-based
-
-- **Severity**: High
-- **Service**: `catalog-service`
-- **Status**: Partially Mitigated
-- **Where**:
-  - `services/catalog-service/pom.xml`
-  - `services/catalog-service/src/main/java/com/bookhub/catalog/web/internal/InternalBookController.java`
-- **Current evidence**:
-  - `spring-boot-starter-security` and resource-server support are active in `pom.xml`.
-  - `services/catalog-service/src/main/java/com/bookhub/catalog/config/SecurityConfig.java` defines explicit rules and deny-by-default behavior (`anyRequest().authenticated()`).
-  - `GET /api/v1/books/**` is public; admin mutations require `ROLE_ADMIN`.
-  - `services/catalog-service/src/test/java/com/bookhub/catalog/SecurityIntegrationTest.java` covers core boundary behavior.
-- **Residual risk**:
-  `GET /api/v1/internal/**` is currently `permitAll()`. The route is logically internal but still relies on trusted network topology/gateway placement rather than service-level authn/authz.
-- **Next hardening step**:
-  Require authenticated service-to-service access (or equivalent trusted principal enforcement) for `/api/v1/internal/**`.
-
-### 2. Auth rate limiting is proxy-aware and bounded, but still node-local
+### 1. Auth rate limiting is proxy-aware and bounded, but still node-local
 
 - **Severity**: Medium
 - **Service**: `identity-service`
@@ -77,9 +59,25 @@ This document tracks security issues identified during repository reviews that r
 - **Resolution summary**:
   Request IDs are now accepted only when they match a strict allowlist and maximum length. Invalid values are replaced with a server-generated UUID.
 
+### 6. Catalog internal routes now require authenticated service-to-service access
+
+- **Severity**: Previously High
+- **Service**: `catalog-service`
+- **Status**: Mitigated
+- **Where**:
+  - `services/catalog-service/src/main/java/com/bookhub/catalog/config/SecurityConfig.java`
+  - `services/identity-service/src/main/java/com/bookhub/identity/web/auth/ServiceAuthController.java`
+  - `services/identity-service/src/main/java/com/bookhub/identity/infrastructure/security/NimbusServiceTokenIssuer.java`
+  - `services/library-service/src/main/java/com/bookhub/library/infrastructure/client/ServiceTokenProvider.java`
+  - `services/library-service/src/main/java/com/bookhub/library/infrastructure/client/CatalogServiceClient.java`
+- **Resolution summary**:
+  Catalog internal routes (`/api/v1/internal/**`) now require authenticated service-to-service access instead of network trust. Identity-service issues machine tokens for authorized callers, catalog-service enforces service-only access on internal routes, and downstream services must use a valid service token when calling those endpoints.
+- **Residual risk**:
+  Service-token issuance is now protected and rate-limited, but broader multi-service operational hardening still belongs in future review blocks (for example, longer-term credential management and cross-instance auth resilience).
+
 ## Accepted for Local Development
 
-### 6. Host-exposed database ports in Docker dev override
+### 7. Host-exposed database ports in Docker dev override
 
 - **Severity**: Low
 - **Scope**: `infrastructure/docker/compose.dev.yml`
@@ -93,8 +91,7 @@ This document tracks security issues identified during repository reviews that r
 
 Recommended implementation order:
 
-1. Require authenticated/authorized service-to-service access on `catalog-service` internal routes
-2. Harden or redesign rate limiting for multi-instance and proxy-aware deployments
-3. Continue security review across gateway-to-service and service-to-service boundaries
+1. Harden or redesign rate limiting for multi-instance and proxy-aware deployments
+2. Continue security review across gateway-to-service and service-to-service boundaries
 
 These items provide the highest security value for the current repository state.

@@ -15,6 +15,8 @@ User library service for BookHub.
 - retrieve user notifications and mark them as read
 - persist stable catalog snapshots for owned books
 - validate JWT access tokens for authenticated requests
+- acquire and cache service tokens from identity-service for machine-to-machine calls
+- forward service tokens when calling catalog internal APIs (`/api/v1/internal/**`)
 
 ## HTTP API
 
@@ -49,6 +51,8 @@ User library service for BookHub.
 - Requires PostgreSQL connection settings via `DB_URL`, `DB_USERNAME`, and `DB_PASSWORD`.
 - Requires JWT settings via `JWT_ISSUER`, `JWT_AUDIENCE`, and `JWT_RSA_PUBLIC_KEY`.
 - Depends on `CATALOG_SERVICE_URL` for catalog enrichment and validation.
+- Depends on `IDENTITY_SERVICE_URL` for service token acquisition.
+- Requires `SERVICE_CLIENT_ID` and `SERVICE_CLIENT_SECRET` for authenticating to identity-service's service-token endpoint.
 
 ## Persistence
 

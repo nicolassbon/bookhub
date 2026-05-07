@@ -7,7 +7,7 @@ Catalog and book discovery service for BookHub.
 - public catalog search and book detail retrieval
 - local PostgreSQL-backed catalog persistence
 - external Open Library integration for bootstrap and lookups
-- internal book lookup endpoint used by other services
+- internal book lookup endpoint used by other services (requires authenticated service-to-service access with `ROLE_SERVICE`)
 - Flyway-managed schema evolution
 
 ## HTTP API
@@ -17,9 +17,9 @@ Catalog and book discovery service for BookHub.
 - `GET /api/v1/books`
 - `GET /api/v1/books/{id}`
 
-### Internal endpoint
+### Internal endpoint (authenticated service-to-service)
 
-- `GET /api/v1/internal/books/{bookId}`
+- `GET /api/v1/internal/books/{bookId}` — requires a service JWT with `role=SERVICE` in the `Authorization: Bearer` header
 
 ## Configuration highlights
 

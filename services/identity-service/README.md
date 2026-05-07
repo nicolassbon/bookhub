@@ -8,9 +8,10 @@ Identity and authentication service for BookHub.
 - JWT access-token issuance using RS256
 - refresh-token rotation and logout
 - forgot-password and reset-password flows
+- service token issuance for machine-to-machine authentication
 - authenticated identity endpoint (`GET /api/v1/users/me`)
 - Flyway-managed PostgreSQL persistence
-- HTTP-layer abuse throttling for auth endpoints
+- HTTP-layer abuse throttling for auth and service-token endpoints
 
 ## HTTP API
 
@@ -22,6 +23,7 @@ Identity and authentication service for BookHub.
 - `POST /api/v1/auth/logout`
 - `POST /api/v1/auth/forgot-password`
 - `POST /api/v1/auth/reset-password`
+- `POST /api/v1/auth/service-token` — issues a service JWT for machine-to-machine access (HTTP Basic auth)
 
 ### User
 
@@ -32,6 +34,7 @@ Identity and authentication service for BookHub.
 - Runs on port `8081` by default.
 - Requires PostgreSQL connection settings via `DB_URL`, `DB_USERNAME`, and `DB_PASSWORD`.
 - Requires JWT settings via `JWT_ISSUER`, `JWT_AUDIENCE`, `JWT_RSA_PRIVATE_KEY`, and `JWT_RSA_PUBLIC_KEY`.
+- Requires service credentials via `SERVICE_CLIENT_ID` and `SERVICE_CLIENT_SECRET` for service-token issuance.
 - Requires password-reset hashing secret via `PASSWORD_RESET_HASH_SECRET`.
 - Uses refresh-token hashing and configurable cookie settings under `auth.refresh-token.*`.
 

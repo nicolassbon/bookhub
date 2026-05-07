@@ -9,7 +9,7 @@ This repository contains the backend foundation for BookHub V1, including identi
 ### Runtime applications
 
 - `services/api-gateway` — single public entrypoint and cross-origin policy.
-- `services/identity-service` — authentication, identity, password recovery, and token lifecycle.
+- `services/identity-service` — authentication, identity, password recovery, and token lifecycle (user and service tokens).
 - `services/catalog-service` — book discovery and internal catalog lookups.
 - `services/library-service` — user library flows, reading state, and progress tracking.
 
@@ -40,6 +40,7 @@ The repository currently includes:
 - a Maven multi-module monorepo for the runtime services
 - Flyway-managed PostgreSQL schemas per backend service
 - JWT-based identity flows with RS256 signing and refresh-token rotation
+- service-to-service authentication via service JWT tokens (identity-service issues; library-service acquires/forwards to catalog-service internal endpoints)
 - catalog search and detail endpoints backed by local persistence plus Open Library bootstrap/integration
 - library endpoints for add/list/get/update-state/update-progress workflows
 - local Docker Compose topology for gateway + identity + catalog + library

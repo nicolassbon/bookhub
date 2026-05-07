@@ -11,21 +11,14 @@ This roadmap defines the shortest high-signal path to close BookHub V1 based on 
 | Catalog | Public search/detail (`/api/v1/books/**`), local persistence, Open Library bootstrap/integration |
 | Library core | Add/list/get library entries, state transitions, reading progress |
 | Library extended V1 scope | Yearly goals, reviews (create/update/list by book), notifications (list/mark read) |
+| Internal service auth | Catalog internal routes require service-to-service auth; identity issues service tokens; library forwards service tokens to catalog internal APIs |
 | Platform baseline | Gateway routing, Flyway migrations, PostgreSQL per service boundary, Docker Compose local stack, ADR and contract docs |
 
 ## 2) Must-have remaining work for V1 closure
 
 These items are required to claim a production-ready V1 baseline, not only a feature-complete demo.
 
-### A. Close catalog internal security boundary
-
-**Outcome:** `/api/v1/internal/**` is no longer trust-by-network and requires explicit service-to-service authentication/authorization.
-
-- Enforce authenticated principal for internal catalog routes.
-- Keep deny-by-default behavior and explicit route rules.
-- Add/expand integration tests for authorized vs unauthorized internal access paths.
-
-### B. Make auth rate limiting production-grade
+### A. Make auth rate limiting production-grade
 
 **Outcome:** auth throttling is consistent across instances and resilient to restarts.
 
@@ -33,7 +26,7 @@ These items are required to claim a production-ready V1 baseline, not only a fea
 - Preserve the current trusted-proxy parsing model (`X-Forwarded-For` with bounded/sanitized chain).
 - Validate behavior under multi-instance assumptions (same identity/IP bucket observed consistently).
 
-### C. Deliver minimum admin/moderation surfaces defined for V1
+### B. Deliver minimum admin/moderation surfaces defined for V1
 
 **Outcome:** V1 admin scope is minimally usable instead of roadmap-only.
 
@@ -41,7 +34,7 @@ These items are required to claim a production-ready V1 baseline, not only a fea
 - Add role-gated authorization and tests for admin-only surfaces.
 - Align exposed endpoints with `docs/service-contracts-v1.md` and update contracts where implementation differs.
 
-### D. Close V1 alignment pass across docs and executable contracts
+### C. Close V1 alignment pass across docs and executable contracts
 
 **Outcome:** V1 can be reviewed without ambiguity between intent and running behavior.
 
@@ -59,7 +52,7 @@ These items are required to claim a production-ready V1 baseline, not only a fea
 
 ## V1 closure checklist
 
-- [ ] Catalog internal routes require authenticated service-to-service access.
+- [x] Catalog internal routes require authenticated service-to-service access.
 - [ ] Auth rate limiting is shared-state and multi-instance consistent.
 - [ ] Initial admin/moderation APIs are implemented and role-protected.
 - [ ] Contracts and operational docs match the final executable V1 state.
