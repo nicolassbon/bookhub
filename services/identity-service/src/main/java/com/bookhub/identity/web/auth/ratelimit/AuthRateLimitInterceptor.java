@@ -26,6 +26,7 @@ public class AuthRateLimitInterceptor implements HandlerInterceptor {
   private static final String REGISTER_PATH = "/api/v1/auth/register";
   private static final String FORGOT_PASSWORD_PATH = "/api/v1/auth/forgot-password";
   private static final String REFRESH_PATH = "/api/v1/auth/refresh";
+  private static final String SERVICE_TOKEN_PATH = "/api/v1/auth/service-token";
 
   private static final long CLEANUP_INTERVAL = 100;
   private static final int MAX_FORWARDED_HOPS = 20;
@@ -89,6 +90,9 @@ public class AuthRateLimitInterceptor implements HandlerInterceptor {
     }
     if (REFRESH_PATH.equals(requestPath)) {
       return authRateLimitProperties.refresh();
+    }
+    if (SERVICE_TOKEN_PATH.equals(requestPath)) {
+      return authRateLimitProperties.serviceToken();
     }
     return null;
   }

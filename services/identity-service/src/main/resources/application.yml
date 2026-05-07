@@ -49,6 +49,10 @@ jwt:
     private-key: ${JWT_RSA_PRIVATE_KEY}
     public-key: ${JWT_RSA_PUBLIC_KEY}
 
+service:
+  client-id: ${SERVICE_CLIENT_ID}
+  client-secret: ${SERVICE_CLIENT_SECRET}
+
 auth:
   refresh-token:
     expiration-seconds: ${REFRESH_TOKEN_EXPIRATION_SECONDS:604800}
@@ -76,6 +80,9 @@ auth:
     refresh:
       max-attempts: ${AUTH_RATE_LIMIT_REFRESH_MAX_ATTEMPTS:15}
       window-seconds: ${AUTH_RATE_LIMIT_REFRESH_WINDOW_SECONDS:60}
+    service-token:
+      max-attempts: ${AUTH_RATE_LIMIT_SERVICE_TOKEN_MAX_ATTEMPTS:20}
+      window-seconds: ${AUTH_RATE_LIMIT_SERVICE_TOKEN_WINDOW_SECONDS:60}
     trust-forwarded-headers: ${AUTH_RATE_LIMIT_TRUST_FORWARDED_HEADERS:true}
     trusted-proxy-cidrs: ${AUTH_RATE_LIMIT_TRUSTED_PROXY_CIDRS:172.16.0.0/12,127.0.0.1/32,::1/128}
     max-tracked-keys: ${AUTH_RATE_LIMIT_MAX_TRACKED_KEYS:10000}

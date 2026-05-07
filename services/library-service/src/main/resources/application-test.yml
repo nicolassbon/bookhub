@@ -16,6 +16,14 @@ catalog:
   service:
     base-url: http://localhost:19999
 
+identity:
+  service:
+    url: http://localhost:18081
+
+service:
+  client-id: test-library-client
+  client-secret: test-library-secret
+
 server:
   port: 0
 

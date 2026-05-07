@@ -30,6 +30,10 @@ jwt:
     private-key: ${JWT_RSA_PRIVATE_KEY}
     public-key: ${JWT_RSA_PUBLIC_KEY}
 
+service:
+  client-id: ${SERVICE_CLIENT_ID:test-client}
+  client-secret: ${SERVICE_CLIENT_SECRET:test-secret}
+
 auth:
   refresh-token:
     expiration-seconds: ${REFRESH_TOKEN_EXPIRATION_SECONDS:604800}
@@ -57,3 +61,6 @@ auth:
     refresh:
       max-attempts: ${AUTH_RATE_LIMIT_REFRESH_MAX_ATTEMPTS:20}
       window-seconds: ${AUTH_RATE_LIMIT_REFRESH_WINDOW_SECONDS:60}
+    service-token:
+      max-attempts: ${AUTH_RATE_LIMIT_SERVICE_TOKEN_MAX_ATTEMPTS:20}
+      window-seconds: ${AUTH_RATE_LIMIT_SERVICE_TOKEN_WINDOW_SECONDS:60}

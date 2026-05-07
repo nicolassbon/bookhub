@@ -39,3 +39,11 @@ jwt:
 catalog:
   service:
     base-url: ${CATALOG_SERVICE_URL:http://localhost:8082}
+
+identity:
+  service:
+    url: ${IDENTITY_SERVICE_URL:http://localhost:8081}
+
+service:
+  client-id: ${SERVICE_CLIENT_ID}
+  client-secret: ${SERVICE_CLIENT_SECRET}

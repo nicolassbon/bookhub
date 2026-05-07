@@ -9,6 +9,7 @@ public record AuthRateLimitProperties(
     EndpointRule register,
     EndpointRule forgotPassword,
     EndpointRule refresh,
+    EndpointRule serviceToken,
     boolean trustForwardedHeaders,
     List<String> trustedProxyCidrs,
     int maxTrackedKeys,

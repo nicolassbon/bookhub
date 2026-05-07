@@ -40,7 +40,7 @@ public class SecurityConfig {
                     .requestMatchers(HttpMethod.GET, "/api/v1/books/**")
                     .permitAll()
                     .requestMatchers("/api/v1/internal/**")
-                    .permitAll()
+                    .hasAuthority("ROLE_SERVICE")
                     .requestMatchers("/actuator/health/**")
                     .permitAll()
                     .requestMatchers(HttpMethod.POST, "/api/v1/books/**")

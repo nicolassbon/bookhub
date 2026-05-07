@@ -20,6 +20,7 @@ These documents define product intent, architecture, and contracts. They should 
 These documents must reflect the current executable state of the repository, local setup, and active remediation work.
 
 - `security-issues-backlog.md` — Security remediation backlog and tracking.
+- `roadmap-bookhub-v1.md` — V1 closure roadmap split by implemented, must-have, and post-V1 scope.
 
 ## Service and Infrastructure READMEs
 
