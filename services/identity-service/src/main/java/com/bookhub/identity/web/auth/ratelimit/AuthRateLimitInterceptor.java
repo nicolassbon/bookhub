@@ -1,5 +1,7 @@
 package com.bookhub.identity.web.auth.ratelimit;
 
+import com.bookhub.identity.application.auth.ratelimit.AuthRateLimitStore;
+import com.bookhub.identity.application.auth.ratelimit.RateLimitDecision;
 import com.bookhub.identity.config.AuthRateLimitProperties;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -7,15 +9,9 @@ import java.net.Inet4Address;
 import java.net.Inet6Address;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
-import java.time.Clock;
-import java.time.Instant;
-import java.util.ArrayDeque;
+import java.time.Duration;
 import java.util.ArrayList;
-import java.util.Deque;
 import java.util.List;
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.atomic.AtomicLong;
 import org.springframework.stereotype.Component;
 import org.springframework.web.servlet.HandlerInterceptor;
 
@@ -28,73 +24,52 @@ public class AuthRateLimitInterceptor implements HandlerInterceptor {
   private static final String REFRESH_PATH = "/api/v1/auth/refresh";
   private static final String SERVICE_TOKEN_PATH = "/api/v1/auth/service-token";
 
-  private static final long CLEANUP_INTERVAL = 100;
   private static final int MAX_FORWARDED_HOPS = 20;
 
   private final AuthRateLimitProperties authRateLimitProperties;
-  private final Clock clock;
-  private final Map<String, Deque<Instant>> attemptsByKey;
-  private final AtomicLong requestsSinceCleanup;
+  private final AuthRateLimitStore authRateLimitStore;
 
   public AuthRateLimitInterceptor(
-      final AuthRateLimitProperties authRateLimitProperties, final Clock clock) {
+      final AuthRateLimitProperties authRateLimitProperties,
+      final AuthRateLimitStore authRateLimitStore) {
     this.authRateLimitProperties = authRateLimitProperties;
-    this.clock = clock;
-    this.attemptsByKey = new ConcurrentHashMap<>();
-    this.requestsSinceCleanup = new AtomicLong(0);
+    this.authRateLimitStore = authRateLimitStore;
   }
 
   @Override
   public boolean preHandle(
       final HttpServletRequest request, final HttpServletResponse response, final Object handler) {
-    final AuthRateLimitProperties.EndpointRule rule = resolveRule(request.getRequestURI());
-    if (rule == null) {
+    final EndpointRateLimit endpointRateLimit = resolveEndpointRateLimit(request.getRequestURI());
+    if (endpointRateLimit == null) {
       return true;
     }
 
-    final Instant now = Instant.now(clock);
-    cleanupIfNeeded(now);
-
-    final Instant windowStart = now.minusSeconds(rule.windowSeconds());
-    final String key = request.getRequestURI() + ":" + clientFingerprint(request);
-    final Deque<Instant> attempts =
-        attemptsByKey.computeIfAbsent(key, ignored -> new ArrayDeque<>());
-
-    synchronized (attempts) {
-      while (!attempts.isEmpty() && attempts.peekFirst().isBefore(windowStart)) {
-        attempts.removeFirst();
-      }
-
-      if (attempts.size() >= rule.maxAttempts()) {
-        throw new RateLimitExceededException(
-            "Too many requests for this endpoint. Try again later.");
-      }
-
-      attempts.addLast(now);
+    final AuthRateLimitProperties.EndpointRule rule = endpointRateLimit.rule();
+    final RateLimitDecision decision =
+        authRateLimitStore.consume(
+            bucketKey(endpointRateLimit.endpointId(), request),
+            rule.maxAttempts(),
+            Duration.ofSeconds(rule.windowSeconds()));
+    if (!decision.allowed()) {
+      throw new RateLimitExceededException("Too many requests for this endpoint. Try again later.");
     }
-
-    enforceMaxTrackedKeys();
 
     return true;
   }
 
-  private AuthRateLimitProperties.EndpointRule resolveRule(final String requestPath) {
-    if (LOGIN_PATH.equals(requestPath)) {
-      return authRateLimitProperties.login();
-    }
-    if (REGISTER_PATH.equals(requestPath)) {
-      return authRateLimitProperties.register();
-    }
-    if (FORGOT_PASSWORD_PATH.equals(requestPath)) {
-      return authRateLimitProperties.forgotPassword();
-    }
-    if (REFRESH_PATH.equals(requestPath)) {
-      return authRateLimitProperties.refresh();
-    }
-    if (SERVICE_TOKEN_PATH.equals(requestPath)) {
-      return authRateLimitProperties.serviceToken();
-    }
-    return null;
+  private EndpointRateLimit resolveEndpointRateLimit(final String requestPath) {
+    return switch (requestPath) {
+      case LOGIN_PATH -> new EndpointRateLimit("login", authRateLimitProperties.login());
+      case REGISTER_PATH -> new EndpointRateLimit("register", authRateLimitProperties.register());
+      case FORGOT_PASSWORD_PATH -> new EndpointRateLimit("forgot-password", authRateLimitProperties.forgotPassword());
+      case REFRESH_PATH -> new EndpointRateLimit("refresh", authRateLimitProperties.refresh());
+      case SERVICE_TOKEN_PATH -> new EndpointRateLimit("service-token", authRateLimitProperties.serviceToken());
+      default -> null;
+    };
+  }
+
+  private String bucketKey(final String endpointId, final HttpServletRequest request) {
+    return endpointId + ":" + clientFingerprint(request);
   }
 
   private String clientFingerprint(final HttpServletRequest request) {
@@ -264,61 +239,5 @@ public class AuthRateLimitInterceptor implements HandlerInterceptor {
     }
   }
 
-  private void cleanupIfNeeded(final Instant now) {
-    final long seenRequests = requestsSinceCleanup.incrementAndGet();
-    if (seenRequests % CLEANUP_INTERVAL != 0) {
-      return;
-    }
-
-    final long staleEntryTtlSeconds = authRateLimitProperties.staleEntryTtlSeconds();
-    final Instant staleThreshold = now.minusSeconds(staleEntryTtlSeconds);
-    attemptsByKey.forEach(
-        (key, attempts) -> {
-          synchronized (attempts) {
-            removeStaleAttempts(attempts, staleThreshold);
-            if (attempts.isEmpty()) {
-              attemptsByKey.remove(key, attempts);
-            }
-          }
-        });
-  }
-
-  private void removeStaleAttempts(final Deque<Instant> attempts, final Instant staleThreshold) {
-    while (!attempts.isEmpty() && attempts.peekFirst().isBefore(staleThreshold)) {
-      attempts.removeFirst();
-    }
-  }
-
-  private void enforceMaxTrackedKeys() {
-    final int maxTrackedKeys = authRateLimitProperties.maxTrackedKeys();
-    if (attemptsByKey.size() <= maxTrackedKeys) {
-      return;
-    }
-
-    attemptsByKey.entrySet().stream()
-        .sorted(
-            (left, right) -> {
-              final Instant leftLastAttempt = lastAttempt(left.getValue());
-              final Instant rightLastAttempt = lastAttempt(right.getValue());
-              if (leftLastAttempt == null && rightLastAttempt == null) {
-                return 0;
-              }
-              if (leftLastAttempt == null) {
-                return -1;
-              }
-              if (rightLastAttempt == null) {
-                return 1;
-              }
-              return leftLastAttempt.compareTo(rightLastAttempt);
-            })
-        .limit(attemptsByKey.size() - maxTrackedKeys)
-        .map(Map.Entry::getKey)
-        .forEach(attemptsByKey::remove);
-  }
-
-  private Instant lastAttempt(final Deque<Instant> attempts) {
-    synchronized (attempts) {
-      return attempts.peekLast();
-    }
-  }
+  private record EndpointRateLimit(String endpointId, AuthRateLimitProperties.EndpointRule rule) {}
 }

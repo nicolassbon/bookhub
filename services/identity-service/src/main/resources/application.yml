@@ -15,6 +15,10 @@ spring:
   flyway:
     enabled: ${FLYWAY_ENABLED:true}
     locations: ${FLYWAY_LOCATIONS:classpath:db/migration}
+  data:
+    redis:
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
   mail:
     host: ${SPRING_MAIL_HOST}
     port: ${SPRING_MAIL_PORT:587}
@@ -85,5 +89,6 @@ auth:
       window-seconds: ${AUTH_RATE_LIMIT_SERVICE_TOKEN_WINDOW_SECONDS:60}
     trust-forwarded-headers: ${AUTH_RATE_LIMIT_TRUST_FORWARDED_HEADERS:true}
     trusted-proxy-cidrs: ${AUTH_RATE_LIMIT_TRUSTED_PROXY_CIDRS:172.16.0.0/12,127.0.0.1/32,::1/128}
-    max-tracked-keys: ${AUTH_RATE_LIMIT_MAX_TRACKED_KEYS:10000}
-    stale-entry-ttl-seconds: ${AUTH_RATE_LIMIT_STALE_ENTRY_TTL_SECONDS:600}
+    redis:
+      key-prefix: ${AUTH_RATE_LIMIT_REDIS_KEY_PREFIX:bookhub:identity:auth-rate-limit:v1}
+      failure-mode: ${AUTH_RATE_LIMIT_REDIS_FAILURE_MODE:FAIL_CLOSED}

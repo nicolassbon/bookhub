@@ -14,7 +14,7 @@ import org.testcontainers.postgresql.PostgreSQLContainer;
 @ActiveProfiles("test")
 @Testcontainers
 @AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.NONE)
-public abstract class PostgreSqlIntegrationTest {
+public abstract class PostgreSqlIntegrationTest extends RedisIntegrationTest {
 
   static final PostgreSQLContainer POSTGRESQL_CONTAINER =
       new PostgreSQLContainer("postgres:16-alpine");
@@ -34,6 +34,7 @@ public abstract class PostgreSqlIntegrationTest {
     registry.add("spring.flyway.url", POSTGRESQL_CONTAINER::getJdbcUrl);
     registry.add("spring.flyway.user", POSTGRESQL_CONTAINER::getUsername);
     registry.add("spring.flyway.password", POSTGRESQL_CONTAINER::getPassword);
+    configureRedis(registry);
   }
 
   @BeforeEach

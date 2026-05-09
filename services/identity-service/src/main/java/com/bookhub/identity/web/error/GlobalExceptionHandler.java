@@ -4,6 +4,7 @@ import com.bookhub.identity.application.auth.InvalidCredentialsException;
 import com.bookhub.identity.application.auth.InvalidPasswordResetTokenException;
 import com.bookhub.identity.application.auth.InvalidRefreshTokenException;
 import com.bookhub.identity.application.auth.InvalidServiceCredentialsException;
+import com.bookhub.identity.application.auth.ratelimit.AuthRateLimitStoreUnavailableException;
 import com.bookhub.identity.domain.user.DuplicateResourceException;
 import com.bookhub.identity.web.auth.ratelimit.RateLimitExceededException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -131,6 +132,24 @@ public class GlobalExceptionHandler {
         "Too Many Requests",
         "RATE_LIMIT_EXCEEDED",
         exception.getMessage(),
+        request.getRequestURI());
+  }
+
+  @ExceptionHandler(AuthRateLimitStoreUnavailableException.class)
+  public ResponseEntity<ErrorResponse> handleRateLimitStoreUnavailable(
+      final AuthRateLimitStoreUnavailableException exception, final HttpServletRequest request) {
+    log.warn(
+        "Authentication rate-limit store unavailable method={} path={} requestId={}",
+        request.getMethod(),
+        request.getRequestURI(),
+        requestId(request),
+        exception);
+
+    return buildErrorResponse(
+        HttpStatus.SERVICE_UNAVAILABLE,
+        "Service Unavailable",
+        "AUTH_RATE_LIMIT_UNAVAILABLE",
+        "Authentication rate limiting is temporarily unavailable",
         request.getRequestURI());
   }
 

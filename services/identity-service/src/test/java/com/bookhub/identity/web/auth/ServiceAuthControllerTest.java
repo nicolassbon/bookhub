@@ -1,6 +1,7 @@
 package com.bookhub.identity.web.auth;
 
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -10,12 +11,15 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import com.bookhub.identity.application.auth.ServiceTokenIssuer;
 import com.bookhub.identity.application.auth.TokenIssuer.IssuedTokenPair;
+import com.bookhub.identity.application.auth.ratelimit.AuthRateLimitStore;
+import com.bookhub.identity.application.auth.ratelimit.RateLimitDecision;
 import com.bookhub.identity.config.JwtKeyConfig;
 import com.bookhub.identity.config.RefreshTokenProperties;
 import com.bookhub.identity.config.SecurityConfig;
 import com.bookhub.identity.domain.auth.ServicePrincipal;
 import com.bookhub.identity.web.error.GlobalExceptionHandler;
 import java.time.Clock;
+import java.time.Duration;
 import java.time.Instant;
 import java.time.ZoneOffset;
 import java.util.Base64;
@@ -37,7 +41,9 @@ import org.springframework.test.web.servlet.MockMvc;
 @TestPropertySource(
     properties = {
       "service.client-id=test-client",
-      "service.client-secret=test-secret"
+      "service.client-secret=test-secret",
+      "auth.rate-limit.service-token.max-attempts=1",
+      "auth.rate-limit.service-token.window-seconds=60"
     })
 class ServiceAuthControllerTest {
 
@@ -46,6 +52,8 @@ class ServiceAuthControllerTest {
   @MockitoBean private ServiceTokenIssuer serviceTokenIssuer;
 
   @MockitoBean private Clock clock;
+
+  @MockitoBean private AuthRateLimitStore authRateLimitStore;
 
   @MockitoBean private RefreshTokenProperties refreshTokenProperties;
 
@@ -57,6 +65,8 @@ class ServiceAuthControllerTest {
     when(refreshTokenProperties.cookiePath()).thenReturn("/api/v1/auth");
     when(refreshTokenProperties.cookieSameSite()).thenReturn("Strict");
     when(refreshTokenProperties.cookieSecure()).thenReturn(false);
+    when(authRateLimitStore.consume(any(), anyInt(), any(Duration.class)))
+        .thenReturn(RateLimitDecision.allowed(99, Duration.ofSeconds(60)));
   }
 
   @Test
@@ -67,7 +77,7 @@ class ServiceAuthControllerTest {
 
     when(serviceTokenIssuer.issueFor(any(ServicePrincipal.class))).thenReturn(tokenPair);
 
-    final String authHeader = "Basic " + Base64.getEncoder().encodeToString("test-client:test-secret".getBytes());
+    final String authHeader = basicAuthHeader("test-client:test-secret");
 
     mockMvc
         .perform(
@@ -78,8 +88,37 @@ class ServiceAuthControllerTest {
         .andExpect(jsonPath("$.accessToken").value("svc-jwt-token"))
         .andExpect(jsonPath("$.expiresIn").value(3600));
 
-    verify(serviceTokenIssuer)
-        .issueFor(new ServicePrincipal("test-client"));
+    verify(serviceTokenIssuer).issueFor(new ServicePrincipal("test-client"));
+  }
+
+  @Test
+  void shouldReturn429WhenServiceTokenRateLimitIsExceeded() throws Exception {
+    final IssuedTokenPair tokenPair =
+        IssuedTokenPair.builder().accessToken("svc-jwt-token").expiresIn(3600).build();
+    final String authHeader = basicAuthHeader("test-client:test-secret");
+
+    when(serviceTokenIssuer.issueFor(any(ServicePrincipal.class))).thenReturn(tokenPair);
+    when(authRateLimitStore.consume(any(), anyInt(), any(Duration.class)))
+        .thenReturn(
+            RateLimitDecision.allowed(0, Duration.ofSeconds(60)),
+            RateLimitDecision.blocked(Duration.ofSeconds(60)));
+
+    mockMvc
+        .perform(
+            post("/api/v1/auth/service-token")
+                .header("Authorization", authHeader)
+                .contentType(MediaType.APPLICATION_JSON))
+        .andExpect(status().isOk());
+
+    mockMvc
+        .perform(
+            post("/api/v1/auth/service-token")
+                .header("Authorization", authHeader)
+                .contentType(MediaType.APPLICATION_JSON))
+        .andExpect(status().isTooManyRequests())
+        .andExpect(jsonPath("$.status").value(429))
+        .andExpect(jsonPath("$.code").value("RATE_LIMIT_EXCEEDED"))
+        .andExpect(jsonPath("$.path").value("/api/v1/auth/service-token"));
   }
 
   @Test
@@ -98,7 +137,7 @@ class ServiceAuthControllerTest {
   @Test
   @DisplayName("Should return 401 when Basic Auth credentials are invalid")
   void shouldReturn401WhenInvalidCredentials() throws Exception {
-    final String authHeader = "Basic " + Base64.getEncoder().encodeToString("test-client:wrong-secret".getBytes());
+    final String authHeader = basicAuthHeader("test-client:wrong-secret");
 
     mockMvc
         .perform(
@@ -209,5 +248,9 @@ class ServiceAuthControllerTest {
         .andExpect(jsonPath("$.code").value("UNAUTHORIZED"));
 
     verify(serviceTokenIssuer, never()).issueFor(any());
+  }
+
+  private String basicAuthHeader(final String credentials) {
+    return "Basic " + Base64.getEncoder().encodeToString(credentials.getBytes());
   }
 }

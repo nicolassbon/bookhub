@@ -8,6 +8,10 @@ spring:
     password: ${DB_PASSWORD}
   jpa:
     show-sql: true
+  data:
+    redis:
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
 
 server:
   port: ${SERVER_PORT:8081}
@@ -26,6 +30,10 @@ jwt:
     public-key: ${JWT_RSA_PUBLIC_KEY:}
 
 auth:
+  rate-limit:
+    redis:
+      key-prefix: ${AUTH_RATE_LIMIT_REDIS_KEY_PREFIX:bookhub:identity:auth-rate-limit:v1}
+      failure-mode: ${AUTH_RATE_LIMIT_REDIS_FAILURE_MODE:FAIL_CLOSED}
   refresh-token:
     expiration-seconds: ${REFRESH_TOKEN_EXPIRATION_SECONDS:604800}
     hash-secret: ${REFRESH_TOKEN_HASH_SECRET:local-refresh-token-secret}

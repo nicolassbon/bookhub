@@ -1,6 +1,7 @@
 package com.bookhub.identity.web.auth;
 
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
@@ -24,12 +25,15 @@ import com.bookhub.identity.application.auth.RegisterUserCommand;
 import com.bookhub.identity.application.auth.RegisterUserResult;
 import com.bookhub.identity.application.auth.RegisterUserService;
 import com.bookhub.identity.application.auth.ResetPasswordService;
+import com.bookhub.identity.application.auth.ratelimit.AuthRateLimitStore;
+import com.bookhub.identity.application.auth.ratelimit.RateLimitDecision;
 import com.bookhub.identity.config.JwtKeyConfig;
 import com.bookhub.identity.config.RefreshTokenProperties;
 import com.bookhub.identity.config.SecurityConfig;
 import com.bookhub.identity.domain.user.DuplicateResourceException;
 import com.bookhub.identity.web.error.GlobalExceptionHandler;
 import java.time.Clock;
+import java.time.Duration;
 import java.time.Instant;
 import java.time.ZoneOffset;
 import org.junit.jupiter.api.BeforeEach;
@@ -66,6 +70,8 @@ class AuthControllerTest {
 
   @MockitoBean private RefreshTokenProperties refreshTokenProperties;
 
+  @MockitoBean private AuthRateLimitStore authRateLimitStore;
+
   @MockitoBean private Clock clock;
 
   @BeforeEach
@@ -76,6 +82,8 @@ class AuthControllerTest {
     when(refreshTokenProperties.cookieSecure()).thenReturn(false);
     when(clock.instant()).thenReturn(Instant.parse("2026-04-17T00:00:00Z"));
     when(clock.getZone()).thenReturn(ZoneOffset.UTC);
+    when(authRateLimitStore.consume(any(), anyInt(), any(Duration.class)))
+        .thenReturn(RateLimitDecision.allowed(99, Duration.ofSeconds(60)));
   }
 
   @Test

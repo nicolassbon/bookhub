@@ -3,7 +3,7 @@
 This setup runs the following services for local development:
 
 - `api-gateway`
-- `identity-service` + `identity-db`
+- `identity-service` + `identity-db` + `identity-redis`
 - `catalog-service` + `catalog-db`
 - `library-service` + `library-db`
 
@@ -80,6 +80,7 @@ docker compose -f compose.yml up --build -d
 
 - Gateway API (public entrypoint): `http://localhost:8080`
 - Identity DB: `localhost:5432`
+- Identity Redis: `localhost:6379`
 - Catalog DB: `localhost:5433`
 
 Library DB is **not** exposed on the host in `compose.dev.yml`.
@@ -101,6 +102,8 @@ Downstream service ports are intentionally not published in `compose.dev.yml` so
 
 ## Notes
 
-- Containers use Docker DNS hostnames (`identity-db`, `catalog-db`, `library-db`) for internal DB connectivity.
+- `identity-service` uses `identity-redis:6379` for shared auth rate-limit counters in the local stack.
+- Redis stores ephemeral TTL-backed counters under `bookhub:identity:auth-rate-limit:v1` by default.
+- Containers use Docker DNS hostnames (`identity-db`, `identity-redis`, `catalog-db`, `library-db`) for internal connectivity.
 - Docker images are built from source inside Docker (no prebuilt local jars required).
 - Host-port publishing is intentionally isolated in `compose.dev.yml` to keep `compose.yml` reusable across local scenarios.

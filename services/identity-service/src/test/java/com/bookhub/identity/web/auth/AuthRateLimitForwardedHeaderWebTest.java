@@ -1,6 +1,9 @@
 package com.bookhub.identity.web.auth;
 
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -14,11 +17,14 @@ import com.bookhub.identity.application.auth.LogoutUserService;
 import com.bookhub.identity.application.auth.RefreshSessionService;
 import com.bookhub.identity.application.auth.RegisterUserService;
 import com.bookhub.identity.application.auth.ResetPasswordService;
+import com.bookhub.identity.application.auth.ratelimit.AuthRateLimitStore;
+import com.bookhub.identity.application.auth.ratelimit.RateLimitDecision;
 import com.bookhub.identity.config.JwtKeyConfig;
 import com.bookhub.identity.config.RefreshTokenProperties;
 import com.bookhub.identity.config.SecurityConfig;
 import com.bookhub.identity.web.error.GlobalExceptionHandler;
 import java.time.Clock;
+import java.time.Duration;
 import java.time.Instant;
 import java.time.ZoneOffset;
 import org.junit.jupiter.api.BeforeEach;
@@ -77,6 +83,8 @@ class AuthRateLimitForwardedHeaderWebTest {
 
   @MockitoBean private RefreshTokenProperties refreshTokenProperties;
 
+  @MockitoBean private AuthRateLimitStore authRateLimitStore;
+
   @MockitoBean private Clock clock;
 
   @BeforeEach
@@ -87,6 +95,8 @@ class AuthRateLimitForwardedHeaderWebTest {
     when(refreshTokenProperties.cookieSecure()).thenReturn(false);
     when(clock.instant()).thenReturn(Instant.parse("2026-04-17T00:00:00Z"));
     when(clock.getZone()).thenReturn(ZoneOffset.UTC);
+    when(authRateLimitStore.consume(any(), anyInt(), any(Duration.class)))
+        .thenReturn(RateLimitDecision.allowed(99, Duration.ofSeconds(60)));
 
     when(authWebMapper.toLoginUserCommand(any(LoginRequest.class)))
         .thenReturn(
@@ -135,6 +145,8 @@ class AuthRateLimitForwardedHeaderWebTest {
 
   @Test
   void shouldRateLimitRequestsWhenTrustedProxyForwardsTheSameClientIp() throws Exception {
+    allowNextAttemptThenBlock();
+
     performLoginFromTrustedProxy("198.51.100.30").andExpect(status().isOk());
 
     performLoginFromTrustedProxy("198.51.100.30")
@@ -142,6 +154,30 @@ class AuthRateLimitForwardedHeaderWebTest {
         .andExpect(jsonPath("$.status").value(429))
         .andExpect(jsonPath("$.code").value("RATE_LIMIT_EXCEEDED"))
         .andExpect(jsonPath("$.path").value("/api/v1/auth/login"));
+  }
+
+  @Test
+  void shouldIgnoreForwardedClientIpWhenRequestComesFromUntrustedSource() throws Exception {
+    final String untrustedRemoteAddress = "10.10.10.10";
+
+    mockMvc
+        .perform(
+            post("/api/v1/auth/login")
+                .with(remoteAddress(untrustedRemoteAddress))
+                .header("X-Forwarded-For", "198.51.100.99")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(LOGIN_REQUEST_BODY))
+        .andExpect(status().isOk());
+
+    verify(authRateLimitStore)
+        .consume(eq("login:" + untrustedRemoteAddress), anyInt(), any(Duration.class));
+  }
+
+  private void allowNextAttemptThenBlock() {
+    when(authRateLimitStore.consume(any(), anyInt(), any(Duration.class)))
+        .thenReturn(
+            RateLimitDecision.allowed(0, Duration.ofSeconds(60)),
+            RateLimitDecision.blocked(Duration.ofSeconds(60)));
   }
 
   private org.springframework.test.web.servlet.ResultActions performLoginFromTrustedProxy(
@@ -155,8 +191,12 @@ class AuthRateLimitForwardedHeaderWebTest {
   }
 
   private RequestPostProcessor trustedProxyRemoteAddress() {
+    return remoteAddress(PROXY_REMOTE_ADDRESS);
+  }
+
+  private RequestPostProcessor remoteAddress(final String address) {
     return request -> {
-      request.setRemoteAddr(PROXY_REMOTE_ADDRESS);
+      request.setRemoteAddr(address);
       return request;
     };
   }

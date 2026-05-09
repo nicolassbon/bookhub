@@ -44,10 +44,16 @@ services:
       SPRING_MAIL_PASSWORD: ${SPRING_MAIL_PASSWORD:-}
       SPRING_MAIL_SMTP_AUTH: ${SPRING_MAIL_SMTP_AUTH:-false}
       SPRING_MAIL_SMTP_STARTTLS_ENABLE: ${SPRING_MAIL_SMTP_STARTTLS_ENABLE:-false}
+      REDIS_HOST: identity-redis
+      REDIS_PORT: 6379
+      AUTH_RATE_LIMIT_REDIS_KEY_PREFIX: bookhub:identity:auth-rate-limit:v1
+      AUTH_RATE_LIMIT_REDIS_FAILURE_MODE: FAIL_CLOSED
       AUTH_RATE_LIMIT_TRUST_FORWARDED_HEADERS: true
       AUTH_RATE_LIMIT_TRUSTED_PROXY_CIDRS: 172.16.0.0/12
     depends_on:
       identity-db:
+        condition: service_healthy
+      identity-redis:
         condition: service_healthy
     networks:
       - bookhub-network
@@ -92,6 +98,18 @@ services:
     networks:
       - bookhub-network
 
+  identity-redis:
+    image: redis:7-alpine
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    volumes:
+      - identity-redis-data:/data
+    networks:
+      - bookhub-network
+
   identity-db:
     image: postgres:16-alpine
     environment:
@@ -99,7 +117,7 @@ services:
       POSTGRES_USER: bookhub
       POSTGRES_PASSWORD: bookhub
     healthcheck:
-      test: ['CMD-SHELL', 'pg_isready -U bookhub -d bookhub_identity']
+      test: ["CMD-SHELL", "pg_isready -U bookhub -d bookhub_identity"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -115,7 +133,7 @@ services:
       POSTGRES_USER: bookhub
       POSTGRES_PASSWORD: bookhub
     healthcheck:
-      test: ['CMD-SHELL', 'pg_isready -U bookhub -d bookhub_catalog']
+      test: ["CMD-SHELL", "pg_isready -U bookhub -d bookhub_catalog"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -131,7 +149,7 @@ services:
       POSTGRES_USER: bookhub
       POSTGRES_PASSWORD: bookhub
     healthcheck:
-      test: ['CMD-SHELL', 'pg_isready -U bookhub -d bookhub_library']
+      test: ["CMD-SHELL", "pg_isready -U bookhub -d bookhub_library"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -146,6 +164,6 @@ networks:
 
 volumes:
   identity-db-data:
+  identity-redis-data:
   catalog-db-data:
   library-db-data:
-

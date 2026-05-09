@@ -47,7 +47,8 @@ public class ServiceAuthController {
     final String base64Credentials = authHeader.substring(BASIC_PREFIX.length());
     final String credentials;
     try {
-      credentials = new String(Base64.getDecoder().decode(base64Credentials), StandardCharsets.UTF_8);
+      credentials =
+          new String(Base64.getDecoder().decode(base64Credentials), StandardCharsets.UTF_8);
     } catch (IllegalArgumentException e) {
       throw new InvalidServiceCredentialsException();
     }
@@ -61,10 +62,11 @@ public class ServiceAuthController {
     final String clientSecret = parts[1];
 
     if (!MessageDigest.isEqual(
-                expectedClientId.getBytes(StandardCharsets.UTF_8), clientId.getBytes(StandardCharsets.UTF_8))
-            || !MessageDigest.isEqual(
-                expectedClientSecret.getBytes(StandardCharsets.UTF_8),
-                clientSecret.getBytes(StandardCharsets.UTF_8))) {
+            expectedClientId.getBytes(StandardCharsets.UTF_8),
+            clientId.getBytes(StandardCharsets.UTF_8))
+        || !MessageDigest.isEqual(
+            expectedClientSecret.getBytes(StandardCharsets.UTF_8),
+            clientSecret.getBytes(StandardCharsets.UTF_8))) {
       throw new InvalidServiceCredentialsException();
     }
 

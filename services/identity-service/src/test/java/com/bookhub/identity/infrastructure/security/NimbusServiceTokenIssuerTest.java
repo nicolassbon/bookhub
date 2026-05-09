@@ -32,8 +32,7 @@ class NimbusServiceTokenIssuerTest {
     final NimbusServiceTokenIssuer tokenIssuer =
         new NimbusServiceTokenIssuer(jwtEncoder, jwtProperties(3600));
 
-    final ServicePrincipal principal =
-        new ServicePrincipal("library-service");
+    final ServicePrincipal principal = new ServicePrincipal("library-service");
 
     when(jwtEncoder.encode(any(JwtEncoderParameters.class)))
         .thenReturn(
@@ -67,13 +66,13 @@ class NimbusServiceTokenIssuerTest {
   }
 
   @Test
-  @DisplayName("Should issue token with correct expiration for service principal with different TTL")
+  @DisplayName(
+      "Should issue token with correct expiration for service principal with different TTL")
   void shouldIssueTokenWithCorrectExpirationForDifferentTtl() {
     final NimbusServiceTokenIssuer tokenIssuer =
         new NimbusServiceTokenIssuer(jwtEncoder, jwtProperties(1800));
 
-    final ServicePrincipal principal =
-        new ServicePrincipal("catalog-service");
+    final ServicePrincipal principal = new ServicePrincipal("catalog-service");
 
     when(jwtEncoder.encode(any(JwtEncoderParameters.class)))
         .thenReturn(

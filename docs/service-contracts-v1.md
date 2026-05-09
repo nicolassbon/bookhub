@@ -200,6 +200,47 @@ Issues a service JWT for machine-to-machine access. Used by downstream services 
 
 **Rate limiting**: This endpoint is rate-limited independently (default: 20 requests per 60-second window).
 
+### Auth rate limiting
+
+The following auth endpoints are rate-limited independently per endpoint and client fingerprint:
+
+- `POST /api/v1/auth/login`
+- `POST /api/v1/auth/register`
+- `POST /api/v1/auth/forgot-password`
+- `POST /api/v1/auth/refresh`
+- `POST /api/v1/auth/service-token`
+
+Rate-limit state is shared across `identity-service` instances through a TTL-backed Redis store.
+Forwarded client IP headers are trusted only when the immediate source matches configured trusted proxy CIDRs.
+
+**Error — 429 Too Many Requests**
+
+```json
+{
+  "timestamp": "2026-04-17T00:00:00Z",
+  "status": 429,
+  "error": "Too Many Requests",
+  "code": "RATE_LIMIT_EXCEEDED",
+  "message": "Too many requests for this endpoint. Try again later.",
+  "path": "/api/v1/auth/login"
+}
+```
+
+**Error — 503 Service Unavailable**
+
+Returned when the shared rate-limit store is unavailable. The default operational policy is fail-closed.
+
+```json
+{
+  "timestamp": "2026-04-17T00:00:00Z",
+  "status": 503,
+  "error": "Service Unavailable",
+  "code": "AUTH_RATE_LIMIT_UNAVAILABLE",
+  "message": "Authentication rate limiting is temporarily unavailable",
+  "path": "/api/v1/auth/login"
+}
+```
+
 ### Users
 
 > Status key used in this document:

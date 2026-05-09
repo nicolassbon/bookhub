@@ -12,8 +12,14 @@ public record AuthRateLimitProperties(
     EndpointRule serviceToken,
     boolean trustForwardedHeaders,
     List<String> trustedProxyCidrs,
-    int maxTrackedKeys,
-    long staleEntryTtlSeconds) {
+    Redis redis) {
 
   public record EndpointRule(int maxAttempts, long windowSeconds) {}
+
+  public record Redis(String keyPrefix, FailureMode failureMode) {}
+
+  public enum FailureMode {
+    FAIL_CLOSED,
+    FAIL_OPEN
+  }
 }
