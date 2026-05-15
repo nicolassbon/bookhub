@@ -289,7 +289,7 @@ Updates editable base profile fields.
 
 ### Admin
 
-**Planned (roadmap) — not implemented in current identity-service controllers**
+**Implemented (current)**
 
 #### `GET /api/v1/admin/users`
 
@@ -459,7 +459,7 @@ Returns minimal canonical book data for authenticated internal consumers such as
 
 ### Admin
 
-**Planned (roadmap) — not implemented in current catalog-service controllers**
+**Implemented (current)**
 
 #### `POST /api/v1/admin/books/import`
 
@@ -685,7 +685,7 @@ In V1, notifications only transition between `UNREAD` and `READ`.
 
 ### Admin
 
-**Planned (roadmap) — not implemented in current library-service controllers**
+**Implemented (current)**
 
 #### `GET /api/v1/admin/reviews`
 

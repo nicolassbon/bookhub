@@ -13,26 +13,23 @@ This roadmap defines the shortest high-signal path to close BookHub V1 based on 
 | Library extended V1 scope | Yearly goals, reviews (create/update/list by book), notifications (list/mark read) |
 | Internal service auth | Catalog internal routes require service-to-service auth; identity issues service tokens; library forwards service tokens to catalog internal APIs |
 | Platform baseline | Gateway routing, Flyway migrations, PostgreSQL per service boundary, Docker Compose local stack, ADR and contract docs |
+| Auth rate limiting | Redis-backed distributed rate limiting on all auth endpoints, shared TTL counters across instances, trusted-proxy fingerprinting, fail-closed on store unavailability |
 
 ## 2) Must-have remaining work for V1 closure
 
 These items are required to claim a production-ready V1 baseline, not only a feature-complete demo.
 
-### A. Make auth rate limiting production-grade
+### ~~A. Make auth rate limiting production-grade~~ ✅ Done
 
-**Outcome:** auth throttling is consistent across instances and resilient to restarts.
+> Delivered in commit `89d4f3e`. Redis-backed sliding-window counters replaced node-local `ConcurrentHashMap` state. Trusted-proxy fingerprinting preserved. Fail-closed on Redis unavailability (503). Contracts and docs updated.
 
-- Move auth rate-limit counters from in-memory state to a shared TTL-backed store.
-- Preserve the current trusted-proxy parsing model (`X-Forwarded-For` with bounded/sanitized chain).
-- Validate behavior under multi-instance assumptions (same identity/IP bucket observed consistently).
-
-### B. Deliver minimum admin/moderation surfaces defined for V1
+### ~~B. Deliver minimum admin/moderation surfaces defined for V1~~ ✅ Done
 
 **Outcome:** V1 admin scope is minimally usable instead of roadmap-only.
 
-- Implement initial admin endpoints for user visibility and review moderation workflows.
-- Add role-gated authorization and tests for admin-only surfaces.
-- Align exposed endpoints with `docs/service-contracts-v1.md` and update contracts where implementation differs.
+- Implemented initial admin endpoints for user visibility and review moderation workflows.
+- Added role-gated authorization and tests for admin-only surfaces.
+- Aligned exposed endpoints with `docs/service-contracts-v1.md` and updated contracts where implementation differs.
 
 ### C. Close V1 alignment pass across docs and executable contracts
 
@@ -53,6 +50,6 @@ These items are required to claim a production-ready V1 baseline, not only a fea
 ## V1 closure checklist
 
 - [x] Catalog internal routes require authenticated service-to-service access.
-- [ ] Auth rate limiting is shared-state and multi-instance consistent.
-- [ ] Initial admin/moderation APIs are implemented and role-protected.
+- [x] Auth rate limiting is shared-state and multi-instance consistent.
+- [x] Initial admin/moderation APIs are implemented and role-protected.
 - [ ] Contracts and operational docs match the final executable V1 state.
