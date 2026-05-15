@@ -6,6 +6,8 @@ import com.bookhub.identity.application.auth.InvalidRefreshTokenException;
 import com.bookhub.identity.application.auth.InvalidServiceCredentialsException;
 import com.bookhub.identity.application.auth.ratelimit.AuthRateLimitStoreUnavailableException;
 import com.bookhub.identity.domain.user.DuplicateResourceException;
+import com.bookhub.identity.domain.user.UserNotFoundException;
+import com.bookhub.identity.web.admin.InvalidRoleException;
 import com.bookhub.identity.web.auth.ratelimit.RateLimitExceededException;
 import jakarta.servlet.http.HttpServletRequest;
 import java.time.Instant;
@@ -172,6 +174,28 @@ public class GlobalExceptionHandler {
         "Not Found",
         "RESOURCE_NOT_FOUND",
         "Resource not found",
+        request.getRequestURI());
+  }
+
+  @ExceptionHandler(UserNotFoundException.class)
+  public ResponseEntity<ErrorResponse> handleUserNotFound(
+      final UserNotFoundException exception, final HttpServletRequest request) {
+    return buildErrorResponse(
+        HttpStatus.NOT_FOUND,
+        "Not Found",
+        "USER_NOT_FOUND",
+        exception.getMessage(),
+        request.getRequestURI());
+  }
+
+  @ExceptionHandler(InvalidRoleException.class)
+  public ResponseEntity<ErrorResponse> handleInvalidRole(
+      final InvalidRoleException exception, final HttpServletRequest request) {
+    return buildErrorResponse(
+        HttpStatus.BAD_REQUEST,
+        "Bad Request",
+        "VALIDATION_ERROR",
+        exception.getMessage(),
         request.getRequestURI());
   }
 

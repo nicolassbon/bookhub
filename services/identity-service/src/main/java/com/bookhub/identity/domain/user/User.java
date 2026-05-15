@@ -108,6 +108,11 @@ public class User {
     this.updatedAt = Instant.now();
   }
 
+  public void changeRole(final UserRole newRole) {
+    this.role = newRole;
+    this.updatedAt = Instant.now();
+  }
+
   @Override
   public boolean equals(final Object other) {
     if (this == other) {
@@ -150,5 +155,9 @@ public class User {
 
   public Instant getUpdatedAt() {
     return updatedAt;
+  }
+
+  public Instant getCreatedAt() {
+    return createdAt;
   }
 }
