@@ -1,5 +1,6 @@
 package com.bookhub.catalog.domain;
 
+import java.time.Instant;
 import java.util.UUID;
 
 public class Book {
@@ -9,9 +10,11 @@ public class Book {
   private final String authorName;
   private final String isbn13;
   private final String sourceReference;
+  private final String source;
   private final String coverUrl;
   private final Integer publishedYear;
   private final Integer pageCount;
+  private final Instant createdAt;
 
   private Book(
       final UUID id,
@@ -19,17 +22,21 @@ public class Book {
       final String authorName,
       final String isbn13,
       final String sourceReference,
+      final String source,
       final String coverUrl,
       final Integer publishedYear,
-      final Integer pageCount) {
+      final Integer pageCount,
+      final Instant createdAt) {
     this.id = id;
     this.title = title;
     this.authorName = authorName;
     this.isbn13 = isbn13;
     this.sourceReference = sourceReference;
+    this.source = source;
     this.coverUrl = coverUrl;
     this.publishedYear = publishedYear;
     this.pageCount = pageCount;
+    this.createdAt = createdAt;
   }
 
   public static BookBuilder builder() {
@@ -56,6 +63,10 @@ public class Book {
     return sourceReference;
   }
 
+  public String getSource() {
+    return source;
+  }
+
   public String getCoverUrl() {
     return coverUrl;
   }
@@ -68,15 +79,21 @@ public class Book {
     return pageCount;
   }
 
+  public Instant getCreatedAt() {
+    return createdAt;
+  }
+
   public static final class BookBuilder {
     private UUID id;
     private String title;
     private String authorName;
     private String isbn13;
     private String sourceReference;
+    private String source;
     private String coverUrl;
     private Integer publishedYear;
     private Integer pageCount;
+    private Instant createdAt;
 
     private BookBuilder() {}
 
@@ -105,6 +122,11 @@ public class Book {
       return this;
     }
 
+    public BookBuilder source(final String source) {
+      this.source = source;
+      return this;
+    }
+
     public BookBuilder coverUrl(final String coverUrl) {
       this.coverUrl = coverUrl;
       return this;
@@ -120,9 +142,15 @@ public class Book {
       return this;
     }
 
+    public BookBuilder createdAt(final Instant createdAt) {
+      this.createdAt = createdAt;
+      return this;
+    }
+
     public Book build() {
       return new Book(
-          id, title, authorName, isbn13, sourceReference, coverUrl, publishedYear, pageCount);
+          id, title, authorName, isbn13, sourceReference, source, coverUrl, publishedYear,
+          pageCount, createdAt);
     }
   }
 }

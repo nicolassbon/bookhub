@@ -13,4 +13,13 @@ public interface BookRepository {
   Optional<Book> findById(UUID id);
 
   List<Book> searchByQuery(String query, int candidateLimit);
+
+  List<Book> findAll(int page, int size);
+
+  List<Book> findAll(int page, int size, String source);
+
+  long countAll();
+
+  long countAll(String source);
 }
+

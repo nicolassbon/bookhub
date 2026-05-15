@@ -31,6 +31,9 @@ public class BookEntity {
   @Column(name = "source_reference", nullable = false, length = 100)
   private String sourceReference;
 
+  @Column(name = "source", nullable = false, length = 50)
+  private String source;
+
   @Column(name = "cover_url", length = 500)
   private String coverUrl;
 
@@ -101,6 +104,14 @@ public class BookEntity {
 
   public void setSourceReference(final String sourceReference) {
     this.sourceReference = sourceReference;
+  }
+
+  public String getSource() {
+    return source;
+  }
+
+  public void setSource(final String source) {
+    this.source = source;
   }
 
   public String getCoverUrl() {

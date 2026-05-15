@@ -67,6 +67,7 @@ class BookPersistenceRepositoryTest {
             .authorName("Robert Martin")
             .isbn13("9780134494166")
             .sourceReference("OL456W")
+            .source("OPEN_LIBRARY")
             .build());
 
     final var titleMatches = bookRepository.searchByQuery("obbi", 10);
@@ -83,6 +84,7 @@ class BookPersistenceRepositoryTest {
         .authorName("J.R.R. Tolkien")
         .isbn13("9780261103344")
         .sourceReference(sourceReference)
+        .source("OPEN_LIBRARY")
         .coverUrl("https://covers.openlibrary.org/b/id/123-L.jpg")
         .publishedYear(1937)
         .build();

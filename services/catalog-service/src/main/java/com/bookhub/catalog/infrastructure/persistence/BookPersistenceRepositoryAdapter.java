@@ -5,6 +5,8 @@ import com.bookhub.catalog.domain.BookRepository;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Repository;
 
 @Repository
@@ -40,5 +42,31 @@ public class BookPersistenceRepositoryAdapter implements BookRepository {
     return jpaBookRepository.searchByQuery(query, candidateLimit).stream()
         .map(bookEntityMapper::toDomain)
         .toList();
+  }
+
+  @Override
+  public List<Book> findAll(final int page, final int size) {
+    final PageRequest pageable = PageRequest.of(page, size, Sort.by("createdAt").descending());
+    return jpaBookRepository.findAll(pageable).getContent().stream()
+        .map(bookEntityMapper::toDomain)
+        .toList();
+  }
+
+  @Override
+  public List<Book> findAll(final int page, final int size, final String source) {
+    final PageRequest pageable = PageRequest.of(page, size, Sort.by("createdAt").descending());
+    return jpaBookRepository.findAllBySource(source, pageable).getContent().stream()
+        .map(bookEntityMapper::toDomain)
+        .toList();
+  }
+
+  @Override
+  public long countAll() {
+    return jpaBookRepository.count();
+  }
+
+  @Override
+  public long countAll(final String source) {
+    return jpaBookRepository.countBySource(source);
   }
 }

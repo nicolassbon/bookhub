@@ -21,6 +21,21 @@ import org.springframework.web.servlet.resource.NoResourceFoundException;
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
+  @ExceptionHandler(org.springframework.web.bind.MethodArgumentNotValidException.class)
+  public ResponseEntity<ErrorResponse> handleMethodArgumentNotValid(
+      final org.springframework.web.bind.MethodArgumentNotValidException exception, final HttpServletRequest request) {
+    final String message =
+        exception.getBindingResult().getFieldErrors().stream()
+            .map(e -> e.getField() + " " + e.getDefaultMessage())
+            .collect(Collectors.joining("; "));
+    return buildError(
+        HttpStatus.BAD_REQUEST,
+        "Validation Error",
+        "VALIDATION_ERROR",
+        message,
+        request.getRequestURI());
+  }
+
   @ExceptionHandler(ConstraintViolationException.class)
   public ResponseEntity<ErrorResponse> handleConstraintViolation(
       final ConstraintViolationException exception, final HttpServletRequest request) {
@@ -115,6 +130,17 @@ public class GlobalExceptionHandler {
         "Method Not Allowed",
         "METHOD_NOT_ALLOWED",
         message,
+        request.getRequestURI());
+  }
+
+  @ExceptionHandler(com.bookhub.catalog.application.admin.AdminImportDegradedException.class)
+  public ResponseEntity<ErrorResponse> handleAdminImportDegraded(
+      final com.bookhub.catalog.application.admin.AdminImportDegradedException exception, final HttpServletRequest request) {
+    return buildError(
+        HttpStatus.SERVICE_UNAVAILABLE,
+        "Service Unavailable",
+        "EXTERNAL_SERVICE_UNAVAILABLE",
+        exception.getMessage(),
         request.getRequestURI());
   }
 

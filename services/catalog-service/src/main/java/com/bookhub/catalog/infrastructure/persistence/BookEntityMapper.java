@@ -15,6 +15,7 @@ public class BookEntityMapper {
     entity.setIsbn13(BookNormalization.normalizeIsbn13(book.getIsbn13()));
     entity.setSourceReference(
         BookNormalization.normalizeSourceReference(book.getSourceReference()));
+    entity.setSource(book.getSource());
     entity.setCoverUrl(book.getCoverUrl());
     entity.setPublishedYear(book.getPublishedYear());
     entity.setPageCount(book.getPageCount());
@@ -28,9 +29,11 @@ public class BookEntityMapper {
         .authorName(entity.getAuthorName())
         .isbn13(entity.getIsbn13())
         .sourceReference(entity.getSourceReference())
+        .source(entity.getSource())
         .coverUrl(entity.getCoverUrl())
         .publishedYear(entity.getPublishedYear())
         .pageCount(entity.getPageCount())
+        .createdAt(entity.getCreatedAt())
         .build();
   }
 }

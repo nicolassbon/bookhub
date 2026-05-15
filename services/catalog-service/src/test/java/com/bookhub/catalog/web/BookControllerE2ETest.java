@@ -88,6 +88,7 @@ class BookControllerE2ETest {
                 .title("The Hobbit")
                 .authorName("J.R.R. Tolkien")
                 .sourceReference("OL123W")
+                .source("OPEN_LIBRARY")
                 .isbn13("9780261103344")
                 .build());
 

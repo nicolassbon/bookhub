@@ -22,6 +22,7 @@ public class GetBookDetailService {
   private static final String SOURCE_REFERENCE_COLUMN = "source_reference";
   private static final String SOURCE_REFERENCE_CONSTRAINT = "uk_books_source_reference";
   private static final String POSTGRES_UNIQUE_VIOLATION_SQL_STATE = "23505";
+  private static final String DEFAULT_SOURCE = "OPEN_LIBRARY";
 
   private final BookRepository bookRepository;
   private final SearchProvider searchProvider;
@@ -72,6 +73,7 @@ public class GetBookDetailService {
               .authorName(normalizeAuthorName(fetchedBook.getAuthorName()))
               .isbn13(fetchedBook.getIsbn13())
               .sourceReference(sourceReference)
+              .source(DEFAULT_SOURCE)
               .coverUrl(fetchedBook.getCoverUrl())
               .publishedYear(fetchedBook.getPublishedYear())
               .build();

@@ -2,12 +2,18 @@ package com.bookhub.catalog.infrastructure.persistence;
 
 import java.util.Optional;
 import java.util.UUID;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 
 public interface JpaBookRepository extends JpaRepository<BookEntity, UUID> {
 
   Optional<BookEntity> findBySourceReference(String sourceReference);
+
+  Page<BookEntity> findAllBySource(String source, Pageable pageable);
+
+  long countBySource(String source);
 
   @Query(
       value =
