@@ -61,4 +61,18 @@ public class ReviewRepositoryAdapter implements ReviewRepository {
         page.getTotalElements(),
         page.getTotalPages());
   }
+
+  @Override
+  public PaginatedResult<Review> findAllForModeration(
+      final PaginationQuery pagination, final ReviewStatus status) {
+    final Pageable pageable = PageRequest.of(pagination.page(), pagination.size());
+    final org.springframework.data.domain.Page<ReviewEntity> page =
+        jpaRepository.findByStatus(status, pageable);
+    return new PaginatedResult<>(
+        page.stream().map(mapper::toDomain).toList(),
+        page.getNumber(),
+        page.getSize(),
+        page.getTotalElements(),
+        page.getTotalPages());
+  }
 }

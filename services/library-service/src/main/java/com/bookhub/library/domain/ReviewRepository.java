@@ -17,4 +17,6 @@ public interface ReviewRepository {
   Review save(Review review);
 
   PaginatedResult<Review> findAllForModeration(PaginationQuery pagination);
+
+  PaginatedResult<Review> findAllForModeration(PaginationQuery pagination, ReviewStatus status);
 }

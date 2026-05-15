@@ -9,8 +9,10 @@ import com.bookhub.library.application.error.LibraryEntryOwnershipException;
 import com.bookhub.library.application.error.NotificationNotFoundException;
 import com.bookhub.library.application.error.NotificationOwnershipException;
 import com.bookhub.library.application.error.ReviewAlreadyExistsException;
+import com.bookhub.library.application.error.ReviewNotFoundException;
 import com.bookhub.library.application.error.YearlyGoalNotFoundException;
 import com.bookhub.library.domain.ReadingProgressException;
+import com.bookhub.library.web.admin.InvalidReviewStatusException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.ConstraintViolationException;
 import java.time.Instant;
@@ -201,6 +203,28 @@ public class GlobalExceptionHandler {
         "Bad Request",
         "INVALID_PARAMETER",
         message,
+        request.getRequestURI());
+  }
+
+  @ExceptionHandler(ReviewNotFoundException.class)
+  public ResponseEntity<ErrorResponse> handleReviewNotFound(
+      final ReviewNotFoundException exception, final HttpServletRequest request) {
+    return buildError(
+        HttpStatus.NOT_FOUND,
+        "Not Found",
+        "REVIEW_NOT_FOUND",
+        exception.getMessage(),
+        request.getRequestURI());
+  }
+
+  @ExceptionHandler(InvalidReviewStatusException.class)
+  public ResponseEntity<ErrorResponse> handleInvalidReviewStatus(
+      final InvalidReviewStatusException exception, final HttpServletRequest request) {
+    return buildError(
+        HttpStatus.BAD_REQUEST,
+        "Validation Error",
+        "VALIDATION_ERROR",
+        exception.getMessage(),
         request.getRequestURI());
   }
 
