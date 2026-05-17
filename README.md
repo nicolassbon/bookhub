@@ -60,7 +60,7 @@ The repository currently includes:
 
 ### Operational / status docs
 
-- `docs/security-issues-backlog.md`
+- `docs/security-hardening-backlog.md`
 - `infrastructure/docker/README.md`
 - `services/*/README.md`
 

@@ -19,7 +19,7 @@ These documents define product intent, architecture, and contracts. They should 
 
 These documents must reflect the current executable state of the repository, local setup, and active remediation work.
 
-- `security-issues-backlog.md` — Security remediation backlog and tracking.
+- `security-hardening-backlog.md` — Future security hardening opportunities beyond active defects.
 
 ## Service and Infrastructure READMEs
 
