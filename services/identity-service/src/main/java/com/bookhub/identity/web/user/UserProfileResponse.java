@@ -4,4 +4,10 @@ import lombok.Builder;
 
 @Builder
 public record UserProfileResponse(
-    String userId, String username, String displayName, String email, String role) {}
+    String userId,
+    String username,
+    String displayName,
+    String email,
+    String role,
+    String bio,
+    String avatarUrl) {}

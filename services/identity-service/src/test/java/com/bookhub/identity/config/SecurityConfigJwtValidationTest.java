@@ -32,7 +32,7 @@ class SecurityConfigJwtValidationTest extends PostgreSqlIntegrationTest {
   @Autowired private JwtEncoder jwtEncoder;
 
   @Test
-  @DisplayName("Should accept RS256 token with valid issuer and audience")
+  @DisplayName("Should authenticate RS256 token with valid issuer and audience")
   void shouldAcceptRs256Token() throws Exception {
     final JwtClaimsSet claims =
         baseClaimsBuilder()
@@ -47,7 +47,7 @@ class SecurityConfigJwtValidationTest extends PostgreSqlIntegrationTest {
 
     mockMvc
         .perform(get("/api/v1/users/me").header("Authorization", "Bearer " + token))
-        .andExpect(status().isOk());
+        .andExpect(status().isNotFound());
   }
 
   @Test

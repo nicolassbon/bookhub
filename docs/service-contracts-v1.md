@@ -251,7 +251,7 @@ Returned when the shared rate-limit store is unavailable. The default operationa
 
 **Implemented (current)**
 
-Returns the authenticated user's profile.
+Returns the authenticated user's profile from persistence (token subject is only used for authorization).
 
 **Response — 200 OK**
 
@@ -261,21 +261,53 @@ Returns the authenticated user's profile.
   "username": "nico",
   "displayName": "Nicolas Bon",
   "email": "nico@example.com",
-  "role": "USER"
+  "role": "USER",
+  "bio": "Backend engineer and book lover",
+  "avatarUrl": "https://cdn.bookhub.app/avatars/usr_123.png"
 }
 ```
 
 #### `GET /api/v1/users/{userId}`
 
-**Planned (roadmap)**
+**Implemented (current)**
 
 Returns public/basic user profile data.
 
-#### `PATCH /api/v1/users/{userId}`
+**Response — 200 OK**
 
-**Planned (roadmap)**
+```json
+{
+  "userId": "usr_123",
+  "username": "nico",
+  "displayName": "Nicolas Bon",
+  "bio": "Backend engineer and book lover",
+  "avatarUrl": "https://cdn.bookhub.app/avatars/usr_123.png"
+}
+```
 
-Updates editable base profile fields.
+Sensitive fields (`email`, `role`, credentials, and account status) are never exposed in this endpoint.
+
+#### `PATCH /api/v1/users/me`
+
+**Implemented (current)**
+
+Updates owner editable base profile fields.
+
+**Request**
+
+```json
+{
+  "displayName": "Nicolas Bon",
+  "bio": "Backend engineer and book lover",
+  "avatarUrl": "https://cdn.bookhub.app/avatars/usr_123.png"
+}
+```
+
+Partial updates are accepted: any subset of `displayName`, `bio`, and `avatarUrl` can be sent.
+
+**Error — 400 Bad Request**
+
+- Returned when payload validation fails (blank `displayName`, oversized fields, invalid `avatarUrl`, or out-of-scope field mutation).
 
 **Request**
 

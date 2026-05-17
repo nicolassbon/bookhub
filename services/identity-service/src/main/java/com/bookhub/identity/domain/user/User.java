@@ -36,6 +36,12 @@ public class User {
   @Column(name = "display_name", nullable = false, length = 100)
   private String displayName;
 
+  @Column(name = "bio", length = 500)
+  private String bio;
+
+  @Column(name = "avatar_url", length = 2048)
+  private String avatarUrl;
+
   @Enumerated(EnumType.STRING)
   @Column(name = "role", nullable = false, length = 20)
   private UserRole role;
@@ -54,6 +60,8 @@ public class User {
       final String email,
       final String passwordHash,
       final String displayName,
+      final String bio,
+      final String avatarUrl,
       final UserRole role,
       final Instant createdAt,
       final Instant updatedAt) {
@@ -62,6 +70,8 @@ public class User {
     this.email = email;
     this.passwordHash = passwordHash;
     this.displayName = displayName;
+    this.bio = bio;
+    this.avatarUrl = avatarUrl;
     this.role = role;
     this.createdAt = createdAt;
     this.updatedAt = updatedAt;
@@ -73,7 +83,20 @@ public class User {
       final String passwordHash,
       final String displayName,
       final UserRole role) {
-    return new User(null, username, email, passwordHash, displayName, role, null, null);
+    return new User(null, username, email, passwordHash, displayName, null, null, role, null, null);
+  }
+
+  public static User rehydrate(
+      final UUID id,
+      final String username,
+      final String email,
+      final String passwordHash,
+      final String displayName,
+      final String bio,
+      final String avatarUrl,
+      final UserRole role) {
+    return new User(
+        id, username, email, passwordHash, displayName, bio, avatarUrl, role, null, null);
   }
 
   public static User rehydrate(
@@ -83,7 +106,7 @@ public class User {
       final String passwordHash,
       final String displayName,
       final UserRole role) {
-    return new User(id, username, email, passwordHash, displayName, role, null, null);
+    return new User(id, username, email, passwordHash, displayName, null, null, role, null, null);
   }
 
   @PrePersist
@@ -110,6 +133,13 @@ public class User {
 
   public void changeRole(final UserRole newRole) {
     this.role = newRole;
+    this.updatedAt = Instant.now();
+  }
+
+  public void updateProfile(final String displayName, final String bio, final String avatarUrl) {
+    this.displayName = displayName;
+    this.bio = bio;
+    this.avatarUrl = avatarUrl;
     this.updatedAt = Instant.now();
   }
 
@@ -151,6 +181,14 @@ public class User {
 
   public UserRole getRole() {
     return role;
+  }
+
+  public String getBio() {
+    return bio;
+  }
+
+  public String getAvatarUrl() {
+    return avatarUrl;
   }
 
   public Instant getUpdatedAt() {

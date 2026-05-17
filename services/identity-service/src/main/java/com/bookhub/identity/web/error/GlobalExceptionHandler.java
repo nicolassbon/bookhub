@@ -199,6 +199,17 @@ public class GlobalExceptionHandler {
         request.getRequestURI());
   }
 
+  @ExceptionHandler(IllegalArgumentException.class)
+  public ResponseEntity<ErrorResponse> handleIllegalArgument(
+      final IllegalArgumentException exception, final HttpServletRequest request) {
+    return buildErrorResponse(
+        HttpStatus.BAD_REQUEST,
+        "Bad Request",
+        "VALIDATION_ERROR",
+        exception.getMessage(),
+        request.getRequestURI());
+  }
+
   @ExceptionHandler(Exception.class)
   public ResponseEntity<ErrorResponse> handleUnhandled(
       final Exception exception, final HttpServletRequest request) {

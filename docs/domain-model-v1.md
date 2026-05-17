@@ -21,6 +21,8 @@ This document defines the initial domain model for BookHub V1 by service. It foc
 ### Purpose
 
 Represents the basic authenticated account identity owned by Identity.
+In V1, profile ownership remains in `identity-service` for base fields only (`displayName`, `bio`, `avatarUrl`).
+Richer social profile concerns are explicitly deferred and out of scope for this slice.
 
 ### Core attributes
 
@@ -31,7 +33,6 @@ Represents the basic authenticated account identity owned by Identity.
 - `bio`
 - `avatarUrl`
 - `role`
-- `status`
 - `createdAt`
 - `updatedAt`
 
@@ -40,14 +41,12 @@ Represents the basic authenticated account identity owned by Identity.
 - register
 - update profile
 - change role
-- activate/deactivate account
 
 ### Invariants
 
 - username is unique
 - email is unique
 - role must be valid
-- inactive users cannot authenticate
 
 ## Supporting aggregate/entity: Credential
 
