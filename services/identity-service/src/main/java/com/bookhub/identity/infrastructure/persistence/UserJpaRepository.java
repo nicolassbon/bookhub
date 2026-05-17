@@ -18,4 +18,3 @@ public interface UserJpaRepository extends JpaRepository<User, UUID> {
 
   Page<User> findAllByRole(UserRole role, Pageable pageable);
 }
-

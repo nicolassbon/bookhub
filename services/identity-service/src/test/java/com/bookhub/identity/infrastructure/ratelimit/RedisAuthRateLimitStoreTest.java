@@ -47,10 +47,12 @@ class RedisAuthRateLimitStoreTest extends RedisIntegrationTest {
   void cleanRedis() {
     redisTemplate = new StringRedisTemplate(connectionFactory);
     redisTemplate.afterPropertiesSet();
-    redisTemplate.execute((RedisCallback<Void>) conn -> {
-      conn.serverCommands().flushDb();
-      return null;
-    });
+    redisTemplate.execute(
+        (RedisCallback<Void>)
+            conn -> {
+              conn.serverCommands().flushDb();
+              return null;
+            });
   }
 
   @Test

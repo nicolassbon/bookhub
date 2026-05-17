@@ -61,9 +61,11 @@ public class AuthRateLimitInterceptor implements HandlerInterceptor {
     return switch (requestPath) {
       case LOGIN_PATH -> new EndpointRateLimit("login", authRateLimitProperties.login());
       case REGISTER_PATH -> new EndpointRateLimit("register", authRateLimitProperties.register());
-      case FORGOT_PASSWORD_PATH -> new EndpointRateLimit("forgot-password", authRateLimitProperties.forgotPassword());
+      case FORGOT_PASSWORD_PATH ->
+          new EndpointRateLimit("forgot-password", authRateLimitProperties.forgotPassword());
       case REFRESH_PATH -> new EndpointRateLimit("refresh", authRateLimitProperties.refresh());
-      case SERVICE_TOKEN_PATH -> new EndpointRateLimit("service-token", authRateLimitProperties.serviceToken());
+      case SERVICE_TOKEN_PATH ->
+          new EndpointRateLimit("service-token", authRateLimitProperties.serviceToken());
       default -> null;
     };
   }

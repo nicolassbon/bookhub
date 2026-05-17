@@ -20,7 +20,9 @@ public class ChangeUserRoleService {
   @Transactional
   public User changeRole(final UUID userId, final UserRole newRole) {
     final User user =
-        userRepository.findById(userId).orElseThrow(() -> new UserNotFoundException(userId.toString()));
+        userRepository
+            .findById(userId)
+            .orElseThrow(() -> new UserNotFoundException(userId.toString()));
     user.changeRole(newRole);
     return userRepository.save(user);
   }

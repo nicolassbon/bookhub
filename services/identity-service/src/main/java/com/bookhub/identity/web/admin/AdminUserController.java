@@ -24,8 +24,7 @@ public class AdminUserController {
   private final ChangeUserRoleService changeUserRoleService;
 
   public AdminUserController(
-      final ListUsersService listUsersService,
-      final ChangeUserRoleService changeUserRoleService) {
+      final ListUsersService listUsersService, final ChangeUserRoleService changeUserRoleService) {
     this.listUsersService = listUsersService;
     this.changeUserRoleService = changeUserRoleService;
   }

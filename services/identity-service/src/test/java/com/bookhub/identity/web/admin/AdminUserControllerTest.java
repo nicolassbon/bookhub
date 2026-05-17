@@ -142,8 +142,7 @@ class AdminUserControllerTest {
         .thenReturn(new ListUsersService.PagedUsersResult(List.of(adminUser), 0, 20, 1L, 1L));
 
     mockMvc
-        .perform(
-            get("/api/v1/admin/users?role=ADMIN").header("Authorization", "Bearer " + token))
+        .perform(get("/api/v1/admin/users?role=ADMIN").header("Authorization", "Bearer " + token))
         .andExpect(status().isOk())
         .andExpect(jsonPath("$.items[0].role").value("ADMIN"));
   }
@@ -241,8 +240,14 @@ class AdminUserControllerTest {
   private String buildToken(final String userId, final String role) {
     final Instant now = Instant.now();
     return JwtTestTokenFactory.createAccessToken(
-        jwtEncoder, userId, "nico", "Nicolas", role, "nico@example.com",
-        now, now.plusSeconds(3600));
+        jwtEncoder,
+        userId,
+        "nico",
+        "Nicolas",
+        role,
+        "nico@example.com",
+        now,
+        now.plusSeconds(3600));
   }
 
   private User buildUser(final String userId, final String username, final UserRole role) {

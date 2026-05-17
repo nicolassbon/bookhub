@@ -27,7 +27,8 @@ public class ListUsersService {
       totalElements = userRepository.countAll();
     }
 
-    final long totalPages = totalElements == 0 ? 0 : (long) Math.ceil((double) totalElements / size);
+    final long totalPages =
+        totalElements == 0 ? 0 : (long) Math.ceil((double) totalElements / size);
 
     return new PagedUsersResult(users, page, size, totalElements, totalPages);
   }
