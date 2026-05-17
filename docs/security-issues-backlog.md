@@ -10,25 +10,24 @@ This document tracks security issues identified during repository reviews that r
 
 ## Open Issues
 
-### 1. Auth rate limiting is proxy-aware and bounded, but still node-local
-
-- **Severity**: Medium
-- **Service**: `identity-service`
-- **Status**: Partially Mitigated
-- **Where**:
-  - `services/identity-service/src/main/java/com/bookhub/identity/web/auth/ratelimit/AuthRateLimitInterceptor.java`
-  - `services/identity-service/src/main/java/com/bookhub/identity/web/auth/AuthWebMvcConfig.java`
-- **Current evidence**:
-  - `AuthRateLimitInterceptor` only uses `X-Forwarded-For` when requests come from configured trusted proxy CIDRs.
-  - The forwarded chain is sanitized and bounded (`MAX_FORWARDED_HOPS`).
-  - In-memory state now has bounded lifecycle controls (`maxTrackedKeys`, stale-entry TTL cleanup).
-  - `AuthRateLimitForwardedHeaderWebTest` verifies trusted-proxy forwarded-header behavior.
-- **Residual risk**:
-  Rate limiting remains in-process memory per instance, so limits are not globally consistent under horizontal scale and can still be reset by restarts.
-- **Next hardening step**:
-  Move counters to a shared TTL-backed store and keep the same proxy-trust model.
+[None - all identified V1 security issues have been mitigated or accepted for local development.]
 
 ## Recently Mitigated Issues
+
+### 1. Auth rate limiting is shared across instances and proxy-aware
+
+- **Severity**: Previously Medium
+- **Service**: `identity-service`
+- **Status**: Mitigated
+- **Where**:
+  - `services/identity-service/src/main/java/com/bookhub/identity/web/auth/ratelimit/RedisAuthRateLimitService.java`
+  - `services/identity-service/src/main/java/com/bookhub/identity/web/auth/ratelimit/AuthRateLimitInterceptor.java`
+- **Resolution summary**:
+  Moved rate-limit counters from in-process memory to a shared Redis store. The system now uses sliding-window counters with TTL-backed expiration, ensuring globally consistent limits across multiple service instances.
+  - Mitigated in commit `89d4f3e`.
+  - Maintains the same trusted-proxy fingerprinting and forwarded-header sanitization model.
+  - Fail-closed behavior on Redis unavailability (returns 503 Service Unavailable).
+
 
 ### 3. Refresh token replay during concurrent rotation
 

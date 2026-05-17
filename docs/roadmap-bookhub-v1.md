@@ -31,13 +31,14 @@ These items are required to claim a production-ready V1 baseline, not only a fea
 - Added role-gated authorization and tests for admin-only surfaces.
 - Aligned exposed endpoints with `docs/service-contracts-v1.md` and updated contracts where implementation differs.
 
-### C. Close V1 alignment pass across docs and executable contracts
+### ~~C. Close V1 alignment pass across docs and executable contracts~~ ✅ Done
 
 **Outcome:** V1 can be reviewed without ambiguity between intent and running behavior.
 
-- Reconcile PRD/contract expectations with implemented endpoints and role boundaries.
-- Update service/infrastructure READMEs where needed to reflect final V1 closure scope.
-- Keep backlog-style residual risks explicit (security and operational caveats).
+- Reconciled PRD/contract expectations with implemented endpoints and role boundaries.
+- Updated root, service, and infrastructure READMEs to reflect final V1 closure scope (including admin APIs and shared rate limiting).
+- Documented recently mitigated security issues in the backlog.
+
 
 ## 3) Optional / post-V1 (do not block V1 closure)
 
@@ -52,4 +53,4 @@ These items are required to claim a production-ready V1 baseline, not only a fea
 - [x] Catalog internal routes require authenticated service-to-service access.
 - [x] Auth rate limiting is shared-state and multi-instance consistent.
 - [x] Initial admin/moderation APIs are implemented and role-protected.
-- [ ] Contracts and operational docs match the final executable V1 state.
+- [x] Contracts and operational docs match the final executable V1 state.

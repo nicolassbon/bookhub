@@ -9,7 +9,7 @@ This document defines the bounded contexts for BookHub V1 and explains how respo
 - Prefer business boundaries over technical layers.
 - Each service owns its data and behavior.
 - Avoid shared databases across services.
-- Keep V1 intentionally small: 3 services maximum.
+- Keep V1 intentionally small: 3 backend services maximum (plus one gateway).
 - Favor synchronous HTTP communication in V1.
 - Treat cross-service calls as integration points, not shortcuts.
 - Preserve room for future extraction without over-designing V1.
@@ -69,13 +69,14 @@ Manage who the user is, how they authenticate, and what permissions they have.
 
 ### Public API examples
 
-- `POST /auth/register`
-- `POST /auth/login`
-- `POST /auth/refresh`
-- `POST /auth/forgot-password`
-- `POST /auth/reset-password`
-- `GET /users/{id}`
-- `PATCH /users/{id}`
+- `POST /api/v1/auth/register`
+- `POST /api/v1/auth/login`
+- `POST /api/v1/auth/refresh`
+- `POST /api/v1/auth/forgot-password`
+- `POST /api/v1/auth/reset-password`
+- `GET /api/v1/users/me`
+- `GET /api/v1/admin/users`
+- `PATCH /api/v1/admin/users/{id}/role`
 
 ### Outbound dependencies
 
@@ -128,11 +129,10 @@ Manage book discovery and canonical book metadata used across the platform.
 
 ### Public API examples
 
-- `GET /books?query=`
-- `GET /books/{id}`
-- `POST /books/import`
-- `GET /authors/{id}`
-- `PATCH /admin/books/{id}`
+- `GET /api/v1/books?query=`
+- `GET /api/v1/books/{id}`
+- `POST /api/v1/admin/books/import`
+- `PATCH /api/v1/admin/books/{id}`
 
 ### Outbound dependencies
 
@@ -192,17 +192,19 @@ Manage the user's relationship with Catalog Books: organization, progress, goals
 
 ### Public API examples
 
-- `POST /library/books/{bookId}`
-- `PATCH /library/books/{bookId}/status`
-- `PATCH /library/books/{bookId}/progress`
-- `GET /library/me`
-- `PUT /goals/yearly`
-- `GET /goals/yearly`
-- `POST /reviews`
-- `PATCH /reviews/{id}`
-- `GET /books/{bookId}/reviews`
-- `GET /notifications`
-- `PATCH /notifications/{id}/read`
+- `POST /api/v1/library/books`
+- `PATCH /api/v1/library/books/{id}/state`
+- `PATCH /api/v1/library/books/{id}/progress`
+- `GET /api/v1/library/me`
+- `PUT /api/v1/goals/yearly`
+- `GET /api/v1/goals/yearly`
+- `POST /api/v1/reviews`
+- `PATCH /api/v1/reviews/{id}`
+- `GET /api/v1/books/{bookId}/reviews`
+- `GET /api/v1/notifications`
+- `PATCH /api/v1/notifications/{id}/read`
+- `GET /api/v1/admin/reviews`
+- `GET /api/v1/admin/metrics/library`
 
 ### Outbound dependencies
 
