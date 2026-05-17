@@ -7,12 +7,9 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import com.bookhub.library.application.error.ReviewNotFoundException;
-import com.bookhub.library.domain.PaginatedResult;
-import com.bookhub.library.domain.PaginationQuery;
 import com.bookhub.library.domain.Review;
 import com.bookhub.library.domain.ReviewRepository;
 import com.bookhub.library.domain.ReviewStatus;
-import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import org.junit.jupiter.api.Nested;
