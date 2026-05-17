@@ -11,7 +11,8 @@ Identity and authentication service for BookHub.
 - service token issuance for machine-to-machine authentication
 - authenticated identity endpoint (`GET /api/v1/users/me`)
 - Flyway-managed PostgreSQL persistence
-- HTTP-layer abuse throttling for auth and service-token endpoints
+- Shared Redis-backed abuse throttling for auth and service-token endpoints (multi-instance consistent)
+- admin-only user management surfaces (role-gated)
 
 ## HTTP API
 
@@ -28,6 +29,11 @@ Identity and authentication service for BookHub.
 ### User
 
 - `GET /api/v1/users/me`
+
+### Admin (requires ROLE_ADMIN)
+
+- `GET /api/v1/admin/users` — list all users (paged)
+- `PATCH /api/v1/admin/users/{userId}/role` — change user role
 
 ## Configuration highlights
 

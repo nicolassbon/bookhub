@@ -8,14 +8,22 @@ Catalog and book discovery service for BookHub.
 - local PostgreSQL-backed catalog persistence
 - external Open Library integration for bootstrap and lookups
 - internal book lookup endpoint used by other services (requires authenticated service-to-service access with `ROLE_SERVICE`)
+- admin catalog management and book import surfaces (requires `ROLE_ADMIN`)
 - Flyway-managed schema evolution
 
 ## HTTP API
 
 ### Public endpoints
 
-- `GET /api/v1/books`
-- `GET /api/v1/books/{id}`
+- `GET /api/v1/books` — list books
+- `GET /api/v1/books/{id}` — book details
+
+### Admin endpoints (requires ROLE_ADMIN)
+
+- `GET /api/v1/admin/books` — list all books with optional source filter
+- `PATCH /api/v1/admin/books/{bookId}` — update book details
+- `POST /api/v1/admin/books/import` — import book from provider
+- `POST/PUT/DELETE/PATCH /api/v1/books/**` — book mutations are restricted to admins
 
 ### Internal endpoint (authenticated service-to-service)
 
@@ -30,7 +38,7 @@ Catalog and book discovery service for BookHub.
 
 ## Persistence
 
-Flyway migrations live in `src/main/resources/db/migration/` and currently cover initial catalog schema, trigram indexes, and page-count support.
+Flyway migrations live in `src/main/resources/db/migration/` and currently cover initial catalog schema, trigram indexes, page-count support, and the `source` field for tracking book origins.
 
 ## Base package
 

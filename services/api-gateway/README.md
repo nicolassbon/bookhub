@@ -17,6 +17,10 @@ Single public HTTP entrypoint for BookHub backend services.
 - `/api/v1/goals/**` -> `library-service`
 - `/api/v1/reviews/**` -> `library-service`
 - `/api/v1/notifications/**` -> `library-service`
+- `/api/v1/admin/users/**` -> `identity-service`
+- `/api/v1/admin/books/**` -> `catalog-service`
+- `/api/v1/admin/reviews/**` -> `library-service`
+- `/api/v1/admin/metrics/**` -> `library-service`
 
 ## Configuration highlights
 

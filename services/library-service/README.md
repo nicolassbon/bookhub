@@ -13,10 +13,8 @@ User library service for BookHub.
 - create and update user reviews
 - retrieve reviews by catalog book
 - retrieve user notifications and mark them as read
+- admin review moderation and platform-wide metrics (requires `ROLE_ADMIN`)
 - persist stable catalog snapshots for owned books
-- validate JWT access tokens for authenticated requests
-- acquire and cache service tokens from identity-service for machine-to-machine calls
-- forward service tokens when calling catalog internal APIs (`/api/v1/internal/**`)
 
 ## HTTP API
 
@@ -44,6 +42,13 @@ User library service for BookHub.
 
 - `GET /api/v1/notifications`
 - `PATCH /api/v1/notifications/{id}/read`
+
+### Admin (requires ROLE_ADMIN)
+
+- `GET /api/v1/admin/reviews` — list reviews for moderation
+- `PATCH /api/v1/admin/reviews/{reviewId}/status` — moderate a review (APPROVE/REJECT/FLAG)
+- `GET /api/v1/admin/metrics/library` — platform-wide library and social metrics
+
 
 ## Configuration highlights
 

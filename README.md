@@ -40,6 +40,8 @@ The repository currently includes:
 - a Maven multi-module monorepo for the runtime services
 - Flyway-managed PostgreSQL schemas per backend service
 - JWT-based identity flows with RS256 signing and refresh-token rotation
+- shared Redis-backed auth rate limiting across instances
+- initial admin surfaces for user management, catalog curation, and review moderation (role-gated via `ROLE_ADMIN`)
 - service-to-service authentication via service JWT tokens (identity-service issues; library-service acquires/forwards to catalog-service internal endpoints)
 - catalog search and detail endpoints backed by local persistence plus Open Library bootstrap/integration
 - library endpoints for add/list/get/update-state/update-progress workflows

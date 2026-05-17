@@ -88,14 +88,15 @@ Use Docker-network access (`library-db:5432`) from containers, or add an explici
 
 ## Gateway route surface and downstream access behavior
 
-- `/api/v1/auth/**` -> `identity-service` (**routed by gateway; identity-service currently permits only `/api/v1/auth/register`, `/login`, `/refresh`, `/logout`, `/forgot-password`, and `/reset-password` without authentication**)
-- `GET /api/v1/books/**` -> `catalog-service` (**public in catalog-service security config**)
-- `/api/v1/users/**` -> `identity-service` (**routed by gateway and requires authentication in identity-service security config**)
-- `/api/v1/library/**` -> `library-service` (**routed by gateway and requires authentication in library-service security config**)
+- `/api/v1/auth/**` -> `identity-service` (routed by gateway; permits registration/login/refresh/logout/forgot-password/reset-password/service-token without authentication)
+- `GET /api/v1/books/**` -> `catalog-service` (public in catalog-service config)
+- `/api/v1/users/**` -> `identity-service` (requires authentication)
+- `/api/v1/library/**`, `/api/v1/goals/**`, `/api/v1/reviews/**`, `/api/v1/notifications/**` -> `library-service` (requires authentication)
+- `/api/v1/admin/**` -> all services (requires `ROLE_ADMIN`)
 
 ## Notes on route alignment
 
-- The base gateway configuration (`services/api-gateway/src/main/resources/application.yml`) also reserves `/api/v1/goals/**`, `/api/v1/reviews/**`, and `/api/v1/notifications/**` for `library-service` as part of the V1 contract surface.
+- The gateway configuration (`services/api-gateway/src/main/resources/application.yml`) defines explicit routes for auth, users, books, library, goals, reviews, notifications, and admin surfaces.
 - Keep the local gateway profile aligned with the intended route map whenever routes are added or removed.
 
 Downstream service ports are intentionally not published in `compose.dev.yml` so all API traffic enters through `api-gateway`.
