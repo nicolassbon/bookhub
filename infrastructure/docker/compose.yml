@@ -158,6 +158,32 @@ services:
     networks:
       - bookhub-network
 
+  prometheus:
+    image: prom/prometheus:v3.4.0
+    volumes:
+      - ../../infrastructure/observability/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus-data:/prometheus
+    command:
+      - --config.file=/etc/prometheus/prometheus.yml
+      - --storage.tsdb.retention.time=7d
+    networks:
+      - bookhub-network
+
+  grafana:
+    image: grafana/grafana:12.0.1
+    environment:
+      GF_SECURITY_ADMIN_USER: admin
+      GF_SECURITY_ADMIN_PASSWORD: admin
+      GF_AUTH_ANONYMOUS_ENABLED: false
+    volumes:
+      - ../../infrastructure/observability/grafana/provisioning:/etc/grafana/provisioning:ro
+      - ../../infrastructure/observability/grafana/dashboards:/var/lib/grafana/dashboards:ro
+      - grafana-data:/var/lib/grafana
+    depends_on:
+      - prometheus
+    networks:
+      - bookhub-network
+
 networks:
   bookhub-network:
     driver: bridge
@@ -167,3 +193,5 @@ volumes:
   identity-redis-data:
   catalog-db-data:
   library-db-data:
+  prometheus-data:
+  grafana-data:

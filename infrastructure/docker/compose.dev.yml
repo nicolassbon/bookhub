@@ -14,3 +14,11 @@ services:
   catalog-db:
     ports:
       - "5433:5432"
+
+  grafana:
+    ports:
+      - "3000:3000"
+
+  prometheus:
+    ports:
+      - "9090:9090"
