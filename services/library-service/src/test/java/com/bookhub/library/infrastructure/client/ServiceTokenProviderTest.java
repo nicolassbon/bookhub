@@ -21,14 +21,13 @@ class ServiceTokenProviderTest {
 
   private ServiceTokenProvider serviceTokenProvider;
 
-  private static final IssuedServiceToken TOKEN_1 =
-      new IssuedServiceToken("svc-jwt-token-1", 3600);
-  private static final IssuedServiceToken TOKEN_2 =
-      new IssuedServiceToken("svc-jwt-token-2", 3600);
+  private static final IssuedServiceToken TOKEN_1 = new IssuedServiceToken("svc-jwt-token-1", 3600);
+  private static final IssuedServiceToken TOKEN_2 = new IssuedServiceToken("svc-jwt-token-2", 3600);
 
   @BeforeEach
   void setUp() {
-    serviceTokenProvider = new ServiceTokenProvider(identityServiceClient, "test-client", "test-secret");
+    serviceTokenProvider =
+        new ServiceTokenProvider(identityServiceClient, "test-client", "test-secret");
   }
 
   @Test
@@ -78,8 +77,7 @@ class ServiceTokenProviderTest {
   @Test
   @DisplayName("Should throw when no token cached and attempt does not produce one")
   void shouldThrowWhenNoTokenCachedAndNullReturned() {
-    when(identityServiceClient.requestServiceToken("test-client", "test-secret"))
-        .thenReturn(null);
+    when(identityServiceClient.requestServiceToken("test-client", "test-secret")).thenReturn(null);
 
     assertThatThrownBy(() -> serviceTokenProvider.getServiceToken())
         .isInstanceOf(ServiceTokenAcquisitionException.class)

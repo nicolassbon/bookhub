@@ -21,10 +21,13 @@ server:
   port: 0
 
 management:
+  endpoint:
+    prometheus:
+      access: unrestricted
   endpoints:
     web:
       exposure:
-        include: health,info
+        include: health,info,prometheus
 
 jwt:
   issuer: ${JWT_ISSUER:bookhub-identity}

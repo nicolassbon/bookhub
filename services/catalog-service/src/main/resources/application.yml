@@ -23,18 +23,39 @@ server:
   port: ${SERVER_PORT:8082}
 
 management:
+  prometheus:
+    metrics:
+      export:
+        enabled: true
   endpoints:
     web:
       exposure:
         include: health,info,prometheus
   endpoint:
+    prometheus:
+      access: unrestricted
     health:
       probes:
         enabled: true
       show-details: never
+      group:
+        liveness:
+          include: livenessState
+        readiness:
+          include: readinessState,db
   metrics:
     tags:
       application: ${spring.application.name}
+  tracing:
+    propagation:
+      type: w3c
+    sampling:
+      probability: 1.0
+
+logging:
+  include-application-name: false
+  pattern:
+    correlation: "[${spring.application.name:},%X{traceId:-},%X{spanId:-}] "
 
 jwt:
   issuer: ${JWT_ISSUER}
@@ -43,6 +64,7 @@ jwt:
     public-key: ${JWT_RSA_PUBLIC_KEY}
 
 catalog:
+  # OpenLibrary timeouts and circuit-open states return degraded or empty search results.
   providers:
     openlibrary:
       enabled: ${CATALOG_OPENLIBRARY_ENABLED:true}

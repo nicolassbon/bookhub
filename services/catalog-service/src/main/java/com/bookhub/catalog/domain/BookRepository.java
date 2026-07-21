@@ -22,4 +22,3 @@ public interface BookRepository {
 
   long countAll(String source);
 }
-

@@ -37,6 +37,7 @@ pom.xml.releaseBackup
 
 .atl/
 .vscode/
+/.codegraph/
 
 # Local Postman/Newman artifacts
 *.postman_environment.private.json

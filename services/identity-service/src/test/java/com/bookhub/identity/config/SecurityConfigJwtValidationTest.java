@@ -24,7 +24,11 @@ import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.web.servlet.MockMvc;
 
 @AutoConfigureMockMvc
-@TestPropertySource(properties = "management.health.mail.enabled=false")
+@TestPropertySource(
+    properties = {
+      "management.health.mail.enabled=false",
+      "management.endpoint.health.group.readiness.include=readinessState,db,redis"
+    })
 class SecurityConfigJwtValidationTest extends PostgreSqlIntegrationTest {
 
   @Autowired private MockMvc mockMvc;
@@ -114,6 +118,12 @@ class SecurityConfigJwtValidationTest extends PostgreSqlIntegrationTest {
   void shouldPermitHealthAndInfoEndpointsWithoutAuthentication() throws Exception {
     mockMvc.perform(get("/actuator/health")).andExpect(status().isOk());
     mockMvc.perform(get("/actuator/info")).andExpect(status().isOk());
+  }
+
+  @Test
+  void shouldExposeOnlyPrometheusAmongSensitiveActuatorEndpoints() throws Exception {
+    mockMvc.perform(get("/actuator/prometheus")).andExpect(status().isOk());
+    mockMvc.perform(get("/actuator/env")).andExpect(status().isUnauthorized());
   }
 
   @Test

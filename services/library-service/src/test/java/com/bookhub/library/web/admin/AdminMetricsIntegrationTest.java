@@ -29,8 +29,7 @@ class AdminMetricsIntegrationTest extends PostgreSqlIntegrationTest {
   @Autowired private JpaUserBookRepository jpaUserBookRepository;
   @Autowired private JpaReviewRepository jpaReviewRepository;
 
-  private static final UUID ADMIN_ID =
-      UUID.fromString("00000000-0000-0000-0000-000000000999");
+  private static final UUID ADMIN_ID = UUID.fromString("00000000-0000-0000-0000-000000000999");
 
   @Test
   @DisplayName("Should return 403 when requesting metrics with USER role")
@@ -53,24 +52,33 @@ class AdminMetricsIntegrationTest extends PostgreSqlIntegrationTest {
     userBookEntity(
         UUID.fromString("00000000-0000-0000-0000-000000000100"),
         UUID.fromString("00000000-0000-0000-0000-000000000200"),
-        ReadingState.WANT_TO_READ, now);
+        ReadingState.WANT_TO_READ,
+        now);
     userBookEntity(
         UUID.fromString("00000000-0000-0000-0000-000000000100"),
         UUID.fromString("00000000-0000-0000-0000-000000000201"),
-        ReadingState.READING, now);
+        ReadingState.READING,
+        now);
     userBookEntity(
         UUID.fromString("00000000-0000-0000-0000-000000000101"),
         UUID.fromString("00000000-0000-0000-0000-000000000202"),
-        ReadingState.READ, now);
+        ReadingState.READ,
+        now);
 
     reviewEntity(
         UUID.fromString("00000000-0000-0000-0000-000000000100"),
         UUID.fromString("00000000-0000-0000-0000-000000000200"),
-        5, "Great", ReviewStatus.VISIBLE, now);
+        5,
+        "Great",
+        ReviewStatus.VISIBLE,
+        now);
     reviewEntity(
         UUID.fromString("00000000-0000-0000-0000-000000000101"),
         UUID.fromString("00000000-0000-0000-0000-000000000202"),
-        3, "Ok", ReviewStatus.FLAGGED, now);
+        3,
+        "Ok",
+        ReviewStatus.FLAGGED,
+        now);
 
     mockMvc
         .perform(
@@ -111,12 +119,8 @@ class AdminMetricsIntegrationTest extends PostgreSqlIntegrationTest {
   }
 
   private void userBookEntity(
-      final UUID userId,
-      final UUID bookId,
-      final ReadingState state,
-      final Instant now) {
-    final UserBookEntity entity =
-        UserBookEntityTestFactory.create(userId, bookId, state, now);
+      final UUID userId, final UUID bookId, final ReadingState state, final Instant now) {
+    final UserBookEntity entity = UserBookEntityTestFactory.create(userId, bookId, state, now);
     jpaUserBookRepository.saveAndFlush(entity);
   }
 

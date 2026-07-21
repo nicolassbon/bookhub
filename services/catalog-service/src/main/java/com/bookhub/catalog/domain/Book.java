@@ -149,8 +149,16 @@ public class Book {
 
     public Book build() {
       return new Book(
-          id, title, authorName, isbn13, sourceReference, source, coverUrl, publishedYear,
-          pageCount, createdAt);
+          id,
+          title,
+          authorName,
+          isbn13,
+          sourceReference,
+          source,
+          coverUrl,
+          publishedYear,
+          pageCount,
+          createdAt);
     }
   }
 }

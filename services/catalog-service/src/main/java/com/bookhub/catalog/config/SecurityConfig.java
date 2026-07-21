@@ -43,6 +43,8 @@ public class SecurityConfig {
                     .hasAuthority("ROLE_SERVICE")
                     .requestMatchers("/actuator/health/**")
                     .permitAll()
+                    .requestMatchers(HttpMethod.GET, "/actuator/prometheus")
+                    .permitAll()
                     .requestMatchers("/api/v1/admin/**")
                     .hasAuthority("ROLE_ADMIN")
                     .requestMatchers(HttpMethod.POST, "/api/v1/books/**")

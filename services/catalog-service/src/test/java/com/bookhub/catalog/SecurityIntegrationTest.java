@@ -9,6 +9,9 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import com.bookhub.catalog.support.TestRsaKeys;
+import com.nimbusds.jose.jwk.JWKSet;
+import com.nimbusds.jose.jwk.RSAKey;
+import com.nimbusds.jose.jwk.source.ImmutableJWKSet;
 import java.security.KeyFactory;
 import java.security.interfaces.RSAPrivateKey;
 import java.security.interfaces.RSAPublicKey;
@@ -34,9 +37,6 @@ import org.springframework.test.context.DynamicPropertySource;
 import org.springframework.test.web.servlet.MockMvc;
 import org.testcontainers.junit.jupiter.Testcontainers;
 import org.testcontainers.postgresql.PostgreSQLContainer;
-import com.nimbusds.jose.jwk.JWKSet;
-import com.nimbusds.jose.jwk.RSAKey;
-import com.nimbusds.jose.jwk.source.ImmutableJWKSet;
 
 @SpringBootTest
 @AutoConfigureMockMvc
@@ -134,7 +134,8 @@ class SecurityIntegrationTest {
             result -> {
               int status = result.getResponse().getStatus();
               assertThat(status)
-                  .as("Internal endpoint with real service JWT (role=SERVICE) must not return 401 or 403")
+                  .as(
+                      "Internal endpoint with real service JWT (role=SERVICE) must not return 401 or 403")
                   .isIn(200, 404);
             });
   }
@@ -199,6 +200,12 @@ class SecurityIntegrationTest {
   @Test
   void actuatorHealthAccessIsPublic() throws Exception {
     mockMvc.perform(get("/actuator/health")).andExpect(status().isOk());
+  }
+
+  @Test
+  void prometheusIsPublicWhileOtherActuatorEndpointsRemainUnauthorized() throws Exception {
+    mockMvc.perform(get("/actuator/prometheus")).andExpect(status().isOk());
+    mockMvc.perform(get("/actuator/env")).andExpect(status().isUnauthorized());
   }
 
   private static String signServiceJwt(final String subject, final String role) throws Exception {

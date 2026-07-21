@@ -43,7 +43,8 @@ class CatalogServiceClientTest {
   void setUp() {
     final RestClient.Builder builder = RestClient.builder();
     mockServer = MockRestServiceServer.bindTo(builder).build();
-    catalogServiceClient = new CatalogServiceClient(CATALOG_BASE_URL, builder, serviceTokenProvider);
+    catalogServiceClient =
+        new CatalogServiceClient(CATALOG_BASE_URL, builder, serviceTokenProvider);
   }
 
   @Test
@@ -126,7 +127,8 @@ class CatalogServiceClientTest {
                       "User JWT MUST NOT be forwarded: must carry exactly one Authorization header (the service token)")
                   .hasSize(1);
               assertThat(authHeaders.getFirst())
-                  .as("The only Authorization header value MUST be the service token, not a user JWT")
+                  .as(
+                      "The only Authorization header value MUST be the service token, not a user JWT")
                   .isEqualTo("Bearer svc-jwt-token");
             })
         .andRespond(withSuccess("{}", MediaType.APPLICATION_JSON));
@@ -136,7 +138,8 @@ class CatalogServiceClientTest {
   }
 
   @Test
-  @DisplayName("Should target internal catalog API path, proving non-internal/public behavior unchanged")
+  @DisplayName(
+      "Should target internal catalog API path, proving non-internal/public behavior unchanged")
   void shouldTargetInternalCatalogApiPath() {
     when(serviceTokenProvider.getServiceToken()).thenReturn("svc-jwt-token");
 

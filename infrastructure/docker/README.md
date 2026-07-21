@@ -86,6 +86,16 @@ docker compose -f compose.yml up --build -d
 Library DB is **not** exposed on the host in `compose.dev.yml`.
 Use Docker-network access (`library-db:5432`) from containers, or add an explicit host port mapping in `compose.dev.yml` if local DB tooling access is needed.
 
+### Redis host-port conflict
+
+If port `6379` is already occupied on the host, this is an environment conflict rather than an application failure. Start the development stack with another host port:
+
+```bash
+IDENTITY_REDIS_HOST_PORT=6380 docker compose -f compose.yml -f compose.dev.yml up --build -d
+```
+
+The containers continue to use `identity-redis:6379`; only host tooling uses the override.
+
 ## Gateway route surface and downstream access behavior
 
 - `/api/v1/auth/**` -> `identity-service` (routed by gateway; permits registration/login/refresh/logout/forgot-password/reset-password/service-token without authentication)
@@ -108,3 +118,4 @@ Downstream service ports are intentionally not published in `compose.dev.yml` so
 - Containers use Docker DNS hostnames (`identity-db`, `identity-redis`, `catalog-db`, `library-db`) for internal connectivity.
 - Docker images are built from source inside Docker (no prebuilt local jars required).
 - Host-port publishing is intentionally isolated in `compose.dev.yml` to keep `compose.yml` reusable across local scenarios.
+- OpenLibrary is an optional catalog provider. When it times out or its circuit breaker is open, catalog search returns degraded or empty external results while preserving locally stored books.

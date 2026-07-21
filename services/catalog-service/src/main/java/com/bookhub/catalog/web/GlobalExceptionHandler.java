@@ -23,7 +23,8 @@ public class GlobalExceptionHandler {
 
   @ExceptionHandler(org.springframework.web.bind.MethodArgumentNotValidException.class)
   public ResponseEntity<ErrorResponse> handleMethodArgumentNotValid(
-      final org.springframework.web.bind.MethodArgumentNotValidException exception, final HttpServletRequest request) {
+      final org.springframework.web.bind.MethodArgumentNotValidException exception,
+      final HttpServletRequest request) {
     final String message =
         exception.getBindingResult().getFieldErrors().stream()
             .map(e -> e.getField() + " " + e.getDefaultMessage())
@@ -135,7 +136,8 @@ public class GlobalExceptionHandler {
 
   @ExceptionHandler(com.bookhub.catalog.application.admin.AdminImportDegradedException.class)
   public ResponseEntity<ErrorResponse> handleAdminImportDegraded(
-      final com.bookhub.catalog.application.admin.AdminImportDegradedException exception, final HttpServletRequest request) {
+      final com.bookhub.catalog.application.admin.AdminImportDegradedException exception,
+      final HttpServletRequest request) {
     return buildError(
         HttpStatus.SERVICE_UNAVAILABLE,
         "Service Unavailable",

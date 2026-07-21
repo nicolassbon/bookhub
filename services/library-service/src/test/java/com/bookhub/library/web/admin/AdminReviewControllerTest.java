@@ -37,12 +37,9 @@ class AdminReviewControllerTest {
   @MockitoBean private ListReviewsForModerationService listReviewsService;
   @MockitoBean private ModerateReviewService moderateReviewService;
 
-  private static final UUID REVIEW_ID =
-      UUID.fromString("00000000-0000-0000-0000-000000000001");
-  private static final UUID USER_ID =
-      UUID.fromString("00000000-0000-0000-0000-000000000002");
-  private static final UUID BOOK_ID =
-      UUID.fromString("00000000-0000-0000-0000-000000000003");
+  private static final UUID REVIEW_ID = UUID.fromString("00000000-0000-0000-0000-000000000001");
+  private static final UUID USER_ID = UUID.fromString("00000000-0000-0000-0000-000000000002");
+  private static final UUID BOOK_ID = UUID.fromString("00000000-0000-0000-0000-000000000003");
 
   @Nested
   class ListReviewsForModeration {
@@ -145,7 +142,8 @@ class AdminReviewControllerTest {
           .perform(
               patch("/api/v1/admin/reviews/{reviewId}/status", REVIEW_ID)
                   .contentType(MediaType.APPLICATION_JSON)
-                  .content("""
+                  .content(
+                      """
                            {"status": "APPROVED"}
                            """))
           .andExpect(status().isOk())
@@ -174,7 +172,8 @@ class AdminReviewControllerTest {
           .perform(
               patch("/api/v1/admin/reviews/{reviewId}/status", REVIEW_ID)
                   .contentType(MediaType.APPLICATION_JSON)
-                  .content("""
+                  .content(
+                      """
                            {"status": "REJECTED"}
                            """))
           .andExpect(status().isOk())
@@ -202,7 +201,8 @@ class AdminReviewControllerTest {
           .perform(
               patch("/api/v1/admin/reviews/{reviewId}/status", REVIEW_ID)
                   .contentType(MediaType.APPLICATION_JSON)
-                  .content("""
+                  .content(
+                      """
                            {"status": "FLAGGED"}
                            """))
           .andExpect(status().isOk())
@@ -218,7 +218,8 @@ class AdminReviewControllerTest {
           .perform(
               patch("/api/v1/admin/reviews/{reviewId}/status", REVIEW_ID)
                   .contentType(MediaType.APPLICATION_JSON)
-                  .content("""
+                  .content(
+                      """
                            {"status": "APPROVED"}
                            """))
           .andExpect(status().isNotFound())
@@ -231,7 +232,8 @@ class AdminReviewControllerTest {
           .perform(
               patch("/api/v1/admin/reviews/{reviewId}/status", REVIEW_ID)
                   .contentType(MediaType.APPLICATION_JSON)
-                  .content("""
+                  .content(
+                      """
                            {"status": "INVALID"}
                            """))
           .andExpect(status().isBadRequest())

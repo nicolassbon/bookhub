@@ -41,8 +41,7 @@ public class CatalogServiceClient {
     }
   }
 
-  private Optional<CatalogBook> executeRequest(
-      final UUID bookId, final String serviceToken) {
+  private Optional<CatalogBook> executeRequest(final UUID bookId, final String serviceToken) {
     try {
       return Optional.ofNullable(
           restClient
@@ -56,8 +55,7 @@ public class CatalogServiceClient {
                     throw new CatalogBookNotFoundException();
                   })
               .onStatus(
-                  statusCode ->
-                      statusCode.value() == 401 || statusCode.value() == 403,
+                  statusCode -> statusCode.value() == 401 || statusCode.value() == 403,
                   (request, response) -> {
                     throw new ServiceTokenRejectedException();
                   })

@@ -116,7 +116,8 @@ class AdminBookControllerTest {
         .perform(
             patch("/api/v1/admin/books/{id}", bookId)
                 .contentType(MediaType.APPLICATION_JSON)
-                .content("""
+                .content(
+                    """
                     {"title": "X"}
                     """))
         .andExpect(status().isNotFound())
@@ -287,9 +288,7 @@ class AdminBookControllerTest {
     when(listBooksAdminService.list(0, 20, "GOOGLE_BOOKS")).thenReturn(emptyResult);
 
     mockMvc
-        .perform(
-            get("/api/v1/admin/books")
-                .queryParam("source", "GOOGLE_BOOKS"))
+        .perform(get("/api/v1/admin/books").queryParam("source", "GOOGLE_BOOKS"))
         .andExpect(status().isOk())
         .andExpect(jsonPath("$.items").isArray())
         .andExpect(jsonPath("$.items").isEmpty())
@@ -315,8 +314,7 @@ class AdminBookControllerTest {
     when(listBooksAdminService.list(0, 20)).thenReturn(result);
 
     mockMvc
-        .perform(
-            get("/api/v1/admin/books").queryParam("source", ""))
+        .perform(get("/api/v1/admin/books").queryParam("source", ""))
         .andExpect(status().isOk())
         .andExpect(jsonPath("$.items[0].title").value("Any Book"))
         .andExpect(jsonPath("$.totalElements").value(1));

@@ -82,6 +82,9 @@
             <goals>
               <goal>prepare-agent</goal>
             </goals>
+            <configuration>
+              <append>false</append>
+            </configuration>
           </execution>
           <execution>
             <id>report</id>
@@ -117,6 +120,15 @@
             </sortPom>
           </pom>
         </configuration>
+        <executions>
+          <execution>
+            <id>spotless-validate</id>
+            <goals>
+              <goal>check</goal>
+            </goals>
+            <phase>validate</phase>
+          </execution>
+        </executions>
       </plugin>
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>

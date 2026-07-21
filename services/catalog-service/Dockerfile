@@ -11,6 +11,10 @@ RUN mvn -f services/catalog-service/pom.xml clean package -DskipTests
 
 FROM eclipse-temurin:21-jre
 
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends curl \
+    && rm -rf /var/lib/apt/lists/*
+
 WORKDIR /app
 
 COPY --from=build /workspace/services/catalog-service/target/*.jar app.jar

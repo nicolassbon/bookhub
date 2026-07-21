@@ -27,12 +27,9 @@ class ListReviewsForModerationServiceTest {
 
   @InjectMocks private ListReviewsForModerationService listReviewsService;
 
-  private static final UUID REVIEW_ID =
-      UUID.fromString("00000000-0000-0000-0000-000000000001");
-  private static final UUID USER_ID =
-      UUID.fromString("00000000-0000-0000-0000-000000000002");
-  private static final UUID BOOK_ID =
-      UUID.fromString("00000000-0000-0000-0000-000000000003");
+  private static final UUID REVIEW_ID = UUID.fromString("00000000-0000-0000-0000-000000000001");
+  private static final UUID USER_ID = UUID.fromString("00000000-0000-0000-0000-000000000002");
+  private static final UUID BOOK_ID = UUID.fromString("00000000-0000-0000-0000-000000000003");
 
   @Nested
   class ListAll {
@@ -40,11 +37,9 @@ class ListReviewsForModerationServiceTest {
     @Test
     void shouldReturnPaginatedReviewsWithoutFilter() {
       final Review review = sampleReview(ReviewStatus.VISIBLE);
-      final PaginatedResult<Review> expected =
-          new PaginatedResult<>(List.of(review), 0, 20, 1, 1);
+      final PaginatedResult<Review> expected = new PaginatedResult<>(List.of(review), 0, 20, 1, 1);
 
-      when(reviewRepository.findAllForModeration(any(PaginationQuery.class)))
-          .thenReturn(expected);
+      when(reviewRepository.findAllForModeration(any(PaginationQuery.class))).thenReturn(expected);
 
       final PaginatedResult<Review> result = listReviewsService.list(0, 20, null);
 
@@ -63,8 +58,7 @@ class ListReviewsForModerationServiceTest {
               any(PaginationQuery.class), eq(ReviewStatus.HIDDEN)))
           .thenReturn(expected);
 
-      final PaginatedResult<Review> result =
-          listReviewsService.list(0, 20, ReviewStatus.HIDDEN);
+      final PaginatedResult<Review> result = listReviewsService.list(0, 20, ReviewStatus.HIDDEN);
 
       assertThat(result.items().getFirst().getStatus()).isEqualTo(ReviewStatus.HIDDEN);
       verify(reviewRepository)
@@ -73,11 +67,9 @@ class ListReviewsForModerationServiceTest {
 
     @Test
     void shouldReturnEmptyPageWhenNoReviews() {
-      final PaginatedResult<Review> empty =
-          new PaginatedResult<>(List.of(), 0, 20, 0, 0);
+      final PaginatedResult<Review> empty = new PaginatedResult<>(List.of(), 0, 20, 0, 0);
 
-      when(reviewRepository.findAllForModeration(any(PaginationQuery.class)))
-          .thenReturn(empty);
+      when(reviewRepository.findAllForModeration(any(PaginationQuery.class))).thenReturn(empty);
 
       final PaginatedResult<Review> result = listReviewsService.list(0, 20, null);
 

@@ -17,18 +17,23 @@ public class UpdateBookService {
 
   public Book update(final UUID bookId, final UpdateBookCommand command) {
     final Book existing =
-        bookRepository.findById(bookId).orElseThrow(() -> new BookNotFoundException(bookId.toString()));
+        bookRepository
+            .findById(bookId)
+            .orElseThrow(() -> new BookNotFoundException(bookId.toString()));
 
     final Book updated =
         Book.builder()
             .id(existing.getId())
             .title(command.title() != null ? command.title() : existing.getTitle())
-            .authorName(command.authorName() != null ? command.authorName() : existing.getAuthorName())
+            .authorName(
+                command.authorName() != null ? command.authorName() : existing.getAuthorName())
             .isbn13(command.isbn13() != null ? command.isbn13() : existing.getIsbn13())
             .sourceReference(existing.getSourceReference())
             .coverUrl(command.coverUrl() != null ? command.coverUrl() : existing.getCoverUrl())
             .publishedYear(
-                command.publishedYear() != null ? command.publishedYear() : existing.getPublishedYear())
+                command.publishedYear() != null
+                    ? command.publishedYear()
+                    : existing.getPublishedYear())
             .pageCount(command.pageCount() != null ? command.pageCount() : existing.getPageCount())
             .createdAt(existing.getCreatedAt())
             .build();

@@ -9,10 +9,7 @@ public final class UserBookEntityTestFactory {
   private UserBookEntityTestFactory() {}
 
   public static UserBookEntity create(
-      final UUID userId,
-      final UUID bookId,
-      final ReadingState state,
-      final Instant now) {
+      final UUID userId, final UUID bookId, final ReadingState state, final Instant now) {
     final UserBookEntity entity = new UserBookEntity();
     entity.setUserId(userId);
     entity.setBookId(bookId);

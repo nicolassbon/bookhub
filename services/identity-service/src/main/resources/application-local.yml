@@ -17,9 +17,15 @@ server:
   port: ${SERVER_PORT:8081}
 
 management:
+  health:
+    mail:
+      enabled: false
   endpoint:
     health:
       show-details: always
+      group:
+        readiness:
+          include: readinessState,db,redis
 
 jwt:
   issuer: ${JWT_ISSUER:bookhub-identity-local}

@@ -21,4 +21,4 @@ jobs:
           cache: maven
 
       - name: Verify monorepo
-        run: mvn -B verify
+        run: ./mvnw -B verify

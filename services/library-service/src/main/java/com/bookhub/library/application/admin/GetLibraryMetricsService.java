@@ -30,10 +30,16 @@ public class GetLibraryMetricsService {
     final double averageRating = jpaReviewRepository.computeAverageRating();
 
     return new LibraryMetricsResult(
-        totalUsers, totalLibraryEntries,
-        wantToRead, reading, read,
-        pending, approved, rejected,
-        totalReviews, averageRating);
+        totalUsers,
+        totalLibraryEntries,
+        wantToRead,
+        reading,
+        read,
+        pending,
+        approved,
+        rejected,
+        totalReviews,
+        averageRating);
   }
 
   public record LibraryMetricsResult(

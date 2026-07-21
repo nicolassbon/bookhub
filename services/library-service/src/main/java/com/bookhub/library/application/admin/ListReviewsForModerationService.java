@@ -14,7 +14,8 @@ public class ListReviewsForModerationService {
 
   private final ReviewRepository reviewRepository;
 
-  public PaginatedResult<Review> list(final int page, final int size, final ReviewStatus statusFilter) {
+  public PaginatedResult<Review> list(
+      final int page, final int size, final ReviewStatus statusFilter) {
     final PaginationQuery query = new PaginationQuery(page, size);
     if (statusFilter != null) {
       return reviewRepository.findAllForModeration(query, statusFilter);

@@ -42,6 +42,8 @@ public class SecurityConfig {
                         "/actuator/health/**",
                         "/actuator/info")
                     .permitAll()
+                    .requestMatchers(HttpMethod.GET, "/actuator/prometheus")
+                    .permitAll()
                     .requestMatchers(HttpMethod.POST, "/api/v1/auth/service-token")
                     .permitAll()
                     .requestMatchers("/api/v1/admin/**")

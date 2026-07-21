@@ -5,8 +5,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 import com.bookhub.identity.application.auth.InvalidRefreshTokenException;
 import com.bookhub.identity.application.auth.RefreshSessionResult;
 import com.bookhub.identity.application.auth.RefreshSessionService;
-import com.bookhub.identity.domain.auth.RefreshToken;
 import com.bookhub.identity.application.auth.RefreshTokenHasher;
+import com.bookhub.identity.domain.auth.RefreshToken;
 import com.bookhub.identity.domain.user.User;
 import com.bookhub.identity.domain.user.UserRole;
 import com.bookhub.identity.infrastructure.persistence.RefreshTokenJpaRepository;
@@ -97,9 +97,7 @@ class RefreshSessionConcurrencyIntegrationTest extends PostgreSqlIntegrationTest
     executor.shutdown();
     executor.awaitTermination(30, TimeUnit.SECONDS);
 
-    assertThat(successCount.get())
-        .as("Exactly one refresh attempt should succeed")
-        .isEqualTo(1);
+    assertThat(successCount.get()).as("Exactly one refresh attempt should succeed").isEqualTo(1);
 
     assertThat(rejectedCount.get())
         .as("All other concurrent attempts should be rejected as invalid")

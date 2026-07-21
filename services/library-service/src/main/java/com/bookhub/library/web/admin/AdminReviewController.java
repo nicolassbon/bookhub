@@ -50,8 +50,7 @@ public class AdminReviewController {
 
   @PatchMapping("/reviews/{reviewId}/status")
   public ResponseEntity<AdminReviewResponse> moderateReview(
-      @PathVariable final UUID reviewId,
-      @Valid @RequestBody final ModerateReviewRequest request) {
+      @PathVariable final UUID reviewId, @Valid @RequestBody final ModerateReviewRequest request) {
 
     final ReviewStatus newStatus = parseModerationStatus(request.status());
     final Review updated = moderateReviewService.moderate(reviewId, newStatus);

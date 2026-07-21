@@ -26,12 +26,9 @@ class AdminReviewIntegrationTest extends PostgreSqlIntegrationTest {
   @Autowired private MockMvc mockMvc;
   @Autowired private JpaReviewRepository jpaReviewRepository;
 
-  private static final UUID USER_ID =
-      UUID.fromString("00000000-0000-0000-0000-000000000100");
-  private static final UUID BOOK_ID =
-      UUID.fromString("00000000-0000-0000-0000-000000000200");
-  private static final UUID ADMIN_ID =
-      UUID.fromString("00000000-0000-0000-0000-000000000999");
+  private static final UUID USER_ID = UUID.fromString("00000000-0000-0000-0000-000000000100");
+  private static final UUID BOOK_ID = UUID.fromString("00000000-0000-0000-0000-000000000200");
+  private static final UUID ADMIN_ID = UUID.fromString("00000000-0000-0000-0000-000000000999");
 
   @Test
   @DisplayName("Should return 403 when listing reviews with USER role")
@@ -39,8 +36,10 @@ class AdminReviewIntegrationTest extends PostgreSqlIntegrationTest {
     mockMvc
         .perform(
             get("/api/v1/admin/reviews")
-                .with(jwt().jwt(j -> j.subject(USER_ID.toString())).authorities(
-                    new SimpleGrantedAuthority("ROLE_USER"))))
+                .with(
+                    jwt()
+                        .jwt(j -> j.subject(USER_ID.toString()))
+                        .authorities(new SimpleGrantedAuthority("ROLE_USER"))))
         .andExpect(status().isForbidden());
   }
 
@@ -59,7 +58,11 @@ class AdminReviewIntegrationTest extends PostgreSqlIntegrationTest {
     jpaReviewRepository.saveAndFlush(
         reviewEntity(
             UUID.fromString("00000000-0000-0000-0000-000000000101"),
-            BOOK_ID, 1, "Spam", ReviewStatus.FLAGGED, now));
+            BOOK_ID,
+            1,
+            "Spam",
+            ReviewStatus.FLAGGED,
+            now));
 
     mockMvc
         .perform(
@@ -83,7 +86,11 @@ class AdminReviewIntegrationTest extends PostgreSqlIntegrationTest {
     jpaReviewRepository.saveAndFlush(
         reviewEntity(
             UUID.fromString("00000000-0000-0000-0000-000000000101"),
-            BOOK_ID, 1, "Spam", ReviewStatus.FLAGGED, now));
+            BOOK_ID,
+            1,
+            "Spam",
+            ReviewStatus.FLAGGED,
+            now));
 
     mockMvc
         .perform(
@@ -110,7 +117,8 @@ class AdminReviewIntegrationTest extends PostgreSqlIntegrationTest {
         .perform(
             patch("/api/v1/admin/reviews/{reviewId}/status", saved.getId())
                 .contentType(MediaType.APPLICATION_JSON)
-                .content("""
+                .content(
+                    """
                          {"status": "APPROVED"}
                          """)
                 .with(
@@ -134,7 +142,8 @@ class AdminReviewIntegrationTest extends PostgreSqlIntegrationTest {
         .perform(
             patch("/api/v1/admin/reviews/{reviewId}/status", saved.getId())
                 .contentType(MediaType.APPLICATION_JSON)
-                .content("""
+                .content(
+                    """
                          {"status": "REJECTED"}
                          """)
                 .with(
@@ -154,7 +163,8 @@ class AdminReviewIntegrationTest extends PostgreSqlIntegrationTest {
         .perform(
             patch("/api/v1/admin/reviews/{reviewId}/status", nonExistentId)
                 .contentType(MediaType.APPLICATION_JSON)
-                .content("""
+                .content(
+                    """
                          {"status": "APPROVED"}
                          """)
                 .with(

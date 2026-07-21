@@ -264,6 +264,55 @@ class GatewayApplicationTests {
             "X-Downstream-Forwarded", forwarded -> assertThat(forwarded).contains("proto=https"));
   }
 
+  @Test
+  void shouldForwardValidInboundW3cTraceContextToDownstreamService() {
+    final String inboundTraceparent = "00-4bf92f3577b34da6a3ce929d0e0e4736-00f067aa0ba902b7-01";
+
+    webTestClient
+        .get()
+        .uri("http://localhost:" + serverPort + "/api/v1/books/trace-probe")
+        .header("traceparent", inboundTraceparent)
+        .exchange()
+        .expectStatus()
+        .isOk()
+        .expectHeader()
+        .valueEquals("X-Downstream-Traceparent", inboundTraceparent);
+  }
+
+  @Test
+  void shouldPreserveInboundW3cTraceIdWhenForwardingToDownstreamService() {
+    final String inboundTraceparent = "00-4bf92f3577b34da6a3ce929d0e0e4736-00f067aa0ba902b7-01";
+
+    webTestClient
+        .get()
+        .uri("http://localhost:" + serverPort + "/api/v1/books/trace-probe")
+        .header("traceparent", inboundTraceparent)
+        .exchange()
+        .expectStatus()
+        .isOk()
+        .expectHeader()
+        .value(
+            "X-Downstream-Traceparent",
+            traceparent -> assertThat(traceparent).isEqualTo(inboundTraceparent));
+  }
+
+  @Test
+  void shouldExposeMetricsButRequireAuthenticationForIt() {
+    webTestClient
+        .get()
+        .uri("http://localhost:" + serverPort + "/actuator/metrics")
+        .exchange()
+        .expectStatus()
+        .isUnauthorized();
+
+    webTestClient
+        .get()
+        .uri("http://localhost:" + serverPort + "/actuator/prometheus")
+        .exchange()
+        .expectStatus()
+        .isOk();
+  }
+
   private void assertDownstreamPathPreserved(final String expectedPath) {
     webTestClient
         .get()
@@ -322,6 +371,11 @@ class GatewayApplicationTests {
     final String forwardedHeader = request.requestHeaders().get("Forwarded");
     if (forwardedHeader != null) {
       response.header("X-Downstream-Forwarded", forwardedHeader);
+    }
+
+    final String traceparent = request.requestHeaders().get("traceparent");
+    if (traceparent != null) {
+      response.header("X-Downstream-Traceparent", traceparent);
     }
 
     final String uri = request.uri();
