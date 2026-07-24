@@ -294,3 +294,19 @@ Examples:
 - **Package without tests:** `./mvnw clean package -DskipTests`
 
 Do not rely on manual DB changes. Prefer Flyway migrations.
+
+---
+
+## 13. Frontend Guidelines (`frontend/web-app`)
+
+- **Framework:** Standalone, zoneless Angular (Angular 22) application.
+- **Language:** TypeScript 6.
+- **Styling:** SCSS design tokens (`src/_tokens.scss`).
+- **Testing:** Vitest & `@testing-library/angular`.
+- **Package Manager:** `pnpm` (pnpm 11.5.2). Use `pnpm`, not `npm`.
+- **Angular 2025 Style Guide Naming:** Component files follow concise naming (`name.ts`, `name.html`, `name.scss`, `name.spec.ts`) without redundant `.component` suffixes.
+- **Commands (from `frontend/web-app`):**
+  - **Dev Server:** `pnpm start` (proxies `/api` to API Gateway at `:8080`)
+  - **Run Tests:** `pnpm test`
+  - **Build Bundle:** `pnpm build`
+
