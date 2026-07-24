@@ -17,7 +17,7 @@ This repository contains the backend foundation for BookHub V1, including identi
 
 - `docs/` — product, architecture, contracts, ADRs, and operational tracking docs.
 - `infrastructure/` — Docker Compose setup and observability scaffolding.
-- `frontend/web-app/` — reserved for the future web application.
+- `frontend/web-app/` — standalone zoneless Angular 22 web application.
 - `tests/k6/` — non-functional performance testing.
 
 ## Architecture direction
@@ -45,6 +45,7 @@ The repository currently includes:
 - service-to-service authentication via service JWT tokens (identity-service issues; library-service acquires/forwards to catalog-service internal endpoints)
 - catalog search and detail endpoints backed by local persistence plus Open Library bootstrap/integration
 - library endpoints for add/list/get/update-state/update-progress workflows
+- single-page web application in `frontend/web-app` built with zoneless Angular, TypeScript, SCSS design tokens, Signals, and lazy-loaded feature modules
 - local Docker Compose topology for gateway + identity + catalog + library
 
 ## Key documentation

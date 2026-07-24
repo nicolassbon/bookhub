@@ -79,9 +79,9 @@ This folder contains one Spring Boot application per service.
 
 ### `frontend/`
 
-Reserved for Angular later.
+Standalone web application in `frontend/web-app/`.
 
-Frontend is intentionally separated from backend services and should not block backend delivery.
+Built with zoneless Angular, Signals, SCSS design tokens, Vitest, and pnpm. Follows the official Angular 2025/2026 Style Guide for concise component file naming.
 
 ---
 

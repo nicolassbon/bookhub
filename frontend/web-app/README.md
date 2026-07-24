@@ -1,59 +1,39 @@
-# WebApp
+# BookHub Web Application
 
-This project was generated using [Angular CLI](https://github.com/angular/angular-cli) version 22.0.8.
+Standalone, zoneless Angular application for the BookHub social reading platform.
 
-## Development server
+## Technology Stack
 
-To start a local development server, run:
+- **Framework:** Angular (Zoneless Change Detection, Signals)
+- **Language:** TypeScript
+- **Styling:** Vanilla SCSS with curated CSS Custom Properties design system (`src/_tokens.scss`)
+- **Testing:** Vitest & `@testing-library/angular`
+- **Package Manager:** pnpm
 
-```bash
-ng serve
-```
+## Architecture & File Naming Conventions
 
-Once the server is running, open your browser and navigate to `http://localhost:4200/`. The application will automatically reload whenever you modify any of the source files.
+This application follows the official **Angular 2025/2026 Style Guide**:
 
-## Code scaffolding
+- **Concise Naming:** Redundant suffixes like `.component` are omitted. Component files use `[name].ts`, `[name].html`, `[name].scss`, and `[name].spec.ts` (e.g., `login.ts`, `login.html`, `login.scss`, `login.spec.ts`).
+- **Standalone Components:** All components, pipes, and directives are standalone.
+- **Signal-based State:** Application state and session tokens use Angular Signals (`SessionStore`).
+- **Lazy Loading:** All feature routes (`/login`, `/register`, `/catalog`, `/catalog/books/:id`, `/library`, `/profile`, `/notifications`) are lazy-loaded via standalone `loadComponent()`.
 
-Angular CLI includes powerful code scaffolding tools. To generate a new component, run:
+## Features
 
-```bash
-ng generate component component-name
-```
+- **Auth & Session Management:** Form validation, JWT in-memory store, single-flight refresh token interceptor, and route guards (`authGuard`, `guestGuard`).
+- **Catalog & Discovery:** Debounced search, pagination, book detail views, and community reviews.
+- **Reading Library:** Tabbed shelf filtering (`TODOS`, `WANT_TO_READ`, `READING`, `READ`), percentage progress indicators, and page progress updates.
+- **Engagement & Profile:** Yearly reading goals widget, public & authenticated reviews submission, profile display name updates, and notifications center.
+- **Accessibility:** Keyboard skip link (`#main-content`), ARIA landmarks, status/alert live regions, and screen-reader utilities (`.sr-only`).
 
-For a complete list of available schematics (such as `components`, `directives`, or `pipes`), run:
+## Available Scripts
 
-```bash
-ng generate --help
-```
-
-## Building
-
-To build the project run:
-
-```bash
-ng build
-```
-
-This will compile your project and store the build artifacts in the `dist/` directory. By default, the production build optimizes your application for performance and speed.
-
-## Running unit tests
-
-To execute unit tests with the [Vitest](https://vitest.dev/) test runner, use the following command:
+Run from `frontend/web-app`:
 
 ```bash
-ng test
+pnpm install
+pnpm start     # Runs dev server with proxy to API Gateway at http://localhost:8080
+pnpm test      # Runs Vitest unit test suite (40/40 tests)
+pnpm build     # Generates production CSR bundle in dist/web-app
 ```
-
-## Running end-to-end tests
-
-For end-to-end (e2e) testing, run:
-
-```bash
-ng e2e
-```
-
-Angular CLI does not come with an end-to-end testing framework by default. You can choose one that suits your needs.
-
-## Additional Resources
-
-For more information on using the Angular CLI, including detailed command references, visit the [Angular CLI Overview and Command Reference](https://angular.dev/tools/cli) page.
