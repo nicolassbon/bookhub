@@ -70,6 +70,7 @@ class GatewayApplicationTests {
             "library-route",
             "library-goals-route",
             "library-reviews-route",
+            "library-book-reviews-route",
             "library-notifications-route",
             "library-admin-route");
 
@@ -199,6 +200,7 @@ class GatewayApplicationTests {
     assertDownstreamPathPreserved("/api/v1/auth/login?probe=auth");
     assertDownstreamPathPreserved("/api/v1/users/profile?probe=users");
     assertDownstreamPathPreserved("/api/v1/books/42?probe=books");
+    assertDownstreamPathPreserved("/api/v1/books/42/reviews?probe=reviews");
   }
 
   @Test

@@ -36,6 +36,7 @@ class GatewayApplicationLocalProfileTests {
             "library-route",
             "library-goals-route",
             "library-reviews-route",
+            "library-book-reviews-route",
             "library-notifications-route",
             "library-admin-route");
 
@@ -56,5 +57,36 @@ class GatewayApplicationLocalProfileTests {
             routeDefinition ->
                 routeDefinition.getId().equals("library-route")
                     && routeDefinition.getUri().toString().equals("http://localhost:8083"));
+
+    assertThat(routeDefinitions)
+        .anyMatch(
+            routeDefinition ->
+                routeDefinition.getId().equals("library-book-reviews-route")
+                    && routeDefinition.getUri().toString().equals("http://localhost:8083")
+                    && routeDefinition.getPredicates().stream()
+                        .anyMatch(
+                            predicate ->
+                                predicate.getArgs().values().stream()
+                                    .anyMatch(
+                                        value ->
+                                            value
+                                                .toString()
+                                                .contains("/api/v1/books/{bookId}/reviews"))));
+
+    final int reviewRouteIndex =
+        routeDefinitions.indexOf(
+            routeDefinitions.stream()
+                .filter(route -> route.getId().equals("library-book-reviews-route"))
+                .findFirst()
+                .orElseThrow());
+    final int catalogBooksRouteIndex =
+        routeDefinitions.indexOf(
+            routeDefinitions.stream()
+                .filter(route -> route.getId().equals("catalog-books-route"))
+                .findFirst()
+                .orElseThrow());
+    assertThat(reviewRouteIndex)
+        .as("library-book-reviews-route must precede catalog-books-route so reviews reach library")
+        .isLessThan(catalogBooksRouteIndex);
   }
 }

@@ -163,5 +163,75 @@ class ReviewControllerTest {
           .andExpect(jsonPath("$[1].userId").value(otherUserId.toString()))
           .andExpect(jsonPath("$[1].rating").value(3));
     }
+
+    @Test
+    void shouldReturn200AndListReviewsWhenUnauthenticated() throws Exception {
+      final Review r1 = Review.create(USER_ID, BOOK_ID, 5, "Great");
+      when(getReviewService.forBook(BOOK_ID)).thenReturn(List.of(r1));
+
+      mockMvc
+          .perform(get("/api/v1/books/{bookId}/reviews", BOOK_ID))
+          .andExpect(status().isOk())
+          .andExpect(jsonPath("$.length()").value(1))
+          .andExpect(jsonPath("$[0].rating").value(5));
+    }
+
+    @Test
+    void shouldPreserveQueryParametersForUnauthenticatedReviewGet() throws Exception {
+      when(getReviewService.forBook(BOOK_ID)).thenReturn(List.of());
+
+      mockMvc
+          .perform(
+              get("/api/v1/books/{bookId}/reviews", BOOK_ID)
+                  .param("limit", "10")
+                  .param("offset", "0"))
+          .andExpect(status().isOk())
+          .andExpect(jsonPath("$.length()").value(0));
+    }
+  }
+
+  @Nested
+  class UnauthenticatedAccessBoundary {
+
+    @Test
+    void shouldReturn401WhenUnauthenticatedCreateReview() throws Exception {
+      mockMvc
+          .perform(
+              post("/api/v1/reviews")
+                  .contentType(MediaType.APPLICATION_JSON)
+                  .content(
+                      """
+                      {"bookId": "00000000-0000-0000-0000-000000000002", "rating": 5, "content": "x"}
+                      """))
+          .andExpect(status().isUnauthorized());
+    }
+
+    @Test
+    void shouldReturn401WhenUnauthenticatedUpdateReview() throws Exception {
+      mockMvc
+          .perform(
+              patch("/api/v1/reviews/{reviewId}", REVIEW_ID)
+                  .contentType(MediaType.APPLICATION_JSON)
+                  .content(
+                      """
+                      {"rating": 4, "content": "x"}
+                      """))
+          .andExpect(status().isUnauthorized());
+    }
+
+    @Test
+    void shouldReturn401WhenUnauthenticatedReadsReviewsCollection() throws Exception {
+      mockMvc.perform(get("/api/v1/reviews")).andExpect(status().isUnauthorized());
+    }
+
+    @Test
+    void shouldReturn401WhenUnauthenticatedNonGetOnPublicReviewsPath() throws Exception {
+      mockMvc
+          .perform(
+              post("/api/v1/books/{bookId}/reviews", BOOK_ID)
+                  .contentType(MediaType.APPLICATION_JSON)
+                  .content("{}"))
+          .andExpect(status().isUnauthorized());
+    }
   }
 }

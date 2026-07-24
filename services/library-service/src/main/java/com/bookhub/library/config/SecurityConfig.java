@@ -41,6 +41,8 @@ public class SecurityConfig {
                     .permitAll()
                     .requestMatchers(HttpMethod.GET, "/actuator/prometheus")
                     .permitAll()
+                    .requestMatchers(HttpMethod.GET, "/api/v1/books/*/reviews")
+                    .permitAll()
                     .requestMatchers("/api/v1/admin/**")
                     .hasAuthority("ROLE_ADMIN")
                     .anyRequest()
