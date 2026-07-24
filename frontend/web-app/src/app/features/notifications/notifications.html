@@ -1,0 +1,30 @@
+<div class="notifications-container">
+  <h2>Notificaciones</h2>
+
+  @if (isLoading()) {
+    <app-loading-state message="Cargando notificaciones..."></app-loading-state>
+  } @else if (notifications().length === 0) {
+    <app-empty-state 
+      title="Sin notificaciones" 
+      description="Estás al día. No tenés alertas ni avisos pendientes." 
+      icon="🔔">
+    </app-empty-state>
+  } @else {
+    <div class="notifications-list">
+      @for (item of notifications(); track item.id) {
+        <div class="notification-card" [class.unread]="!item.read">
+          <div class="notification-header">
+            <span class="notification-title">{{ item.title }}</span>
+            <span class="notification-date">{{ item.createdAt | date:'short' }}</span>
+          </div>
+          <p class="notification-message">{{ item.message }}</p>
+          @if (!item.read) {
+            <button type="button" class="btn-mark-read" (click)="markAsRead(item.id)">
+              Marcar como leída
+            </button>
+          }
+        </div>
+      }
+    </div>
+  }
+</div>

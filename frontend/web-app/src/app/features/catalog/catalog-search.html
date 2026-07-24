@@ -1,0 +1,62 @@
+<div class="catalog-header">
+  <h2>Explorá el Catálogo de Libros</h2>
+  <p>Buscá por título, autor o palabras clave en nuestra biblioteca digital</p>
+
+  <form [formGroup]="searchForm" class="search-form" (ngSubmit)="onSearch()">
+    <div class="search-input-wrapper">
+      <span class="search-icon">🔍</span>
+      <input 
+        type="search" 
+        formControlName="query" 
+        placeholder="Buscar por título o autor..." 
+        aria-label="Buscar libros por título o autor" />
+    </div>
+  </form>
+</div>
+
+@if (isLoading()) {
+  <app-loading-state message="Buscando libros en el catálogo..."></app-loading-state>
+} @else if (errorMessage()) {
+  <app-error-state 
+    title="Error al consultar el catálogo" 
+    [message]="errorMessage()!" 
+    (retry)="loadBooks()">
+  </app-error-state>
+} @else if (books().length === 0) {
+  <app-empty-state 
+    title="Sin resultados" 
+    description="No encontramos libros que coincidan con tu búsqueda. Probá con otros términos." 
+    icon="🔍">
+  </app-empty-state>
+} @else {
+  <div class="books-grid">
+    @for (book of books(); track book.id) {
+      <a [routerLink]="['/catalog/books', book.id]" class="book-card">
+        <div class="cover-wrapper">
+          @if (book.coverUrl) {
+            <img [src]="book.coverUrl" [alt]="'Portada de ' + book.title" loading="lazy" />
+          } @else {
+            <div class="cover-placeholder">
+              <span class="placeholder-icon">📖</span>
+            </div>
+          }
+        </div>
+        <div class="book-info">
+          <h3 class="book-title">{{ book.title }}</h3>
+          <p class="book-author">por {{ book.author }}</p>
+          @if (book.publishedYear) {
+            <span class="book-year">{{ book.publishedYear }}</span>
+          }
+        </div>
+      </a>
+    }
+  </div>
+
+  @if (hasMorePages()) {
+    <div class="load-more-wrapper">
+      <button type="button" class="btn-secondary" (click)="loadMore()">
+        Cargar más libros
+      </button>
+    </div>
+  }
+}

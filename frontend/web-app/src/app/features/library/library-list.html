@@ -1,0 +1,105 @@
+<div class="library-header">
+  <h2>Mi Biblioteca de Lectura</h2>
+  <p>Gestioná tus libros guardados y actualizá tu avance página por página</p>
+
+  <div class="filter-tabs" role="tablist">
+    <button 
+      type="button" 
+      role="tab" 
+      [attr.aria-selected]="activeFilter() === null"
+      [class.active]="activeFilter() === null" 
+      (click)="setFilter(null)">
+      Todos
+    </button>
+    <button 
+      type="button" 
+      role="tab" 
+      [attr.aria-selected]="activeFilter() === 'READING'"
+      [class.active]="activeFilter() === 'READING'" 
+      (click)="setFilter('READING')">
+      📖 Leyendo
+    </button>
+    <button 
+      type="button" 
+      role="tab" 
+      [attr.aria-selected]="activeFilter() === 'WANT_TO_READ'"
+      [class.active]="activeFilter() === 'WANT_TO_READ'" 
+      (click)="setFilter('WANT_TO_READ')">
+      📚 Quiero Leer
+    </button>
+    <button 
+      type="button" 
+      role="tab" 
+      [attr.aria-selected]="activeFilter() === 'READ'"
+      [class.active]="activeFilter() === 'READ'" 
+      (click)="setFilter('READ')">
+      ✅ Leídos
+    </button>
+  </div>
+</div>
+
+@if (isLoading()) {
+  <app-loading-state message="Cargando tu biblioteca..."></app-loading-state>
+} @else if (errorMessage()) {
+  <app-error-state 
+    title="Error al cargar la biblioteca" 
+    [message]="errorMessage()!" 
+    (retry)="loadLibrary()">
+  </app-error-state>
+} @else if (userBooks().length === 0) {
+  <app-empty-state 
+    title="Tu biblioteca está vacía" 
+    description="Todavía no agregaste libros a esta sección. Explorá el catálogo para sumar nuevas lecturas." 
+    icon="📚">
+  </app-empty-state>
+} @else {
+  <div class="library-grid">
+    @for (item of userBooks(); track item.id) {
+      <div class="library-item-card">
+        <div class="item-cover">
+          @if (item.book.coverUrl) {
+            <img [src]="item.book.coverUrl" [alt]="'Portada de ' + item.book.title" />
+          } @else {
+            <div class="placeholder-cover">📖</div>
+          }
+        </div>
+
+        <div class="item-content">
+          <div class="item-header">
+            <a [routerLink]="['/catalog/books', item.book.id]" class="item-title">
+              {{ item.book.title }}
+            </a>
+            <span class="item-author">por {{ item.book.author }}</span>
+          </div>
+
+          <div class="progress-section">
+            <div class="progress-labels">
+              <span>Progreso de lectura</span>
+              <span class="percentage">{{ item.percentageCompleted }}%</span>
+            </div>
+            <div class="progress-bar">
+              <div class="progress-fill" [style.width.%]="item.percentageCompleted"></div>
+            </div>
+            <span class="pages-text">Página {{ item.currentPage }} de {{ item.totalPages || item.book.pageCount }}</span>
+          </div>
+
+          <div class="update-progress-row">
+            <input 
+              #pageInput 
+              type="number" 
+              min="0" 
+              [max]="item.totalPages || item.book.pageCount" 
+              [value]="item.currentPage" 
+              placeholder="Pág" />
+            <button 
+              type="button" 
+              class="btn-update" 
+              (click)="updateProgress(item.id, pageInput.value)">
+              Actualizar
+            </button>
+          </div>
+        </div>
+      </div>
+    }
+  </div>
+}

@@ -1,0 +1,103 @@
+.auth-card {
+  max-width: 440px;
+  margin: 40px auto;
+  padding: 32px;
+  background-color: var(--bh-color-bg-surface);
+  border: 1px solid var(--bh-color-border);
+  border-radius: var(--bh-radius-lg);
+  box-shadow: var(--bh-shadow-md);
+
+  h2 {
+    font-size: 1.5rem;
+    font-weight: 700;
+    margin-bottom: 6px;
+  }
+
+  .auth-subtitle {
+    color: var(--bh-color-text-secondary);
+    font-size: 0.95rem;
+    margin-bottom: 24px;
+  }
+}
+
+.alert.error {
+  background-color: var(--bh-color-error-light);
+  border: 1px solid var(--bh-color-error);
+  color: var(--bh-color-error);
+  padding: 10px 14px;
+  border-radius: var(--bh-radius-md);
+  font-size: 0.9rem;
+  margin-bottom: 16px;
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 18px;
+
+  label {
+    font-weight: 600;
+    font-size: 0.9rem;
+  }
+
+  input {
+    padding: 10px 14px;
+    border: 1px solid var(--bh-color-border);
+    border-radius: var(--bh-radius-md);
+    font-family: inherit;
+    font-size: 0.95rem;
+
+    &:focus {
+      border-color: var(--bh-color-brand-primary);
+    }
+
+    &.invalid {
+      border-color: var(--bh-color-error);
+    }
+  }
+
+  .field-error {
+    color: var(--bh-color-error);
+    font-size: 0.8rem;
+  }
+}
+
+.btn-submit {
+  width: 100%;
+  padding: 12px;
+  background-color: var(--bh-color-brand-primary);
+  color: #ffffff;
+  border: none;
+  border-radius: var(--bh-radius-md);
+  font-weight: 600;
+  font-size: 1rem;
+  cursor: pointer;
+  margin-top: 8px;
+  transition: background-color var(--bh-transition-fast);
+
+  &:hover:not(:disabled) {
+    background-color: var(--bh-color-brand-hover);
+  }
+
+  &:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
+}
+
+.auth-footer {
+  margin-top: 24px;
+  padding-top: 16px;
+  border-top: 1px solid var(--bh-color-border);
+  text-align: center;
+  font-size: 0.9rem;
+  color: var(--bh-color-text-secondary);
+
+  a {
+    color: var(--bh-color-brand-primary);
+    font-weight: 600;
+    text-decoration: none;
+    &:hover { text-decoration: underline; }
+  }
+}

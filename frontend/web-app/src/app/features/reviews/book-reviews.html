@@ -1,0 +1,83 @@
+<div class="reviews-section">
+  <div class="reviews-header">
+    <h3>Reseñas de Lectores</h3>
+
+    @if (sessionStore.isAuthenticated()) {
+      <button type="button" class="btn-write-review" (click)="toggleReviewForm()">
+        ✍️ {{ showForm() ? 'Cancelar' : 'Escribir una reseña' }}
+      </button>
+    } @else {
+      <p class="auth-prompt">
+        <a (click)="navigateToLogin()">Iniciá sesión</a> para dejar tu opinión sobre este libro.
+      </p>
+    }
+  </div>
+
+  @if (showForm()) {
+    <form [formGroup]="reviewForm" class="review-form-card" (ngSubmit)="onSubmitReview()">
+      <h4>Tu Opinión</h4>
+
+      @if (formError()) {
+        <div class="alert error">{{ formError() }}</div>
+      }
+
+      <div class="form-group">
+        <label>Calificación (1 a 5 estrellas)</label>
+        <div class="star-rating-selector">
+          @for (star of [1, 2, 3, 4, 5]; track star) {
+            <button 
+              type="button" 
+              class="star-btn" 
+              [class.selected]="star <= selectedRating()" 
+              (click)="setRating(star)">
+              ★
+            </button>
+          }
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label for="content">Reseña</label>
+        <textarea 
+          id="content" 
+          formControlName="content" 
+          rows="4" 
+          placeholder="¿Qué te pareció el libro? Comparte tu experiencia sin spoilers..."></textarea>
+      </div>
+
+      <button type="submit" class="btn-submit" [disabled]="isSubmitting() || reviewForm.invalid">
+        {{ isSubmitting() ? 'Publicando...' : 'Publicar Reseña' }}
+      </button>
+    </form>
+  }
+
+  @if (isLoading()) {
+    <app-loading-state message="Cargando reseñas..."></app-loading-state>
+  } @else if (reviews().length === 0) {
+    <app-empty-state 
+      title="Sin reseñas aún" 
+      description="Sé el primero en dejar una opinión sobre este libro." 
+      icon="💬">
+    </app-empty-state>
+  } @else {
+    <div class="reviews-list">
+      @for (review of reviews(); track review.id) {
+        <div class="review-card">
+          <div class="review-card-header">
+            <div class="user-badge">
+              <span class="avatar">👤</span>
+              <span class="username">{{ review.userDisplayName || 'Lector de BookHub' }}</span>
+            </div>
+            <div class="stars-display">
+              @for (star of [1, 2, 3, 4, 5]; track star) {
+                <span class="star" [class.filled]="star <= review.rating">★</span>
+              }
+            </div>
+          </div>
+          <p class="review-content">{{ review.content }}</p>
+          <span class="review-date">{{ review.createdAt | date:'mediumDate' }}</span>
+        </div>
+      }
+    </div>
+  }
+</div>

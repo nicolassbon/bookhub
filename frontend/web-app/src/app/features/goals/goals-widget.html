@@ -1,0 +1,49 @@
+<div class="goal-widget-card">
+  <div class="goal-widget-header">
+    <div class="title-badge">
+      <span class="icon">🎯</span>
+      <h3>Meta de Lectura {{ currentYear }}</h3>
+    </div>
+    <button type="button" class="btn-edit" (click)="toggleEdit()">
+      {{ isEditing() ? 'Cancelar' : (goal() ? 'Editar Meta' : 'Configurar') }}
+    </button>
+  </div>
+
+  @if (isEditing()) {
+    <form [formGroup]="goalForm" class="edit-goal-form" (ngSubmit)="onSaveGoal()">
+      <div class="input-row">
+        <label for="targetBooks">¿Cuántos libros querés leer este año?</label>
+        <input 
+          id="targetBooks" 
+          type="number" 
+          min="1" 
+          max="300" 
+          formControlName="targetBooks" />
+      </div>
+      <button type="submit" class="btn-save" [disabled]="goalForm.invalid || isSaving()">
+        {{ isSaving() ? 'Guardando...' : 'Guardar Meta' }}
+      </button>
+    </form>
+  } @else if (goal()) {
+    <div class="goal-progress-body">
+      <div class="goal-stats">
+        <span class="count">{{ goal()!.booksReadCount }} de {{ goal()!.targetBooks }} libros</span>
+        <span class="percentage">{{ goal()!.percentageAchieved }}%</span>
+      </div>
+
+      <div class="progress-bar">
+        <div class="progress-fill" [style.width.%]="goal()!.percentageAchieved"></div>
+      </div>
+
+      @if (goal()!.isAchieved) {
+        <p class="congrats-banner">🎉 ¡Felicitaciones! Cumpliste tu meta de lectura del año.</p>
+      } @else {
+        <p class="goal-subtext">¡Seguí así! Te faltan {{ goal()!.targetBooks - goal()!.booksReadCount }} libros para cumplir tu objetivo.</p>
+      }
+    </div>
+  } @else {
+    <div class="no-goal-prompt">
+      <p>Aún no configuraste tu objetivo de libros para este año.</p>
+    </div>
+  }
+</div>

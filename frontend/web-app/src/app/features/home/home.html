@@ -1,0 +1,52 @@
+<div class="home-container">
+  <section class="hero-section">
+    @if (sessionStore.isAuthenticated()) {
+      <h1>¡Hola, {{ sessionStore.user()?.displayName }}! 👋</h1>
+      <p class="hero-subtitle">Continuá con tus lecturas y mantené al día tus objetivos del año.</p>
+    } @else {
+      <h1>Bienvenido a BookHub 📚</h1>
+      <p class="hero-subtitle">Tu plataforma social de lectura para organizar libros, registrar avances y descubrir nuevas historias.</p>
+      <div class="hero-actions">
+        <a routerLink="/register" class="btn-primary">Crear Cuenta Gratis</a>
+        <a routerLink="/catalog" class="btn-outline">Explorar Catálogo</a>
+      </div>
+    }
+  </section>
+
+  @if (sessionStore.isAuthenticated()) {
+    <section class="dashboard-grid">
+      <div class="widget-col">
+        <app-goals-widget></app-goals-widget>
+      </div>
+    </section>
+  }
+
+  <section class="featured-section">
+    <div class="section-header">
+      <h2>Libros Destacados</h2>
+      <a routerLink="/catalog" class="see-all-link">Ver todo el catálogo →</a>
+    </div>
+
+    @if (isLoading()) {
+      <app-loading-state message="Cargando recomendaciones..."></app-loading-state>
+    } @else {
+      <div class="featured-grid">
+        @for (book of featuredBooks(); track book.id) {
+          <a [routerLink]="['/catalog/books', book.id]" class="featured-card">
+            <div class="card-cover">
+              @if (book.coverUrl) {
+                <img [src]="book.coverUrl" [alt]="'Portada de ' + book.title" />
+              } @else {
+                <div class="cover-icon">📖</div>
+              }
+            </div>
+            <div class="card-info">
+              <h3 class="title">{{ book.title }}</h3>
+              <p class="author">por {{ book.author }}</p>
+            </div>
+          </a>
+        }
+      </div>
+    }
+  </section>
+</div>

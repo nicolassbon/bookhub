@@ -1,0 +1,81 @@
+@if (isLoading()) {
+  <app-loading-state message="Cargando detalles del libro..."></app-loading-state>
+} @else if (errorMessage()) {
+  <app-error-state 
+    title="Libro no encontrado" 
+    [message]="errorMessage()!" 
+    (retry)="loadBookDetail()">
+  </app-error-state>
+} @else if (book()) {
+  <div class="book-detail-container">
+    <a routerLink="/catalog" class="back-link">← Volver al catálogo</a>
+
+    <div class="book-detail-grid">
+      <div class="cover-section">
+        <div class="cover-card">
+          @if (book()!.coverUrl) {
+            <img [src]="book()!.coverUrl" [alt]="'Portada de ' + book()!.title" />
+          } @else {
+            <div class="cover-placeholder">📖</div>
+          }
+        </div>
+
+        <div class="actions-wrapper">
+          @if (isSuccessMessage()) {
+            <div class="alert success" role="status">
+              {{ isSuccessMessage() }}
+            </div>
+          }
+
+          <div class="shelf-buttons">
+            <button 
+              type="button" 
+              class="btn-action want"
+              [disabled]="isAdding()"
+              (click)="addBook('WANT_TO_READ')">
+              📚 Quiero Leer
+            </button>
+            <button 
+              type="button" 
+              class="btn-action reading"
+              [disabled]="isAdding()"
+              (click)="addBook('READING')">
+              📖 Leyendo
+            </button>
+            <button 
+              type="button" 
+              class="btn-action read"
+              [disabled]="isAdding()"
+              (click)="addBook('READ')">
+              ✅ Leído
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <div class="info-section">
+        <h1 class="book-title">{{ book()!.title }}</h1>
+        <h2 class="book-author">por {{ book()!.author }}</h2>
+
+        <div class="meta-row">
+          @if (book()!.publishedYear) {
+            <span class="meta-badge">📅 {{ book()!.publishedYear }}</span>
+          }
+          @if (book()!.pageCount) {
+            <span class="meta-badge">📄 {{ book()!.pageCount }} páginas</span>
+          }
+          @if (book()!.isbn) {
+            <span class="meta-badge">🏷️ ISBN: {{ book()!.isbn }}</span>
+          }
+        </div>
+
+        <div class="description-box">
+          <h3>Sinopsis</h3>
+          <p>{{ book()!.description || 'Sin descripción disponible.' }}</p>
+        </div>
+
+        <app-book-reviews [bookId]="book()!.id"></app-book-reviews>
+      </div>
+    </div>
+  </div>
+}

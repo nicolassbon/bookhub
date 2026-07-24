@@ -1,0 +1,146 @@
+.app-header {
+  background-color: var(--bh-color-bg-surface);
+  border-bottom: 1px solid var(--bh-color-border);
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  box-shadow: var(--bh-shadow-sm);
+
+  .header-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 12px 24px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+}
+
+.brand-logo {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  text-decoration: none;
+  color: var(--bh-color-text-primary);
+  font-weight: 700;
+  font-size: 1.35rem;
+
+  .logo-icon {
+    font-size: 1.5rem;
+  }
+
+  .logo-text {
+    letter-spacing: -0.02em;
+  }
+}
+
+.mobile-menu-toggle {
+  display: none;
+  background: none;
+  border: none;
+  padding: 8px;
+  cursor: pointer;
+  color: var(--bh-color-text-primary);
+
+  .hamburger-icon {
+    display: block;
+    width: 24px;
+    height: 2px;
+    background-color: currentColor;
+    position: relative;
+
+    &::before, &::after {
+      content: '';
+      position: absolute;
+      width: 24px;
+      height: 2px;
+      background-color: currentColor;
+      left: 0;
+    }
+
+    &::before { top: -6px; }
+    &::after { top: 6px; }
+  }
+
+  @media (max-width: 768px) {
+    display: block;
+  }
+}
+
+.nav-menu {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+
+  a {
+    text-decoration: none;
+    color: var(--bh-color-text-secondary);
+    font-weight: 500;
+    transition: color var(--bh-transition-fast);
+
+    &:hover, &.active {
+      color: var(--bh-color-brand-primary);
+    }
+
+    &.btn-login {
+      background-color: var(--bh-color-brand-primary);
+      color: #ffffff;
+      padding: 6px 16px;
+      border-radius: var(--bh-radius-md);
+
+      &:hover {
+        background-color: var(--bh-color-brand-hover);
+        color: #ffffff;
+      }
+    }
+  }
+
+  .btn-logout {
+    background: none;
+    border: 1px solid var(--bh-color-border);
+    padding: 6px 14px;
+    border-radius: var(--bh-radius-md);
+    font-weight: 500;
+    color: var(--bh-color-text-secondary);
+    cursor: pointer;
+
+    &:hover {
+      background-color: var(--bh-color-error-light);
+      color: var(--bh-color-error);
+      border-color: var(--bh-color-error);
+    }
+  }
+
+  @media (max-width: 768px) {
+    display: none;
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    background-color: var(--bh-color-bg-surface);
+    border-bottom: 1px solid var(--bh-color-border);
+    flex-direction: column;
+    padding: 16px;
+    gap: 16px;
+
+    &.open {
+      display: flex;
+    }
+  }
+}
+
+.app-main {
+  min-height: calc(100vh - 140px);
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 24px;
+}
+
+.app-footer {
+  border-top: 1px solid var(--bh-color-border);
+  background-color: var(--bh-color-bg-surface);
+  padding: 16px 24px;
+  text-align: center;
+  color: var(--bh-color-text-muted);
+  font-size: 0.875rem;
+}

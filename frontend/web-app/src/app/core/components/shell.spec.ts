@@ -1,11 +1,17 @@
 import { render, screen, fireEvent } from '@testing-library/angular';
 import { ShellComponent } from './shell';
 import { provideRouter } from '@angular/router';
+import { provideHttpClient } from '@angular/common/http';
+import { provideHttpClientTesting } from '@angular/common/http/testing';
 
 describe('ShellComponent', () => {
   it('should render skip to content link', async () => {
     await render(ShellComponent, {
-      providers: [provideRouter([])]
+      providers: [
+        provideHttpClient(),
+        provideHttpClientTesting(),
+        provideRouter([])
+      ]
     });
 
     const skipLink = screen.getByRole('link', { name: /saltar al contenido/i });
@@ -15,7 +21,11 @@ describe('ShellComponent', () => {
 
   it('should toggle mobile menu open and closed', async () => {
     const { container } = await render(ShellComponent, {
-      providers: [provideRouter([])]
+      providers: [
+        provideHttpClient(),
+        provideHttpClientTesting(),
+        provideRouter([])
+      ]
     });
 
     const toggleButton = container.querySelector('.mobile-menu-toggle') as HTMLButtonElement;

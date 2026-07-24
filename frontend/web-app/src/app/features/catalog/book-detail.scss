@@ -1,0 +1,142 @@
+.book-detail-container {
+  max-width: 960px;
+  margin: 0 auto;
+}
+
+.back-link {
+  display: inline-block;
+  margin-bottom: 20px;
+  color: var(--bh-color-text-secondary);
+  text-decoration: none;
+  font-weight: 500;
+  transition: color var(--bh-transition-fast);
+
+  &:hover {
+    color: var(--bh-color-brand-primary);
+  }
+}
+
+.book-detail-grid {
+  display: grid;
+  grid-template-columns: 280px 1fr;
+  gap: 40px;
+
+  @media (max-width: 768px) {
+    grid-template-columns: 1fr;
+  }
+}
+
+.cover-card {
+  aspect-ratio: 2/3;
+  background-color: var(--bh-color-bg-surface);
+  border: 1px solid var(--bh-color-border);
+  border-radius: var(--bh-radius-lg);
+  overflow: hidden;
+  box-shadow: var(--bh-shadow-md);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  .cover-placeholder {
+    font-size: 5rem;
+  }
+}
+
+.actions-wrapper {
+  margin-top: 20px;
+
+  .alert.success {
+    background-color: var(--bh-color-success-light);
+    color: var(--bh-color-success);
+    border: 1px solid rgba(59, 128, 82, 0.2);
+    padding: 10px;
+    border-radius: var(--bh-radius-md);
+    font-size: 0.9rem;
+    margin-bottom: 12px;
+    text-align: center;
+  }
+
+  .shelf-buttons {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+
+    .btn-action {
+      width: 100%;
+      padding: 10px;
+      border: 1px solid var(--bh-color-border);
+      border-radius: var(--bh-radius-md);
+      background-color: var(--bh-color-bg-surface);
+      font-weight: 600;
+      cursor: pointer;
+      transition: all var(--bh-transition-fast);
+
+      &:hover:not(:disabled) {
+        background-color: var(--bh-color-brand-primary);
+        color: #ffffff;
+        border-color: var(--bh-color-brand-primary);
+      }
+
+      &:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+      }
+    }
+  }
+}
+
+.info-section {
+  .book-title {
+    font-size: 2.2rem;
+    font-weight: 700;
+    line-height: 1.2;
+    margin-bottom: 6px;
+  }
+
+  .book-author {
+    font-size: 1.2rem;
+    font-weight: 500;
+    color: var(--bh-color-text-secondary);
+    margin-bottom: 16px;
+  }
+
+  .meta-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-bottom: 24px;
+
+    .meta-badge {
+      background-color: var(--bh-color-bg-surface);
+      border: 1px solid var(--bh-color-border);
+      padding: 4px 12px;
+      border-radius: var(--bh-radius-full);
+      font-size: 0.85rem;
+      color: var(--bh-color-text-secondary);
+    }
+  }
+
+  .description-box {
+    background-color: var(--bh-color-bg-surface);
+    border: 1px solid var(--bh-color-border);
+    border-radius: var(--bh-radius-lg);
+    padding: 24px;
+
+    h3 {
+      font-size: 1.1rem;
+      font-weight: 600;
+      margin-bottom: 10px;
+    }
+
+    p {
+      line-height: 1.6;
+      color: var(--bh-color-text-secondary);
+    }
+  }
+}

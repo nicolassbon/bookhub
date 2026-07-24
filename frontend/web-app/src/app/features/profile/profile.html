@@ -1,0 +1,40 @@
+<div class="profile-container">
+  <h2>Mi Perfil de Lector</h2>
+
+  @if (isLoading()) {
+    <app-loading-state message="Cargando información de perfil..."></app-loading-state>
+  } @else if (user()) {
+    <div class="profile-card">
+      <div class="avatar-header">
+        <div class="avatar-circle">👤</div>
+        <div class="user-titles">
+          <h3>{{ user()!.displayName }}</h3>
+          <span class="user-email">{{ user()!.email }}</span>
+        </div>
+      </div>
+
+      @if (successMessage()) {
+        <div class="alert success">{{ successMessage() }}</div>
+      }
+
+      @if (errorMessage()) {
+        <div class="alert error">{{ errorMessage() }}</div>
+      }
+
+      <form [formGroup]="profileForm" (ngSubmit)="onSubmit()">
+        <div class="form-group">
+          <label for="displayName">Nombre Visible</label>
+          <input 
+            id="displayName" 
+            type="text" 
+            formControlName="displayName" 
+            [class.invalid]="profileForm.get('displayName')?.invalid && profileForm.get('displayName')?.touched" />
+        </div>
+
+        <button type="submit" class="btn-submit" [disabled]="isSaving() || profileForm.invalid">
+          {{ isSaving() ? 'Guardando...' : 'Guardar Cambios' }}
+        </button>
+      </form>
+    </div>
+  }
+</div>
