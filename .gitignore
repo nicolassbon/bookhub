@@ -45,4 +45,4 @@ pom.xml.releaseBackup
 newman/
 
 # Local OpenSpec artifacts
-.openspec/
+openspec/
