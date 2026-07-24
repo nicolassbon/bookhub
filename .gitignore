@@ -43,3 +43,6 @@ pom.xml.releaseBackup
 *.postman_environment.private.json
 *.postman_environment.local.json
 newman/
+
+# Local OpenSpec artifacts
+.openspec/
