@@ -1,0 +1,55 @@
+@use 'tokens';
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap');
+
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html, body {
+  height: 100%;
+  font-family: var(--bh-font-family);
+  background-color: var(--bh-color-bg-primary);
+  color: var(--bh-color-text-primary);
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Accessibility Focus Ring */
+*:focus-visible {
+  outline: 3px solid var(--bh-color-focus-ring);
+  outline-offset: 2px;
+}
+
+/* Skip Link */
+.skip-to-content {
+  position: absolute;
+  top: -100px;
+  left: 16px;
+  background: var(--bh-color-brand-primary);
+  color: #ffffff;
+  padding: 8px 16px;
+  border-radius: var(--bh-radius-sm);
+  z-index: 1000;
+  text-decoration: none;
+  font-weight: 600;
+  transition: top var(--bh-transition-fast);
+
+  &:focus {
+    top: 16px;
+  }
+}
+
+/* Screen Reader Only Utility */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
